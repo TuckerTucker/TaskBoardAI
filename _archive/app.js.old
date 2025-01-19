@@ -1,0 +1,1179 @@
+const addBtns = document.querySelectorAll(".add-btn:not(.solid)");
+const saveItemBtns = document.querySelectorAll(".solid");
+const addItemContainers = document.querySelectorAll(".add-container");
+const addItems = document.querySelectorAll(".add-item");
+
+// Kanban Board Elements
+const backlogListEl = document.querySelector(".to-do-column .drag-item-list");
+const progressListEl = document.querySelector(".doing-column .drag-item-list");
+const completeListEl = document.querySelector(".done-column .drag-item-list");
+const onHoldListEl = document.querySelector(".on-hold-column .drag-item-list");
+
+const backlogList = document.getElementById("backlog-list");
+const progressList = document.getElementById("progress-list");
+const completeList = document.getElementById("complete-list");
+const onHoldList = document.getElementById("on-hold-list");
+
+// Items
+let projectName = 'My Kanban Board';
+let updatedOnLoad = false;
+
+// Initialize Arrays
+let columns = [];
+let listArrays = [];
+
+// Create default columns if none exist
+function createDefaultColumns() {
+    if (columns.length === 0) {
+        columns = [
+            {
+                id: generateUUID(),
+                name: 'To Do',
+                items: [{
+                    id: generateUUID(),
+                    title: 'Welcome!',
+                    description: '# Welcome to the Enhanced Kanban Board\n\nThis board supports:\n- Markdown formatting\n- Subtasks\n- Tags\n- Dependencies\n- Completion tracking',
+                    collapsed: false,
+                    subtasks: [
+                        'Try adding a new card',
+                        'Try moving cards between columns',
+                        'Try using markdown in descriptions'
+                    ],
+                    tags: ['example', 'welcome']
+                }]
+            },
+            {
+                id: generateUUID(),
+                name: 'Doing',
+                items: []
+            },
+            {
+                id: generateUUID(),
+                name: 'Done',
+                items: []
+            }
+        ];
+        listArrays = columns.map(col => col.items);
+    }
+}
+
+// Drag Functionality
+let draggedItem;
+let dragging = false;
+let currentColumn;
+
+// UUID Generation
+function generateUUID() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        const r = Math.random() * 16 | 0;
+        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
+}
+
+// Convert string to slug
+function toSlug(str) {
+    return str.toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '');
+}
+
+// Ensure unique slug
+function generateUniqueSlug(name, existingIds = []) {
+    let slug = toSlug(name);
+    let counter = 1;
+    let uniqueSlug = slug;
+    
+    while (existingIds.includes(uniqueSlug)) {
+        uniqueSlug = `${slug}-${counter}`;
+        counter++;
+    }
+    
+    return uniqueSlug;
+}
+
+// Add Column
+async function addColumn(name) {
+    const columnName = name || 'New Column';
+    const existingIds = columns.map(col => col.id);
+    
+    const column = {
+        id: generateUniqueSlug(columnName, existingIds),
+        name: columnName,
+        items: []
+    };
+    
+    columns.push(column);
+    listArrays.push(column.items);
+    
+    // Create and append new column DOM element
+    const columnEl = createColumnElement(column, columns.length - 1);
+    document.querySelector('.drag-list').appendChild(columnEl);
+    
+    await updateSavedColumns();
+}
+
+// Create Column Element
+function createColumnElement(column, index) {
+    const li = document.createElement('li');
+    li.className = `drag-column column-${column.id}`;
+    li.innerHTML = `
+        <span class="header">
+            <h1>${column.name}</h1>
+            <div class="column-actions">
+                <button class="column-btn collapse-all" onclick="collapseAllInColumn(this)">▶ All</button>
+                <button class="column-btn expand-all" onclick="expandAllInColumn(this)">▼ All</button>
+                <button class="column-btn remove-column" onclick="removeColumn(${index})">×</button>
+            </div>
+        </span>
+        <div class="add-btn-group">
+            <div class="add-btn" onclick="addNewCard(${index})">
+                <span class="plus-sign">+</span>
+                <span>Add Card</span>
+            </div>
+        </div>
+        <div id="content-${column.id}" class="custom-scroll">
+            <ul class="drag-item-list" id="list-${column.id}" 
+                ondrop="drop(event)" 
+                ondragover="allowDrop(event)" 
+                ondragenter="dragEnter(${index})">
+            </ul>
+        </div>
+    `;
+    return li;
+}
+
+// Set server data
+async function updateSavedColumns() {
+    const data = {
+        projectName,
+        columns: columns.map(col => ({
+            id: col.id,
+            name: col.name,
+            items: col.items
+        }))
+    };
+
+    try {
+        const response = await fetch('/api/kanban', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to save data to server');
+        }
+        
+        const result = await response.json();
+        if (!result.success) {
+            throw new Error('Server did not confirm successful save');
+        }
+    } catch (error) {
+        console.error('Error saving to server:', error);
+        alert(`Failed to save changes: ${error.message}`);
+        throw error;
+    }
+}
+
+// Load data from server
+async function loadFromServer() {
+    try {
+        const response = await fetch('/api/kanban');
+        if (!response.ok) {
+            throw new Error('Failed to load board data');
+        }
+        const data = await response.json();
+        
+        // Update project metadata
+        projectName = data.projectName || 'My Kanban Board';
+        document.title = projectName;
+        
+        if (Array.isArray(data.columns)) {
+            columns = data.columns;
+            
+            // Ensure all items have required properties and valid IDs
+            columns.forEach((column, colIndex) => {
+                // Convert legacy UUID column IDs to slug-based IDs
+                if (column.id && column.id.includes('-') && column.id.length > 20) {
+                    column.id = generateUniqueSlug(column.name, 
+                        columns.slice(0, colIndex).map(c => c.id));
+                }
+                
+                if (Array.isArray(column.items)) {
+                    column.items = column.items.map((item, itemIndex) => {
+                        // Convert legacy UUID item IDs to slug-based IDs
+                        if (item.id && item.id.includes('-') && item.id.length > 20) {
+                            const existingIds = columns.flatMap(c => 
+                                c.items.slice(0, c === column ? itemIndex : undefined)
+                                    .map(i => i.id));
+                            item.id = generateUniqueSlug(item.title, existingIds);
+                        }
+                        
+                        return {
+                            id: item.id || generateUniqueSlug(item.title || 'Untitled'),
+                            title: item.title || 'Untitled',
+                            content: item.content || item.description || '',
+                            collapsed: item.collapsed || false,
+                            subtasks: Array.isArray(item.subtasks) ? item.subtasks : [],
+                            tags: Array.isArray(item.tags) ? item.tags : [],
+                            dependencies: Array.isArray(item.dependencies) ? item.dependencies : []
+                        };
+                    });
+                } else {
+                    column.items = [];
+                }
+            });
+            
+            // Rebuild arrays for drag and drop functionality
+            rebuildArrays();
+        } else {
+            columns = [];
+            listArrays = [];
+        }
+        
+        updateDOM();
+        
+    } catch (error) {
+        console.error('Error loading board data:', error);
+        // Initialize with empty state
+        columns = [];
+        listArrays = [];
+        updateDOM();
+    }
+}
+
+// Update DOM - Create Project Title and Cards
+function updateDOM() {
+    if (!updatedOnLoad) { updatedOnLoad = true; }
+    
+    // Update project title
+    const titleEl = document.querySelector('.main-title');
+    if (titleEl) {
+        titleEl.textContent = projectName;
+        titleEl.contentEditable = true;
+        titleEl.addEventListener('focusout', updateProjectName);
+    }
+    
+    // Clear and rebuild columns
+    const dragList = document.querySelector('.drag-list');
+    dragList.innerHTML = '';
+    
+    // Create columns and cards
+    columns.forEach((column, index) => {
+        const columnEl = createColumnElement(column, index);
+        dragList.appendChild(columnEl);
+        
+        const itemList = columnEl.querySelector('.drag-item-list');
+        column.items.forEach((item, itemIndex) => {
+            createItemEl(itemList, column, item, itemIndex);
+        });
+        
+        // Keep listArrays in sync for backwards compatibility
+        listArrays[index] = column.items;
+    });
+}
+
+// Create DOM Elements for each list item
+function createItemEl(columnEl, column, item, index) {
+    // List Item
+    const listEl = document.createElement('li');
+    listEl.id = item.id;
+    listEl.classList.add('drag-item');
+    listEl.draggable = true;
+    listEl.setAttribute('ondragstart', 'drag(event)');
+    listEl.setAttribute('data-id', item.id);
+    
+    // Header
+    const header = document.createElement('div');
+    header.classList.add('drag-item-header');
+
+    // Title Container
+    const titleContainer = document.createElement('div');
+    titleContainer.classList.add('title-container');
+
+    // Drag Icon
+    const dragIcon = document.createElement('span');
+    dragIcon.classList.add('drag-icon');
+    dragIcon.innerHTML = '⋮⋮';
+    titleContainer.appendChild(dragIcon);
+
+    // Title
+    const title = document.createElement('div');
+    title.classList.add('drag-item-title');
+    title.contentEditable = false;
+    title.textContent = item.title || '';
+    title.addEventListener('blur', () => {
+        if (listEl.classList.contains('editing')) {
+            item.title = title.textContent;
+        }
+    });
+    title.addEventListener('focusout', async () => {
+        await updateCardTitle(listEl, title.textContent);
+    });
+    titleContainer.appendChild(title);
+
+    // Normal Buttons Container
+    const normalButtons = document.createElement('div');
+    normalButtons.classList.add('buttons-container', 'normal-buttons');
+
+    // Edit Buttons Container
+    const editButtons = document.createElement('div');
+    editButtons.classList.add('buttons-container', 'edit-buttons');
+    editButtons.style.display = 'none';
+
+    // Collapse Button
+    const collapseBtn = document.createElement('button');
+    collapseBtn.classList.add('action-btn', 'collapse-btn');
+    collapseBtn.innerHTML = item.collapsed ? '▶' : '▼';
+    collapseBtn.onclick = (e) => {
+        e.stopPropagation();
+        if (!listEl.classList.contains('editing')) {
+            toggleCollapse(listEl);
+        }
+    };
+    normalButtons.appendChild(collapseBtn);
+
+    // Edit Button
+    const editBtn = document.createElement('button');
+    editBtn.classList.add('action-btn', 'edit-btn');
+    editBtn.innerHTML = '✎';
+    editBtn.onclick = (e) => {
+        e.stopPropagation();
+        enterEditMode();
+    };
+    normalButtons.appendChild(editBtn);
+
+    // Delete Button
+    const deleteBtn = document.createElement('button');
+    deleteBtn.classList.add('action-btn', 'delete-btn');
+    deleteBtn.innerHTML = '×';
+    deleteBtn.onclick = (e) => {
+        e.stopPropagation();
+        if (!listEl.classList.contains('editing')) {
+            confirmDelete(item.id, column);
+        }
+    };
+    normalButtons.appendChild(deleteBtn);
+
+    // Save Button
+    const saveBtn = document.createElement('button');
+    saveBtn.classList.add('action-btn', 'save-btn');
+    saveBtn.innerHTML = '✓';
+    saveBtn.onclick = (e) => {
+        e.stopPropagation();
+        saveChanges();
+    };
+    editButtons.appendChild(saveBtn);
+
+    // Cancel Button
+    const cancelBtn = document.createElement('button');
+    cancelBtn.classList.add('action-btn', 'cancel-btn');
+    cancelBtn.innerHTML = '×';
+    cancelBtn.onclick = (e) => {
+        e.stopPropagation();
+        cancelEdit();
+    };
+    editButtons.appendChild(cancelBtn);
+
+    // Content
+    const content = document.createElement('div');
+    content.classList.add('drag-item-content');
+    if (item.collapsed) {
+        content.style.display = 'none';
+    }
+
+    // Description/Content (with markdown support)
+    if (item.description || item.content) {
+        const description = document.createElement('div');
+        description.classList.add('drag-item-description');
+        description.innerHTML = marked.parse(item.description || item.content);
+        content.appendChild(description);
+    }
+
+    // Subtasks
+    if (item.subtasks && item.subtasks.length > 0) {
+        const subtasksSection = document.createElement('div');
+        subtasksSection.classList.add('subtasks-section');
+        
+        const subtasksTitle = document.createElement('div');
+        subtasksTitle.classList.add('section-title');
+        subtasksTitle.textContent = 'Subtasks';
+        subtasksSection.appendChild(subtasksTitle);
+
+        const subtasksList = document.createElement('ul');
+        subtasksList.classList.add('subtasks-list');
+
+        item.subtasks.forEach((task, taskIndex) => {
+            const subtaskItem = document.createElement('li');
+            subtaskItem.classList.add('subtask-item');
+
+            const checkbox = document.createElement('span');
+            checkbox.classList.add('subtask-indicator');
+            checkbox.innerHTML = task.startsWith('✓') ? '☑' : '☐';
+            
+            const taskText = document.createElement('span');
+            taskText.classList.add('subtask-text');
+            taskText.textContent = task.replace(/^✓\s*/, '');
+
+            subtaskItem.appendChild(checkbox);
+            subtaskItem.appendChild(taskText);
+            subtasksList.appendChild(subtaskItem);
+        });
+
+        subtasksSection.appendChild(subtasksList);
+        content.appendChild(subtasksSection);
+    }
+
+    // Tags
+    // temporarily hiding tags
+    // if (item.tags && item.tags.length > 0) {
+    //    const tagsSection = document.createElement('div');
+    //    tagsSection.classList.add('tags-section');
+    //    
+    //    const tagsTitle = document.createElement('div');
+    //    tagsTitle.classList.add('section-title');
+    //    tagsTitle.textContent = 'Tags';
+    //    tagsSection.appendChild(tagsTitle);
+    //
+    //    item.tags.forEach(tag => {
+    //        const tagEl = document.createElement('span');
+    //        tagEl.classList.add('tag');
+    //        tagEl.textContent = tag;
+    //        tagsSection.appendChild(tagEl);
+    //    });
+    //
+    //    content.appendChild(tagsSection);
+   //}
+
+    // Dependencies
+    if (item.dependencies && item.dependencies.length > 0) {
+        const dependenciesSection = document.createElement('div');
+        dependenciesSection.classList.add('dependencies-section');
+        
+        const dependenciesTitle = document.createElement('div');
+        dependenciesTitle.classList.add('section-title');
+        dependenciesTitle.textContent = 'Dependencies';
+        dependenciesSection.appendChild(dependenciesTitle);
+
+        item.dependencies.forEach(depId => {
+            const depItem = findItemById(depId);
+            if (depItem) {
+                const depLink = document.createElement('div');
+                depLink.classList.add('dependency-link');
+                depLink.textContent = depItem.title;
+                depLink.onclick = () => {
+                    const depEl = document.getElementById(depId);
+                    if (depEl) {
+                        depEl.scrollIntoView({ behavior: 'smooth' });
+                        depEl.classList.add('highlight');
+                        setTimeout(() => depEl.classList.remove('highlight'), 2000);
+                    }
+                };
+                dependenciesSection.appendChild(depLink);
+            }
+        });
+
+        content.appendChild(dependenciesSection);
+    }
+
+    // Completion Timestamp
+    if (item.completed_at) {
+        const timestampEl = document.createElement('div');
+        timestampEl.classList.add('completion-time');
+        timestampEl.textContent = `Completed: ${new Date(item.completed_at).toLocaleString()}`;
+        content.appendChild(timestampEl);
+    }
+
+    // Assemble the card
+    header.appendChild(titleContainer);
+    header.appendChild(normalButtons);
+    header.appendChild(editButtons);
+    listEl.appendChild(header);
+    listEl.appendChild(content);
+
+    // Add to column
+    columnEl.appendChild(listEl);
+
+    function enterEditMode() {
+        // Enter edit mode
+        listEl.classList.add('editing');
+        
+        // Show/hide button groups
+        normalButtons.style.display = 'none';
+        editButtons.style.display = 'flex';
+        
+        // Make title editable
+        title.contentEditable = true;
+        
+        // Create description editor
+        const descriptionEditor = document.createElement('textarea');
+        descriptionEditor.classList.add('description-editor');
+        descriptionEditor.value = item.description || '';
+        
+        // Add editor to content
+        const description = content.querySelector('.drag-item-description');
+        if (description) {
+            content.removeChild(description);
+        }
+        content.insertBefore(descriptionEditor, content.firstChild);
+        
+        // Focus title
+        title.focus();
+    }
+
+    function saveChanges() {
+        // Get the description editor
+        const descriptionEditor = content.querySelector('.description-editor');
+        
+        // Save changes
+        item.title = title.textContent.trim();
+        item.description = descriptionEditor ? descriptionEditor.value.trim() : '';
+        
+        // Update display
+        title.contentEditable = false;
+        
+        if (descriptionEditor) {
+            const existingDescription = content.querySelector('.drag-item-description');
+            if (existingDescription) {
+                // Update existing description
+                existingDescription.innerHTML = item.description ? marked.parse(item.description) : '';
+                content.replaceChild(existingDescription, descriptionEditor);
+            } else if (item.description) {
+                // Create new description if it doesn't exist
+                const description = document.createElement('div');
+                description.classList.add('drag-item-description');
+                description.innerHTML = marked.parse(item.description);
+                content.replaceChild(description, descriptionEditor);
+            } else {
+                // Remove editor if no description
+                content.removeChild(descriptionEditor);
+            }
+        }
+        
+        // Show/hide button groups
+        normalButtons.style.display = 'flex';
+        editButtons.style.display = 'none';
+        
+        // Remove edit mode
+        listEl.classList.remove('editing');
+        
+        // Save to server
+        updateItem(item.id, column);
+    }
+
+    function cancelEdit() {
+        // Revert changes
+        title.textContent = item.title;
+        title.contentEditable = false;
+        
+        // Remove description editor if it exists
+        const descriptionEditor = content.querySelector('.description-editor');
+        if (descriptionEditor) {
+            const existingDescription = content.querySelector('.drag-item-description');
+            if (existingDescription) {
+                // Restore existing description
+                existingDescription.innerHTML = item.description ? marked.parse(item.description) : '';
+                content.replaceChild(existingDescription, descriptionEditor);
+            } else if (item.description) {
+                // Create new description if it doesn't exist
+                const description = document.createElement('div');
+                description.classList.add('drag-item-description');
+                description.innerHTML = marked.parse(item.description);
+                content.replaceChild(description, descriptionEditor);
+            } else {
+                // Remove editor if no description
+                content.removeChild(descriptionEditor);
+            }
+        }
+        
+        // Show/hide button groups
+        normalButtons.style.display = 'flex';
+        editButtons.style.display = 'none';
+        
+        // Remove edit mode
+        listEl.classList.remove('editing');
+    }
+
+    return listEl;
+}
+
+// Toggle card collapse
+function toggleCollapse(card) {
+    const content = card.querySelector('.drag-item-content');
+    const collapseBtn = card.querySelector('.collapse-btn');
+    
+    if (!content || !collapseBtn) return;
+    
+    const isCollapsed = content.style.display === 'none';
+    content.style.display = isCollapsed ? 'block' : 'none';
+    collapseBtn.innerHTML = isCollapsed ? '▼' : '▶';
+    
+    // Update the collapsed state in the data structure
+    const item = findItemById(card.getAttribute('data-id'));
+    if (item) {
+        item.collapsed = !isCollapsed;
+        updateSavedColumns();
+    }
+}
+
+// Save content changes
+async function saveContent(listEl, index, column) {
+    const title = listEl.querySelector('.drag-item-title');
+    const content = listEl.querySelector('.content-edit');
+    const display = listEl.querySelector('.content-display');
+    const editButtons = listEl.querySelector('.edit-buttons');
+    const normalButtons = listEl.querySelector('.normal-buttons');
+    
+    // Get the item from listArrays
+    const item = listArrays[column][index];
+    
+    // Update item data
+    item.title = title.textContent;
+    item.content = content.value;
+    
+    // Update display
+    display.innerHTML = content.value ? marked.parse(content.value) : '';
+    
+    // Reset edit state
+    listEl.classList.remove('editing');
+    title.contentEditable = false;
+    content.style.display = 'none';
+    display.style.display = 'block';
+    editButtons.style.display = 'none';
+    normalButtons.style.display = 'flex';
+    
+    // Save to server
+    updateSavedColumns();
+}
+
+function cancelEdit(listEl, item) {
+    // Reset edit state
+    listEl.classList.remove('editing');
+    
+    const title = listEl.querySelector('.drag-item-title');
+    const content = listEl.querySelector('.content-edit');
+    const display = listEl.querySelector('.content-display');
+    const editButtons = listEl.querySelector('.edit-buttons');
+    const normalButtons = listEl.querySelector('.normal-buttons');
+
+    // Reset title and content
+    title.contentEditable = false;
+    title.textContent = item.title || '';
+    
+    if (content && display) {
+        content.style.display = 'none';
+        content.value = item.content || '';
+        display.style.display = 'block';
+    }
+
+    // Reset buttons
+    editButtons.style.display = 'none';
+    normalButtons.style.display = 'flex';
+}
+
+// Confirm and delete card
+async function confirmDelete(id, columnData) {
+    if (confirm('Are you sure you want to delete this card?')) {
+        try {
+            // Find the column index in the global array
+            const columnIndex = columns.findIndex(col => col.id === columnData.id);
+            if (columnIndex === -1) {
+                console.error('Column not found:', columnData.id);
+                return;
+            }
+
+            // Find and remove the card
+            const itemIndex = columnData.items.findIndex(item => item.id === id);
+            if (itemIndex !== -1) {
+                // Remove from both data structures
+                columnData.items.splice(itemIndex, 1);
+                columns[columnIndex].items = columnData.items;
+                listArrays[columnIndex] = columnData.items;
+
+                // Save and update UI
+                await updateSavedColumns();
+                updateDOM();
+            }
+        } catch (error) {
+            console.error('Failed to delete card:', error);
+            alert('Failed to delete card. Please try again.');
+        }
+    }
+}
+
+// When Item Enters Column Area
+function dragEnter(column) {
+    document.querySelector(`.column-${columns[column].id}`).classList.add("over");
+    currentColumn = column;
+}
+
+// When Item Starts Dragging
+function drag(e) {
+    draggedItem = e.target;
+    dragging = true;
+}
+
+// Column Allows for Item to Drop
+function allowDrop(e) {
+    e.preventDefault();
+}
+
+// Dropping Item in Column
+async function drop(e) {
+    e.preventDefault();
+    const columnIndex = e.target.closest('.drag-column')?.getAttribute('data-column-index');
+    if (!columnIndex) return;
+
+    // Get target column
+    const targetColumn = columns[columnIndex];
+    if (!targetColumn) return;
+
+    // Check if moving to Done column
+    if (targetColumn.name.toLowerCase() === 'done') {
+        const itemId = draggedItem.id;
+        if (!canMoveToDone(itemId)) {
+            return;
+        }
+    }
+
+    // Remove item from source column
+    const sourceColumn = findColumnForCard(draggedItem.id);
+    if (sourceColumn) {
+        sourceColumn.items = sourceColumn.items.filter(item => item.id !== draggedItem.id);
+    }
+
+    // Add to target column
+    const draggedItemData = findItemById(draggedItem.id);
+    if (draggedItemData) {
+        // Update completion timestamp if moving to Done
+        if (targetColumn.name.toLowerCase() === 'done') {
+            draggedItemData.completed_at = new Date().toISOString();
+        } else {
+            delete draggedItemData.completed_at;
+        }
+
+        targetColumn.items.push(draggedItemData);
+    }
+
+    // Update the UI
+    updateDOM();
+    // Save to server
+    updateSavedColumns();
+}
+
+// Add new card directly in edit mode
+async function addNewCard(columnIndex) {
+    const defaultTitle = 'New Card';
+    const existingIds = columns.flatMap(col => col.items.map(item => item.id));
+    
+    const item = {
+        id: generateUniqueSlug(defaultTitle, existingIds),
+        title: defaultTitle,
+        description: '',
+        collapsed: false,
+        subtasks: [],
+        tags: [],
+        dependencies: []
+    };
+    
+    // Add to column
+    columns[columnIndex].items.push(item);
+    
+    // Update DOM
+    await updateDOM();
+    
+    // Find the new card element
+    const cardEl = document.getElementById(item.id);
+    if (cardEl) {
+        // Trigger edit mode
+        const editBtn = cardEl.querySelector('.edit-btn');
+        if (editBtn) {
+            editBtn.click();
+        }
+    }
+}
+
+// Helper function to find which column a card belongs to
+function findColumnForCard(card) {
+    for (let i = 0; i < columns.length; i++) {
+        if (card.closest(`.column-${columns[i].id}`)) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+// Collapse all cards in a column
+async function collapseAllInColumn(button) {
+    const column = button.closest('.drag-column');
+    const cardList = column.querySelector('.drag-item-list');
+    const cards = cardList.querySelectorAll('.drag-item');
+    
+    try {
+        // Update UI and data model
+        cards.forEach(card => {
+            const contentWrapper = card.querySelector('.drag-item-content');
+            const collapseBtn = card.querySelector('.collapse-btn');
+            const cardId = card.getAttribute('data-id');
+            
+            // Update UI
+            contentWrapper.style.display = 'none';
+            collapseBtn.innerHTML = '▶';
+            collapseBtn.classList.add('collapsed');
+            
+            // Update data model
+            const item = findItemById(cardId);
+            if (item) {
+                item.collapsed = true;
+            }
+        });
+        
+        // Save changes
+        await updateSavedColumns();
+    } catch (error) {
+        console.error('Failed to collapse cards:', error);
+        // Revert changes on failure
+        cards.forEach(card => {
+            const contentWrapper = card.querySelector('.drag-item-content');
+            const collapseBtn = card.querySelector('.collapse-btn');
+            contentWrapper.style.display = 'block';
+            collapseBtn.innerHTML = '▼';
+            collapseBtn.classList.remove('collapsed');
+        });
+        alert('Failed to collapse cards. Please try again.');
+    }
+}
+
+// Expand all cards in a column
+async function expandAllInColumn(button) {
+    const column = button.closest('.drag-column');
+    const cardList = column.querySelector('.drag-item-list');
+    const cards = cardList.querySelectorAll('.drag-item');
+    
+    try {
+        // Update UI and data model
+        cards.forEach(card => {
+            const contentWrapper = card.querySelector('.drag-item-content');
+            const collapseBtn = card.querySelector('.collapse-btn');
+            const cardId = card.getAttribute('data-id');
+            
+            // Update UI
+            contentWrapper.style.display = 'block';
+            collapseBtn.innerHTML = '▼';
+            collapseBtn.classList.remove('collapsed');
+            
+            // Update data model
+            const item = findItemById(cardId);
+            if (item) {
+                item.collapsed = false;
+            }
+        });
+        
+        // Save changes
+        await updateSavedColumns();
+    } catch (error) {
+        console.error('Failed to expand cards:', error);
+        // Revert changes on failure
+        cards.forEach(card => {
+            const contentWrapper = card.querySelector('.drag-item-content');
+            const collapseBtn = card.querySelector('.collapse-btn');
+            contentWrapper.style.display = 'none';
+            collapseBtn.innerHTML = '▶';
+            collapseBtn.classList.add('collapsed');
+        });
+        alert('Failed to expand cards. Please try again.');
+    }
+}
+
+// Remove column
+async function removeColumn(columnIndex) {
+    if (confirm('Are you sure you want to delete this column?')) {
+        try {
+            columns.splice(columnIndex, 1);
+            listArrays.splice(columnIndex, 1);
+            updateDOM();
+            await updateSavedColumns();
+        } catch (error) {
+            console.error('Failed to delete column:', error);
+            alert('Failed to delete column. Please try again.');
+        }
+    }
+}
+
+// Update Project Name
+async function updateProjectName(e) {
+    const newName = e.target.textContent.trim();
+    if (newName && newName !== projectName) {
+        projectName = newName;
+        await updateSavedColumns();
+    } else {
+        e.target.textContent = projectName;
+    }
+}
+
+// Configure marked to preserve line breaks
+marked.use({
+    breaks: true,
+    gfm: true
+});
+
+// Show Add Column Dialog
+function showAddColumnDialog() {
+    const dialog = document.getElementById('add-column-dialog');
+    const input = document.getElementById('new-column-name');
+    dialog.style.display = 'flex';
+    input.value = '';
+    input.focus();
+
+    // Handle Enter key
+    input.onkeypress = function(e) {
+        if (e.key === 'Enter') {
+            handleAddColumn();
+        }
+    };
+}
+
+// Hide Add Column Dialog
+function hideAddColumnDialog() {
+    const dialog = document.getElementById('add-column-dialog');
+    dialog.style.display = 'none';
+}
+
+// Handle Add Column
+async function handleAddColumn() {
+    const input = document.getElementById('new-column-name');
+    const name = input.value.trim();
+    
+    if (name) {
+        await addColumn(name);
+        hideAddColumnDialog();
+    }
+}
+
+// Update Item - Delete if necessary, or update Array value
+async function updateItem(id, column) {
+    const item = findItemById(id);
+    if (!item) return;
+
+    // If moving to Done column, validate dependencies
+    const targetColumn = findColumnForCard(id);
+    if (targetColumn && targetColumn.name.toLowerCase() === 'done') {
+        if (!canMoveToDone(id)) {
+            return;
+        }
+    }
+
+    // Update the UI
+    updateDOM();
+    // Save to server
+    await updateSavedColumns();
+}
+
+// Toggle subtask completion
+function toggleSubtask(itemId, subtaskIndex, column) {
+    const item = findItemById(itemId);
+    if (item && item.subtasks && item.subtasks[subtaskIndex]) {
+        const task = item.subtasks[subtaskIndex];
+        const isCompleted = task.startsWith('✓');
+        const taskText = task.replace(/^✓\s*/, '');
+        item.subtasks[subtaskIndex] = isCompleted ? taskText : `✓ ${taskText}`;
+        updateItem(itemId, column);
+    }
+}
+
+// Check if all dependencies are completed
+function checkDependencies(itemId) {
+    const item = findItemById(itemId);
+    if (!item || !item.dependencies) return true;
+
+    return item.dependencies.every(depId => {
+        const depItem = findItemById(depId);
+        return depItem && findColumnForCard(depId)?.name.toLowerCase() === 'done';
+    });
+}
+
+// Validate move based on dependencies
+function canMoveToDone(itemId) {
+    const item = findItemById(itemId);
+    if (!item) return true;
+
+    // Check if all dependencies are in Done column
+    if (item.dependencies && item.dependencies.length > 0) {
+        const allDependenciesDone = checkDependencies(itemId);
+        if (!allDependenciesDone) {
+            alert('Cannot move to Done: Not all dependencies are completed');
+            return false;
+        }
+    }
+
+    return true;
+}
+
+// Allows arrays to reflect Drag and Drop items
+function rebuildArrays() {
+    columns.forEach((column, index) => {
+        const columnEl = document.querySelector(`.column-${column.id} .drag-item-list`);
+        
+        if (columnEl) {
+            listArrays[index] = [];
+            
+            let itemElements = columnEl.getElementsByClassName('drag-item');
+            Array.from(itemElements).forEach(itemEl => {
+                const itemId = itemEl.getAttribute('data-id');
+                const item = findItemById(itemId);
+                if (item) {
+                    listArrays[index].push(item);
+                }
+            });
+        }
+    });
+    
+    updateSavedColumns();
+}
+
+// Helper function to find item by ID across all columns
+function findItemById(itemId) {
+    for (let i = 0; i < columns.length; i++) {
+        const item = columns[i].items.find(item => item.id === itemId);
+        if (item) return item;
+    }
+    return null;
+}
+
+// Update Item - Delete if necessary, or update Array value
+async function updateItem(id, column) {
+    const item = findItemById(id);
+    if (!item) return;
+    
+    // Update the item in the column
+    const columnIndex = columns.indexOf(column);
+    if (columnIndex !== -1) {
+        const itemIndex = column.items.findIndex(i => i.id === id);
+        if (itemIndex !== -1) {
+            column.items[itemIndex] = item;
+        }
+    }
+    
+    await updateSavedColumns();
+}
+
+// Update card title and generate new ID
+async function updateCardTitle(cardEl, newTitle) {
+    const itemId = cardEl.id;
+    const item = findItemById(itemId);
+    if (item) {
+        const column = findColumnForCard(item);
+        if (column) {
+            const existingIds = columns.flatMap(col => 
+                col.items.filter(i => i.id !== itemId).map(i => i.id)
+            );
+            const newId = generateUniqueSlug(newTitle, existingIds);
+            
+            // Update item properties
+            item.title = newTitle;
+            item.id = newId;
+            
+            // Update DOM element ID
+            cardEl.id = newId;
+            
+            // Update any references to this card (e.g., in dependencies)
+            columns.forEach(col => {
+                col.items.forEach(i => {
+                    if (i.dependencies) {
+                        const depIndex = i.dependencies.indexOf(itemId);
+                        if (depIndex !== -1) {
+                            i.dependencies[depIndex] = newId;
+                        }
+                    }
+                });
+            });
+            
+            await updateSavedColumns();
+        }
+    }
+}
+
+// Update column name and generate new ID
+async function updateColumnName(columnEl, newName) {
+    const columnIndex = parseInt(columnEl.dataset.columnIndex);
+    if (!isNaN(columnIndex) && columns[columnIndex]) {
+        const column = columns[columnIndex];
+        const existingIds = columns.filter((_, i) => i !== columnIndex).map(c => c.id);
+        const newId = generateUniqueSlug(newName, existingIds);
+        
+        // Update column properties
+        column.name = newName;
+        column.id = newId;
+        
+        await updateSavedColumns();
+    }
+}
+
+// Make functions available globally
+window.addNewCard = addNewCard;
+window.toggleCollapse = toggleCollapse;
+window.confirmDelete = confirmDelete;
+window.collapseAllInColumn = collapseAllInColumn;
+window.expandAllInColumn = expandAllInColumn;
+window.removeColumn = removeColumn;
+window.updateProjectName = updateProjectName;
+window.showAddColumnDialog = showAddColumnDialog;
+window.hideAddColumnDialog = hideAddColumnDialog;
+window.handleAddColumn = handleAddColumn;
+window.toggleSubtask = toggleSubtask;
+window.drag = drag;
+window.allowDrop = allowDrop;
+window.dragEnter = dragEnter;
+window.drop = drop;
+
+// Sync scroll positions
+function setupScrollSync() {
+    const dragContainer = document.querySelector('.drag-container');
+    const topScrollbar = document.querySelector('.top-scrollbar');
+    const scrollbarSpacer = document.querySelector('.scrollbar-spacer');
+    
+    // Match scrollbar width to content
+    function updateScrollbarWidth() {
+        // Set spacer width to match content plus some extra space
+        scrollbarSpacer.style.width = (dragContainer.scrollWidth + 100) + 'px';
+    }
+    
+    // Sync scroll positions
+    dragContainer.addEventListener('scroll', () => {
+        topScrollbar.scrollLeft = dragContainer.scrollLeft;
+    });
+    
+    topScrollbar.addEventListener('scroll', () => {
+        dragContainer.scrollLeft = topScrollbar.scrollLeft;
+    });
+    
+    // Update scrollbar width when columns change
+    const observer = new MutationObserver(updateScrollbarWidth);
+    observer.observe(dragContainer.querySelector('.drag-list'), {
+        childList: true,
+        subtree: true
+    });
+    
+    // Initial width setup
+    updateScrollbarWidth();
+}
+
+// Initialize on page load
+async function initialize() {
+    try {
+        await loadFromServer();
+        updateDOM();
+        setupScrollSync();
+    } catch (error) {
+        console.error('Initialization error:', error);
+        createDefaultColumns();
+        updateDOM();
+        setupScrollSync();
+    }
+}
+
+initialize();

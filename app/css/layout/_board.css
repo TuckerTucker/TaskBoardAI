@@ -1,0 +1,174 @@
+/* Board Layout */
+body {
+    margin: 0;
+    height: 100vh;
+    background: var(--bg-main);
+    color: var(--text-primary);
+    font-family: var(--font-main);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+header {
+    background: var(--header-bg);
+    padding: var(--spacing-md);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: var(--shadow-md);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+#project-name {
+    margin: 0;
+    font-size: 1.5rem;
+    color: var(--text-primary);
+    outline: none;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--radius-sm);
+    transition: background-color 0.2s ease;
+}
+
+#project-name:hover,
+#project-name:focus {
+    background: var(--overlay-light);
+}
+
+.board-controls {
+    display: flex;
+    gap: var(--spacing-sm);
+}
+
+main {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+}
+
+/* Next Steps Sidebar */
+.next-steps-sidebar {
+    width: 300px;
+    background: var(--bg-secondary);
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+}
+
+.next-steps-header {
+    padding: var(--spacing-md);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.next-steps-header h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.toggle-sidebar {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: var(--spacing-xs);
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.toggle-sidebar:hover {
+    background: var(--overlay-light);
+    color: var(--text-primary);
+}
+
+.next-steps-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--spacing-md);
+    list-style: none;
+    counter-reset: step;
+}
+
+.next-steps-list li {
+    counter-increment: step;
+    padding: var(--spacing-sm) 0;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    line-height: 1.5;
+    display: flex;
+    align-items: baseline;
+    gap: var(--spacing-sm);
+}
+
+.next-steps-list li::before {
+    content: counter(step);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    background: var(--overlay-light);
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+    color: var(--text-primary);
+}
+
+/* Board Content */
+#board {
+    flex: 1;
+    padding: var(--spacing-md);
+    display: flex;
+    gap: var(--spacing-md);
+    overflow-x: auto;
+    height: 100%;
+}
+
+/* Add Column Button */
+#add-column-btn {
+    background: var(--button-primary);
+    color: var(--button-text);
+    border: none;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.2s ease;
+}
+
+#add-column-btn:hover {
+    background: var(--button-primary-hover);
+}
+
+/* Error Message */
+.error-message {
+    position: fixed;
+    top: var(--spacing-md);
+    right: var(--spacing-md);
+    background: var(--error-bg);
+    color: var(--error-text);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-md);
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}

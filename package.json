@@ -1,0 +1,14 @@
+{
+  "name": "tkr-droppi-kanban",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server/kanban-server.js",
+  "scripts": {
+    "start": "node server/kanban-server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "marked": "^15.0.4"
+  }
+}

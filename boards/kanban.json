@@ -1,0 +1,100 @@
+{
+  "projectName": "Project Example",
+  "columns": [
+    {
+      "id": "to-do",
+      "name": "To Do",
+      "items": [
+        {
+          "id": "feature-one",
+          "title": "Feature One",
+          "content": "## Feature Description\n\n- Point 1\n- Point 2\n\nAdditional details here.",
+          "collapsed": false,
+          "subtasks": [
+            "✓ Task One",
+            "Task Two"
+          ],
+          "tags": [
+            "feature",
+            "frontend"
+          ],
+          "dependencies": [
+            "feature-two"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "in-progress",
+      "name": "In Progress",
+      "items": [
+        {
+          "id": "feature-two",
+          "title": "Feature Two",
+          "content": "A basic feature description",
+          "collapsed": true,
+          "subtasks": [],
+          "tags": [
+            "backend",
+            "another tag",
+            "exmaple of a tag"
+          ],
+          "dependencies": []
+        }
+      ]
+    },
+    {
+      "id": "done",
+      "name": "Done",
+      "items": [
+        {
+          "id": "completed-feature",
+          "title": "Completed Feature",
+          "content": "This feature is done",
+          "collapsed": false,
+          "subtasks": [
+            "✓ Task One",
+            "✓ Task Two",
+            "✓ Task Three"
+          ],
+          "tags": [
+            "complete"
+          ],
+          "dependencies": [],
+          "completed_at": "2025-01-19T18:12:35.604Z"
+        }
+      ]
+    },
+    {
+      "id": "blocked",
+      "name": "Blocked",
+      "items": [
+        {
+          "id": "example-blocked-feature",
+          "title": "Example Blocked Feature",
+          "content": "the card description.",
+          "collapsed": false,
+          "subtasks": [
+            "Task One",
+            "Task Two",
+            "Task Three"
+          ],
+          "tags": [
+            "blocked",
+            "backend"
+          ],
+          "dependencies": [
+            "feature-two"
+          ]
+        }
+      ]
+    }
+  ],
+  "next-steps": [
+    "Complete user-info feature slice",
+    "Review completed features for proper types, structures, and architecture"
+  ],
+  "last_updated": "2025-01-19T21:19:50.028Z",
+  "isDragging": false,
+  "scrollToColumn": null
+}

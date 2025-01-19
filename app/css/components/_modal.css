@@ -1,0 +1,78 @@
+/* Modal Component Styles */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--overlay-dark);
+    z-index: 1000;
+}
+
+.modal-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: var(--bg-card);
+    padding: var(--spacing-lg);
+    border-radius: var(--radius-md);
+    min-width: 300px;
+    max-width: 500px;
+    width: 90%;
+}
+
+.modal-content h2 {
+    margin-top: 0;
+    margin-bottom: var(--spacing-md);
+}
+
+.modal-content input {
+    width: 100%;
+    padding: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+    background-color: var(--overlay-light);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    color: var(--color-text);
+    font-family: inherit;
+}
+
+.modal-content input:focus {
+    outline: none;
+    background-color: var(--overlay-light-hover);
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--spacing-sm);
+}
+
+.modal-actions button {
+    padding: var(--spacing-sm) var(--spacing-md);
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s ease;
+}
+
+.modal-actions button[type="button"] {
+    background-color: var(--overlay-light);
+    color: var(--color-text);
+}
+
+.modal-actions button[type="button"]:hover {
+    background-color: var(--overlay-light-hover);
+}
+
+.modal-actions button[type="submit"] {
+    background-color: var(--btn-primary);
+    color: white;
+}
+
+.modal-actions button[type="submit"]:hover {
+    filter: brightness(1.1);
+}
