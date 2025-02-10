@@ -80,10 +80,19 @@ class DragDropManager {
         if (!column || !this.draggedItem) return;
         
         const targetColumnIndex = parseInt(column.dataset.index);
-        if (this.sourceColumnIndex === targetColumnIndex) return;
-        
         const cardId = this.draggedItem.dataset.id;
-        await stateManager.moveCard(cardId, this.sourceColumnIndex, targetColumnIndex);
+        
+        // Get all cards in the target column
+        const cards = [...column.querySelectorAll('.card')];
+        const newIndex = cards.indexOf(this.draggedItem);
+        
+        if (this.sourceColumnIndex === targetColumnIndex) {
+            // Same column - reorder
+            await stateManager.reorderCard(cardId, targetColumnIndex, newIndex);
+        } else {
+            // Different column - move
+            await stateManager.moveCard(cardId, this.sourceColumnIndex, targetColumnIndex, newIndex);
+        }
     }
 
     /**

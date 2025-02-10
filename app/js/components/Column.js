@@ -100,6 +100,8 @@ export class Column {
         // Get all card elements and update their state
         const cardElements = cardsContainer.querySelectorAll('.card');
         cardElements.forEach(cardElement => {
+            const cardId = cardElement.dataset.id;
+            
             // Update the card's visual state
             cardElement.classList.toggle('collapsed', collapsed);
             
@@ -110,7 +112,16 @@ export class Column {
             // Update the content visibility
             const content = cardElement.querySelector('.card-content');
             content.classList.toggle('collapsed', collapsed);
+            
+            // Update the card data in the state
+            const cardData = this.data.items.find(item => item.id === cardId);
+            if (cardData) {
+                cardData.collapsed = collapsed;
+            }
         });
+        
+        // Save the updated state
+        stateManager.saveState();
     }
 
     /**

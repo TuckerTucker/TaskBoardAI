@@ -138,12 +138,36 @@ class StateManager {
     }
 
     /**
+     * Reorder a card within its column
+     * @param {string} cardId - Card ID
+     * @param {number} columnIndex - Column index
+     * @param {number} newIndex - New position index
+     */
+    async reorderCard(cardId, columnIndex, newIndex) {
+        const column = this.state.columns[columnIndex];
+        if (!column) return;
+
+        // Find the card's current index
+        const currentIndex = column.items.findIndex(item => item.id === cardId);
+        if (currentIndex === -1) return;
+
+        // Remove card from current position
+        const [card] = column.items.splice(currentIndex, 1);
+        
+        // Insert at new position
+        column.items.splice(newIndex, 0, card);
+        
+        await this.saveState();
+    }
+
+    /**
      * Move a card between columns
      * @param {string} cardId - Card ID
      * @param {number} sourceColumnIndex - Source column index
      * @param {number} targetColumnIndex - Target column index
+     * @param {number} newIndex - New position index (optional)
      */
-    async moveCard(cardId, sourceColumnIndex, targetColumnIndex) {
+    async moveCard(cardId, sourceColumnIndex, targetColumnIndex, newIndex = -1) {
         const sourceColumn = this.state.columns[sourceColumnIndex];
         const targetColumn = this.state.columns[targetColumnIndex];
         
@@ -153,7 +177,13 @@ class StateManager {
         if (cardIndex === -1) return;
 
         const [card] = sourceColumn.items.splice(cardIndex, 1);
-        targetColumn.items.push(card);
+        
+        if (newIndex >= 0) {
+            targetColumn.items.splice(newIndex, 0, card);
+        } else {
+            targetColumn.items.push(card);
+        }
+        
         await this.saveState();
     }
 

@@ -15,7 +15,7 @@ export class Card {
         this.data = data;
         this.columnIndex = columnIndex;
         this.element = null;
-        this.isCollapsed = false;
+        this.isCollapsed = data.collapsed || false;
     }
 
     /**
@@ -136,6 +136,8 @@ export class Card {
      */
     setCollapsed(collapsed) {
         this.isCollapsed = collapsed;
+        this.data.collapsed = collapsed;  // Update the data object
+        
         if (this.element) {
             this.element.classList.toggle('collapsed', collapsed);
             const icon = this.element.querySelector('.collapse-btn i');
@@ -146,6 +148,17 @@ export class Card {
             const content = this.element.querySelector('.card-content');
             if (content) {
                 content.classList.toggle('collapsed', collapsed);
+            }
+        }
+
+        // Find and update the card in the state
+        const columns = stateManager.getState().columns;
+        const column = columns[this.columnIndex];
+        if (column) {
+            const cardIndex = column.items.findIndex(item => item.id === this.data.id);
+            if (cardIndex !== -1) {
+                column.items[cardIndex].collapsed = collapsed;
+                stateManager.saveState();  // Persist the change
             }
         }
     }
