@@ -6,15 +6,23 @@
 class ApiService {
     constructor() {
         this.baseUrl = '/api';
+        this.configPath = '/config';
+        this.boardsPath = '/boards';
+        this.webhooksPath = '/webhooks';
     }
 
     /**
      * Load board data from server
+     * @param {string} boardId - ID of the board to load (optional)
      * @returns {Promise<Object>} Board data
      */
-    async loadBoard() {
+    async loadBoard(boardId) {
         try {
-            const response = await fetch(`${this.baseUrl}/kanban`);
+            const url = boardId 
+                ? `${this.baseUrl}${this.boardsPath}/${boardId}` 
+                : `${this.baseUrl}/kanban`;
+                
+            const response = await fetch(url);
             if (!response.ok) {
                 throw new Error('Failed to load board data');
             }
@@ -64,6 +72,263 @@ class ApiService {
             return await response.json();
         } catch (error) {
             console.error('Error loading board info:', error);
+            throw error;
+        }
+    }
+    
+    /**
+     * Get list of available boards
+     * @returns {Promise<Array>} List of boards
+     */
+    async getBoards() {
+        try {
+            const response = await fetch(`${this.baseUrl}${this.boardsPath}`);
+            if (!response.ok) {
+                throw new Error('Failed to load boards list');
+            }
+            return await response.json();
+        } catch (error) {
+            console.error('Error loading boards:', error);
+            // Return empty array as fallback
+            return [];
+        }
+    }
+    
+    /**
+     * Create a new board
+     * @param {string} name - Name of the new board
+     * @returns {Promise<Object>} New board data
+     */
+    async createBoard(name) {
+        try {
+            const response = await fetch(`${this.baseUrl}${this.boardsPath}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ name }),
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to create board');
+            }
+            
+            return await response.json();
+        } catch (error) {
+            console.error('Error creating board:', error);
+            throw error;
+        }
+    }
+    
+    /**
+     * Delete a board
+     * @param {string} boardId - ID of the board to delete
+     * @returns {Promise<Object>} Response data
+     */
+    async deleteBoard(boardId) {
+        try {
+            const response = await fetch(`${this.baseUrl}${this.boardsPath}/${boardId}`, {
+                method: 'DELETE',
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to delete board');
+            }
+            
+            return await response.json();
+        } catch (error) {
+            console.error('Error deleting board:', error);
+            throw error;
+        }
+    }
+    
+    /**
+     * Import a board from JSON data
+     * @param {Object} boardData - Board data to import
+     * @returns {Promise<Object>} Imported board data
+     */
+    async importBoard(boardData) {
+        try {
+            const response = await fetch(`${this.baseUrl}${this.boardsPath}/import`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(boardData),
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to import board');
+            }
+            
+            return await response.json();
+        } catch (error) {
+            console.error('Error importing board:', error);
+            throw error;
+        }
+    }
+    
+    /**
+     * Load configuration from server
+     * @returns {Promise<Object>} Configuration data
+     */
+    async loadConfig() {
+        try {
+            const response = await fetch(`${this.baseUrl}${this.configPath}`);
+            if (!response.ok) {
+                throw new Error('Failed to load configuration');
+            }
+            return await response.json();
+        } catch (error) {
+            console.error('Error loading configuration:', error);
+            // Return default config as fallback
+            return {
+                theme: 'light',
+                dataStorage: 'local',
+                serverOptions: {
+                    apiEndpoint: '/api',
+                    autoSave: true
+                }
+            };
+        }
+    }
+    
+    /**
+     * Save configuration to server
+     * @param {Object} config - Configuration data to save
+     * @returns {Promise<Object>} Response data
+     */
+    async saveConfig(config) {
+        try {
+            const response = await fetch(`${this.baseUrl}${this.configPath}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(config),
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to save configuration');
+            }
+            
+            return await response.json();
+        } catch (error) {
+            console.error('Error saving configuration:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Get list of configured webhooks
+     * @returns {Promise<Array>} List of webhooks
+     */
+    async getWebhooks() {
+        try {
+            const response = await fetch(`${this.baseUrl}${this.webhooksPath}`);
+            if (!response.ok) {
+                throw new Error('Failed to load webhooks list');
+            }
+            return await response.json();
+        } catch (error) {
+            console.error('Error loading webhooks:', error);
+            // Return empty array as fallback
+            return [];
+        }
+    }
+    
+    /**
+     * Create a new webhook
+     * @param {Object} webhookData - Webhook data (name, url, event)
+     * @returns {Promise<Object>} New webhook data
+     */
+    async createWebhook(webhookData) {
+        try {
+            const response = await fetch(`${this.baseUrl}${this.webhooksPath}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(webhookData),
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to create webhook');
+            }
+            
+            return await response.json();
+        } catch (error) {
+            console.error('Error creating webhook:', error);
+            throw error;
+        }
+    }
+    
+    /**
+     * Delete a webhook
+     * @param {string} webhookId - ID of the webhook to delete
+     * @returns {Promise<Object>} Response data
+     */
+    async deleteWebhook(webhookId) {
+        try {
+            const response = await fetch(`${this.baseUrl}${this.webhooksPath}/${webhookId}`, {
+                method: 'DELETE',
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to delete webhook');
+            }
+            
+            return await response.json();
+        } catch (error) {
+            console.error('Error deleting webhook:', error);
+            throw error;
+        }
+    }
+    
+    /**
+     * Test a specific webhook
+     * @param {string} webhookId - ID of the webhook to test
+     * @returns {Promise<Object>} Test result
+     */
+    async testWebhook(webhookId) {
+        try {
+            const response = await fetch(`${this.baseUrl}${this.webhooksPath}/${webhookId}/test`, {
+                method: 'POST',
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to test webhook');
+            }
+            
+            return await response.json();
+        } catch (error) {
+            console.error('Error testing webhook:', error);
+            throw error;
+        }
+    }
+    
+    /**
+     * Test a webhook connection
+     * @param {string} url - URL to test
+     * @returns {Promise<Object>} Test result
+     */
+    async testWebhookConnection(url) {
+        try {
+            const response = await fetch(`${this.baseUrl}${this.webhooksPath}/test-connection`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ url }),
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to test webhook connection');
+            }
+            
+            return await response.json();
+        } catch (error) {
+            console.error('Error testing webhook connection:', error);
             throw error;
         }
     }

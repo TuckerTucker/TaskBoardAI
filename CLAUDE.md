@@ -31,3 +31,20 @@
 - Log errors to console with descriptive messages
 - Provide user-friendly error messages via UI
 - Return appropriate HTTP status codes from API
+
+
+## Slash Actions
+Slash actions may appear in the user's message.
+
+/commit = "Write a succinct commit message"
+
+/chat_start = "
+Review @_planning for project details | Review codebase for current implementation. No coding. Just understanding."
+
+/proceed = "proceed in optimal order. Complete only the required changes. Do not try to optimize or streamline the code along the way. Do not Change any variable/module/import names without first checking the impact."
+
+/five = "use the five why's process to evaluate this issue"
+
+/step = "Think through this step-by-step"
+
+/minima = " Keep in mind we are building full-stack applications. A break/fix approach to problem solving isn't always appropriate.  You might get stuck in "local minima" or over-index on immediate, obvious problems. Sometimes you'll need to step back and think differently or review the process holistically."
