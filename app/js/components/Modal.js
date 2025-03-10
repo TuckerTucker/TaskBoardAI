@@ -82,7 +82,7 @@ export class Modal {
                 this.backdropElement.style.left = '0';
                 this.backdropElement.style.width = '100%';
                 this.backdropElement.style.height = '100%';
-                this.backdropElement.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+                this.backdropElement.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
                 this.backdropElement.style.zIndex = '999';
                 document.body.appendChild(this.backdropElement);
                 

@@ -145,8 +145,8 @@ export class Settings {
      */
     openSettings() {
         this.modal.open();
-        // Default to first tab
-        this.modal.switchTab('general');
+        // Default to boards tab
+        this.modal.switchTab('boards');
     }
     
     /**

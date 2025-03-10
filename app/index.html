@@ -57,13 +57,12 @@
             </div>
             <div class="modal-body">
                 <div class="settings-tabs">
-                    <button class="tab-btn active" data-tab="general">General</button>
-                    <button class="tab-btn" data-tab="boards">Boards</button>
-                    <button class="tab-btn" data-tab="storage">Storage</button>
-                    <button class="tab-btn" data-tab="integration">Integration</button>
+                    <!-- <button class="tab-btn" data-tab="general">General</button> -->
+                    <button class="tab-btn active" data-tab="boards">Boards</button>
+                    <!-- <button class="tab-btn" data-tab="integration">Integrations</button> -->
                 </div>
                 
-                <div class="tab-content active" id="general-tab">
+                <div class="tab-content" id="general-tab" style="display: none;">
                     <h3>General Settings</h3>
                     <div class="settings-form">
                         <!-- General settings will be added here -->
@@ -74,10 +73,29 @@
                                 <option value="dark">Dark</option>
                             </select>
                         </div>
+                        
+                        <div class="form-group">
+                            <label for="storage-select">Data Storage:</label>
+                            <select id="storage-select">
+                                <option value="local">Local Storage</option>
+                                <option value="server">Server Storage</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="api-endpoint">API Endpoint:</label>
+                            <input type="text" id="api-endpoint" placeholder="/api">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="auto-save">
+                                <input type="checkbox" id="auto-save"> Auto Save Changes
+                            </label>
+                        </div>
                     </div>
                 </div>
                 
-                <div class="tab-content" id="boards-tab">
+                <div class="tab-content active" id="boards-tab">
                     <h3>Board Management</h3>
                     <div class="board-management">
                         <div class="board-list-container">
@@ -115,20 +133,13 @@
                     </div>
                 </div>
                 
-                <div class="tab-content" id="storage-tab">
-                    <h3>Storage Settings</h3>
-                    <div class="settings-form">
-                        <!-- Storage settings will be added here -->
-                    </div>
-                </div>
-                
-                <div class="tab-content" id="integration-tab">
+                <div class="tab-content" id="integration-tab" style="display: none;">
                     <h3>Integration Settings</h3>
                     <div class="settings-form">
-                        <div class="webhook-section">
-                            <h4>Webhook Configuration</h4>
-                            <p class="section-description">Configure webhooks to notify external services when changes occur in your boards.</p>
+                        <h4>Webhook Configuration</h4>
+                        <p class="section-description">Configure webhooks to notify external services when changes occur.</p>
                             
+                        <div class="webhook-section">
                             <div class="webhook-list-container">
                                 <h5>Active Webhooks</h5>
                                 <div id="webhook-list" class="webhook-list">
@@ -141,7 +152,7 @@
                                 <form id="webhook-form" class="settings-form">
                                     <div class="form-group">
                                         <label for="webhook-name">Name:</label>
-                                        <input type="text" id="webhook-name" placeholder="Enter webhook name" required>
+                                        <input type="text" id="webhook-name" placeholder="Enter name" required>
                                     </div>
                                     <div class="form-group">
                                         <label for="webhook-url">URL:</label>
@@ -157,8 +168,8 @@
                                         </select>
                                     </div>
                                     <div class="form-actions">
-                                        <button type="submit" class="primary-btn">Add Webhook</button>
-                                        <button type="button" id="test-webhook-btn" class="secondary-btn">Test Connection</button>
+                                        <button type="submit" class="primary-btn">Add</button>
+                                        <button type="button" id="test-webhook-btn" class="secondary-btn">Test</button>
                                     </div>
                                 </form>
                             </div>
@@ -166,9 +177,9 @@
                     </div>
                 </div>
             </div>
-            <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: var(--spacing-md); padding: var(--spacing-md) var(--spacing-lg); border-top: 1px solid var(--border-color); background-color: var(--bg-card);">
-                <button id="save-settings-btn" class="primary-btn" style="background-color: var(--btn-primary); color: white; border: none; border-radius: var(--radius-sm); padding: var(--spacing-sm) var(--spacing-md); cursor: pointer; transition: filter 0.2s ease;">Save Settings</button>
-                <button class="close-modal-btn secondary-btn" style="background-color: var(--overlay-light); color: var(--color-text); border: none; border-radius: var(--radius-sm); padding: var(--spacing-sm) var(--spacing-md); cursor: pointer; transition: background-color 0.2s ease;">Cancel</button>
+            <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: var(--spacing-md); padding: var(--spacing-md) var(--spacing-lg); border-top: 1px solid var(--border-color); background-color: var(--header-bg);">
+                <button id="save-settings-btn" class="primary-btn" style="background-color: var(--button-primary); color: white; border: none; border-radius: var(--radius-sm); padding: var(--spacing-sm) var(--spacing-md); cursor: pointer; transition: filter 0.2s ease;">Save Settings</button>
+                <button class="close-modal-btn secondary-btn" style="background-color: var(--overlay-light); color: var(--text-primary); border: none; border-radius: var(--radius-sm); padding: var(--spacing-sm) var(--spacing-md); cursor: pointer; transition: background-color 0.2s ease;">Cancel</button>
             </div>
         </div>
     </div>
