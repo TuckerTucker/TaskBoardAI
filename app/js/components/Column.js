@@ -24,6 +24,7 @@ export class Column {
         this.index = index;
         this.element = null;
         this.isCollapsed = false;
+        this.isDragging = false;
     }
 
     /**
@@ -56,6 +57,8 @@ export class Column {
         column.className = 'column';
         column.dataset.index = this.index;
         column.dataset.type = this.getType();
+        column.dataset.id = this.data.id;
+        column.draggable = true;
         
         column.innerHTML = `
             <div class="column-header">
@@ -161,5 +164,19 @@ export class Column {
         expandAllBtn.addEventListener('click', () => {
             this.setAllCardsCollapsed(false);
         });
+        
+        // Column edit on double click
+        this.element.querySelector('.column-header h2').addEventListener('dblclick', (e) => {
+            const newName = prompt('Enter column name:', this.data.name);
+            if (newName && newName !== this.data.name) {
+                this.data.name = newName;
+                e.target.textContent = newName;
+                this.element.dataset.type = this.getType();
+                stateManager.saveState();
+            }
+        });
+        
+        // We'll rely on the central DragDropManager to handle drag events
+        // and not add duplicate event listeners here
     }
 }

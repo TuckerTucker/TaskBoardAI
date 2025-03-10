@@ -10,6 +10,7 @@
     --column-review-bg: #3b332d;
     --column-done-bg: #33372d;
     --column-header-bg: rgba(0, 0, 0, 0.2);
+    --column-header-hover-bg: rgba(0, 0, 0, 0.3);
     --column-scrollbar: rgba(255, 255, 255, 0.1);
     --column-scrollbar-hover: rgba(255, 255, 255, 0.2);
     

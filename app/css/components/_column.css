@@ -7,9 +7,21 @@
     border-radius: var(--radius-md);
     overflow: hidden;
     min-width: 300px;
-    transition: background-color 0.2s ease;
+    transition: all 0.2s ease;
     display: flex;
     flex-direction: column;
+    cursor: grab;
+}
+
+.column.dragging {
+    opacity: 0.8;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    z-index: 100;
+    cursor: grabbing;
+}
+
+.column:hover .column-header {
+    background-color: var(--column-header-hover-bg, rgba(0, 0, 0, 0.1));
 }
 
 /* Column Types */

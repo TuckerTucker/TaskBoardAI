@@ -102,7 +102,7 @@ function renderBoard() {
         
         // Render cards for this column
         columnData.items.forEach(cardData => {
-            const card = new Card(cardData);
+            const card = new Card(cardData, index);
             column.addCard(card);
         });
     });

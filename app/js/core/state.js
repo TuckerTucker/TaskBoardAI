@@ -115,6 +115,25 @@ class StateManager {
             await this.saveState();
         }
     }
+    
+    /**
+     * Reorder columns
+     * @param {string} columnId - Column ID 
+     * @param {number} newIndex - New position index
+     */
+    async reorderColumns(columnId, newIndex) {
+        // Find the column's current index
+        const currentIndex = this.state.columns.findIndex(column => column.id === columnId);
+        if (currentIndex === -1 || newIndex < 0 || newIndex >= this.state.columns.length) return;
+        
+        // Remove column from current position
+        const [column] = this.state.columns.splice(currentIndex, 1);
+        
+        // Insert at new position
+        this.state.columns.splice(newIndex, 0, column);
+        
+        await this.saveState();
+    }
 
     /**
      * Add a card to a column

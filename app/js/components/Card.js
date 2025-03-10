@@ -233,18 +233,7 @@ export class Card {
             });
         });
 
-        // Drag start
-        this.element.addEventListener('dragstart', (e) => {
-            e.dataTransfer.setData('text/plain', JSON.stringify({
-                id: this.data.id,
-                columnIndex: this.columnIndex
-            }));
-            this.element.classList.add('dragging');
-        });
-
-        // Drag end
-        this.element.addEventListener('dragend', () => {
-            this.element.classList.remove('dragging');
-        });
+        // We'll rely on the central DragDropManager to handle drag events
+        // and not add duplicate event listeners here
     }
 }

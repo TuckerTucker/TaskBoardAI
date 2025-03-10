@@ -10,6 +10,7 @@ class DragDropManager {
         this.draggedItem = null;
         this.dragging = false;
         this.sourceColumnIndex = null;
+        this.dragItemType = null;
     }
 
     /**
@@ -27,12 +28,42 @@ class DragDropManager {
      * @param {DragEvent} e - Drag event
      */
     handleDragStart(e) {
-        if (!e.target.matches('.card')) return;
+        const isCard = e.target.matches('.card');
+        const isColumn = e.target.matches('.column') && 
+                       !e.target.closest('button') && 
+                       !e.target.closest('.card') && 
+                       !e.target.closest('.cards');
+        
+        if (!isCard && !isColumn) return;
+        
+        // Prevent event bubbling and duplicate drag-start events
+        if (e._handled) return;
+        e._handled = true;
         
         this.draggedItem = e.target;
-        this.sourceColumnIndex = parseInt(e.target.closest('.column').dataset.index);
+        this.dragItemType = isCard ? 'card' : 'column';
         
-        e.dataTransfer.setData('text/plain', ''); // Required for Firefox
+        console.log(`Drag start: ${this.dragItemType}`, e.target);
+        
+        if (isCard) {
+            this.sourceColumnIndex = parseInt(e.target.closest('.column').dataset.index);
+            const data = {
+                type: 'card',
+                id: e.target.dataset.id,
+                columnIndex: this.sourceColumnIndex
+            };
+            console.log('Setting card drag data:', data);
+            e.dataTransfer.setData('text/plain', JSON.stringify(data));
+        } else if (isColumn) {
+            const data = {
+                type: 'column',
+                id: e.target.dataset.id,
+                index: parseInt(e.target.dataset.index)
+            };
+            console.log('Setting column drag data:', data);
+            e.dataTransfer.setData('text/plain', JSON.stringify(data));
+        }
+        
         setTimeout(() => {
             this.draggedItem.classList.add('dragging');
         }, 0);
@@ -47,6 +78,7 @@ class DragDropManager {
         this.draggedItem.classList.remove('dragging');
         this.draggedItem = null;
         this.sourceColumnIndex = null;
+        this.dragItemType = null;
     }
 
     /**
@@ -56,8 +88,22 @@ class DragDropManager {
     handleDragOver(e) {
         e.preventDefault();
         
+        if (!this.draggedItem) return;
+        
+        if (this.dragItemType === 'card') {
+            this.handleCardDragOver(e);
+        } else if (this.dragItemType === 'column') {
+            this.handleColumnDragOver(e);
+        }
+    }
+    
+    /**
+     * Handle drag over for cards
+     * @param {DragEvent} e - Drag event
+     */
+    handleCardDragOver(e) {
         const column = e.target.closest('.column');
-        if (!column || !this.draggedItem) return;
+        if (!column) return;
         
         const cards = [...column.querySelectorAll('.card:not(.dragging)')];
         const afterElement = this.getDragAfterElement(column, e.clientY);
@@ -68,6 +114,56 @@ class DragDropManager {
             column.querySelector('.cards').appendChild(this.draggedItem);
         }
     }
+    
+    /**
+     * Handle drag over for columns
+     * @param {DragEvent} e - Drag event
+     */
+    handleColumnDragOver(e) {
+        const board = document.getElementById('board');
+        if (!board) return;
+        
+        let targetColumn = e.target.closest('.column');
+        
+        // If hovering over the dragged column itself, find the nearest non-dragged column
+        if (targetColumn === this.draggedItem || !targetColumn) {
+            const mouseX = e.clientX;
+            const columns = [...board.querySelectorAll('.column:not(.dragging)')];
+            
+            // Find nearest column based on mouse position
+            targetColumn = columns.reduce((closest, column) => {
+                const box = column.getBoundingClientRect();
+                const offset = mouseX - (box.left + box.width / 2);
+                const absOffset = Math.abs(offset);
+                
+                if (absOffset < closest.absOffset) {
+                    return { 
+                        absOffset, 
+                        element: column, 
+                        isAfter: offset > 0 
+                    };
+                }
+                return closest;
+            }, { absOffset: Number.POSITIVE_INFINITY }).element;
+            
+            if (!targetColumn) return;
+        }
+        
+        const targetIndex = parseInt(targetColumn.dataset.index);
+        const draggedIndex = parseInt(this.draggedItem.dataset.index);
+        
+        // Determine if dragged column should go before or after target
+        const targetRect = targetColumn.getBoundingClientRect();
+        const isAfter = e.clientX > targetRect.left + targetRect.width / 2;
+        
+        if ((isAfter && draggedIndex < targetIndex) || (!isAfter && draggedIndex > targetIndex)) {
+            if (isAfter) {
+                board.insertBefore(this.draggedItem, targetColumn.nextSibling);
+            } else {
+                board.insertBefore(this.draggedItem, targetColumn);
+            }
+        }
+    }
 
     /**
      * Handle drop event
@@ -76,23 +172,68 @@ class DragDropManager {
     async handleDrop(e) {
         e.preventDefault();
         
+        if (!this.draggedItem) return;
+        
+        try {
+            const dataTransferText = e.dataTransfer.getData('text/plain');
+            console.log('Drop data received:', dataTransferText);
+            
+            const dataTransfer = JSON.parse(dataTransferText);
+            console.log('Parsed data:', dataTransfer);
+            
+            if (dataTransfer.type === 'card') {
+                await this.handleCardDrop(e, dataTransfer);
+            } else if (dataTransfer.type === 'column') {
+                await this.handleColumnDrop(e, dataTransfer);
+            } else {
+                console.warn('Unknown drag item type:', dataTransfer);
+            }
+        } catch (error) {
+            console.error('Error handling drop:', error);
+        }
+    }
+    
+    /**
+     * Handle drop for cards
+     * @param {DragEvent} e - Drag event
+     * @param {Object} data - Card data
+     */
+    async handleCardDrop(e, data) {
         const column = e.target.closest('.column');
-        if (!column || !this.draggedItem) return;
+        if (!column) return;
         
         const targetColumnIndex = parseInt(column.dataset.index);
-        const cardId = this.draggedItem.dataset.id;
+        const cardId = data.id;
+        const sourceColumnIndex = data.columnIndex;
         
         // Get all cards in the target column
         const cards = [...column.querySelectorAll('.card')];
         const newIndex = cards.indexOf(this.draggedItem);
         
-        if (this.sourceColumnIndex === targetColumnIndex) {
+        if (sourceColumnIndex === targetColumnIndex) {
             // Same column - reorder
             await stateManager.reorderCard(cardId, targetColumnIndex, newIndex);
         } else {
             // Different column - move
-            await stateManager.moveCard(cardId, this.sourceColumnIndex, targetColumnIndex, newIndex);
+            await stateManager.moveCard(cardId, sourceColumnIndex, targetColumnIndex, newIndex);
         }
+    }
+    
+    /**
+     * Handle drop for columns
+     * @param {DragEvent} e - Drag event 
+     * @param {Object} data - Column data
+     */
+    async handleColumnDrop(e, data) {
+        const board = document.getElementById('board');
+        if (!board) return;
+        
+        // Calculate the new index based on the DOM order
+        const columns = [...board.querySelectorAll('.column')];
+        const newIndex = columns.indexOf(this.draggedItem);
+        
+        // Reorder columns in state
+        await stateManager.reorderColumns(data.id, newIndex);
     }
 
     /**
