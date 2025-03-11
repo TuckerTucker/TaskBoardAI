@@ -78,7 +78,9 @@ class StateManager {
      * Notify all listeners of state changes
      */
     notifyListeners() {
-        this.listeners.forEach(listener => listener(this.state));
+        for (const listener of this.listeners) {
+            listener(this.state);
+        }
     }
 
     /**
@@ -218,13 +220,36 @@ class StateManager {
             throw error;
         }
     }
+    
+    /**
+     * Load a specific board
+     * @param {Object} board - Board data to load
+     */
+    async loadBoard(board) {
+        try {
+            // Update the state with the new board data
+            this.state = {
+                ...board,
+                isDragging: false
+            };
+            
+            // Notify all listeners of the state change
+            this.notifyListeners();
+            
+            // Save the state to persist it
+            await apiService.saveBoard(this.state);
+        } catch (error) {
+            console.error('Failed to load board:', error);
+            throw error;
+        }
+    }
 
     /**
      * Generate a UUID
      * @returns {string} UUID
      */
     generateUUID() {
-        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
             const r = Math.random() * 16 | 0;
             const v = c === 'x' ? r : (r & 0x3 | 0x8);
             return v.toString(16);

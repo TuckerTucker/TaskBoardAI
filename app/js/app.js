@@ -10,6 +10,9 @@ import { NextSteps } from './components/NextSteps.js';
 import { Settings } from './components/Settings.js';
 import { apiService } from './services/api.js';
 
+// Global component references
+let nextSteps;
+
 // Initialize the application
 async function initApp() {
     try {
@@ -17,7 +20,7 @@ async function initApp() {
         await stateManager.initialize();
         
         // Initialize components
-        const nextSteps = new NextSteps();
+        nextSteps = new NextSteps();
         const settings = new Settings();
         
         // Load board data
@@ -116,6 +119,12 @@ function renderBoard() {
             const card = new Card(cardData, index);
             column.addCard(card);
         }
+    }
+    
+    // Update Next Steps if available
+    if (state['next-steps'] && nextSteps) {
+        console.log('Updating next steps during render:', state['next-steps']);
+        nextSteps.update(state['next-steps']);
     }
 }
 
