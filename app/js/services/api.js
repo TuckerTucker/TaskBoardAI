@@ -13,20 +13,58 @@ class ApiService {
 
     /**
      * Load board data from server
-     * @param {string} boardId - ID of the board to load (optional)
+     * @param {string|Object} boardId - ID of the board to load (optional) or board object
      * @returns {Promise<Object>} Board data
      */
     async loadBoard(boardId) {
         try {
-            const url = boardId 
-                ? `${this.baseUrl}${this.boardsPath}/${boardId}` 
-                : `${this.baseUrl}/kanban`;
-                
-            const response = await fetch(url);
-            if (!response.ok) {
-                throw new Error('Failed to load board data');
+            // If boardId is an object, return it directly
+            if (typeof boardId === 'object' && boardId !== null) {
+                console.log('Board object provided directly, skipping API call');
+                return boardId;
             }
-            return await response.json();
+            
+            // Make sure boardId is properly encoded if it's a string
+            let url;
+            if (boardId && typeof boardId === 'string' && boardId.trim() !== '') {
+                url = `${this.baseUrl}${this.boardsPath}/${encodeURIComponent(boardId.trim())}`;
+            } else {
+                url = `${this.baseUrl}/kanban`;
+            }
+                
+            console.log(`Attempting to load board from: ${url}`);
+            
+            // Add timeout to fetch request
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+            
+            try {
+                const response = await fetch(url, { signal: controller.signal });
+                clearTimeout(timeoutId);
+                
+                if (!response.ok) {
+                    throw new Error(`Failed to load board data: ${response.status} ${response.statusText}`);
+                }
+                
+                // Check if response is empty
+                const text = await response.text();
+                if (!text || text.trim() === '') {
+                    throw new Error('Empty response received from server');
+                }
+                
+                // Try to parse JSON
+                try {
+                    return JSON.parse(text);
+                } catch (parseError) {
+                    console.error('JSON parse error:', parseError, 'Response text:', text);
+                    throw new Error(`Invalid JSON response: ${parseError.message}`);
+                }
+            } catch (fetchError) {
+                if (fetchError.name === 'AbortError') {
+                    throw new Error('Request timed out. Server may be unavailable.');
+                }
+                throw fetchError;
+            }
         } catch (error) {
             console.error('Error loading board:', error);
             throw error;

@@ -34,24 +34,46 @@ app.use(errorHandler);
 
 // Initialize server
 async function init() {
-    try {
-        // Ensure required directories exist
-        await ensureBoardsDir();
-        await ensureConfigDir();
-        await ensureWebhooksDir();
+  // Check if port is in use before starting the server
+  const net = require('net');
+  const tester = net.createServer()
+    .once('error', err => {
+      if (err.code === 'EADDRINUSE') {
+        console.log('Port 3001 is already in use. Attempting to kill the process...');
         
-        // Start server
-        app.listen(config.port, () => {
-            console.log(`Server running on port ${config.port}`);
-            console.log('Using board file:', config.dataFile);
-            console.log('Using config file:', config.configDataFile);
-            console.log('Using webhooks directory:', config.webhooksDir);
-        });
-    } catch (error) {
-        console.error('Failed to initialize server:', error);
+        // For MacOS, find and kill the process using the port
+        const { execSync } = require('child_process');
+        try {
+          // Find the PID of the process using port 3001
+          const pid = execSync('lsof -i :3001 -t').toString().trim();
+          if (pid) {
+            console.log(`Killing process with PID: ${pid}`);
+            execSync(`kill -9 ${pid}`);
+            console.log('Process killed successfully. Starting new server...');
+            // Wait a moment for the port to be released
+            setTimeout(() => startServer(), 1000);
+          }
+        } catch (error) {
+          console.error('Failed to kill the process:', error.message);
+          process.exit(1);
+        }
+      } else {
+        console.error('Server error:', err);
         process.exit(1);
-    }
+      }
+    })
+    .once('listening', () => {
+      tester.close();
+      startServer();
+    })
+    .listen(3001);
 }
 
-// Start server
+function startServer() {
+  app.listen(3001, () => {
+    console.log('Kanban server running on port 3001');
+  });
+}
+
+// Call init to start the server with port checking
 init();

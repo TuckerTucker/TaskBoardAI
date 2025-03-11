@@ -361,13 +361,24 @@ export class Settings {
     
     /**
      * Load a specific board
-     * @param {string} boardId - ID of the board to load
+     * @param {string|Object} boardId - ID of the board to load or board object
      */
     async loadBoard(boardId) {
         if (!boardId) return;
         
         try {
-            const board = await apiService.loadBoard(boardId);
+            // Check if boardId is an object (full board) or a string (board ID)
+            let board;
+            if (typeof boardId === 'object') {
+                // We already have the board object
+                board = boardId;
+            } else {
+                // We have a board ID, need to load the board
+                board = await apiService.loadBoard(String(boardId));
+                
+                // Store the board ID in localStorage for persistence
+                localStorage.setItem('selectedBoard', String(boardId));
+            }
             
             // Update state
             await stateManager.loadBoard(board);

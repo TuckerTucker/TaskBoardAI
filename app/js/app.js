@@ -2,7 +2,7 @@
  * Main Application Entry Point
  */
 
-import { stateManager } from './core/state.js';
+import { stateManager, initializeState } from './core/state.js';
 import { setupDragAndDrop } from './utils/drag-drop.js';
 import { Column } from './components/Column.js';
 import { Card } from './components/Card.js';
@@ -14,35 +14,41 @@ import { apiService } from './services/api.js';
 let nextSteps;
 
 // Initialize the application
-async function initApp() {
+async function initializeApp() {
     try {
-        // Initialize state
-        await stateManager.initialize();
-        
-        // Initialize components
+        // Initialize components first so they're available even if state initialization fails
         nextSteps = new NextSteps();
         const settings = new Settings();
-        
-        // Load board data
-        try {
-            const data = await apiService.loadBoard();
-            console.log('Board data loaded:', data);
-            if (data['next-steps']) {
-                console.log('Next steps found:', data['next-steps']);
-                nextSteps.update(data['next-steps']);
-            } else {
-                console.log('No next steps found in data');
-            }
-        } catch (error) {
-            console.error('Error loading board:', error);
-            showError('Failed to load board data');
-        }
         
         // Setup UI event listeners
         setupEventListeners();
         
         // Setup drag and drop
         setupDragAndDrop();
+        
+        // Initialize state with previously selected board if available
+        try {
+            await initializeState();
+            console.log('State initialized successfully');
+        } catch (stateError) {
+            console.error('State initialization error:', stateError);
+            showError('Error loading board data. Using default board.');
+            // Continue execution - the state manager will use default board
+        }
+        
+        // Try to load next steps if available
+        try {
+            const state = stateManager.getState();
+            if (state['next-steps']) {
+                console.log('Next steps found:', state['next-steps']);
+                nextSteps.update(state['next-steps']);
+            } else {
+                console.log('No next steps found in state');
+            }
+        } catch (nextStepsError) {
+            console.warn('Error loading next steps:', nextStepsError);
+            // Continue without next steps
+        }
         
         // Initial render
         renderBoard();
@@ -51,7 +57,20 @@ async function initApp() {
         stateManager.subscribe(renderBoard);
     } catch (error) {
         console.error('Failed to initialize app:', error);
-        showError('Failed to load board data. Please try refreshing the page.');
+        showError('Failed to initialize application. Please try refreshing the page.');
+        
+        // Create minimal UI to allow user interaction
+        try {
+            const board = document.getElementById('board');
+            if (board) {
+                board.innerHTML = '<div class="error-container"><h2>Failed to load board</h2><p>Please check your connection and try again.</p><button id="retry-btn">Retry</button></div>';
+                document.getElementById('retry-btn')?.addEventListener('click', () => {
+                    window.location.reload();
+                });
+            }
+        } catch (fallbackError) {
+            console.error('Failed to create fallback UI:', fallbackError);
+        }
     }
 }
 
@@ -129,4 +148,4 @@ function renderBoard() {
 }
 
 // Start the application
-document.addEventListener('DOMContentLoaded', initApp);
+document.addEventListener('DOMContentLoaded', initializeApp);

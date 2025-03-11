@@ -223,25 +223,119 @@ class StateManager {
     
     /**
      * Load a specific board
-     * @param {Object} board - Board data to load
+     * @param {string|Object} boardNameOrData - Name of the board to load or board data object
      */
-    async loadBoard(board) {
+    async loadBoard(boardNameOrData) {
+      // Check if we received a board object or a board name
+      if (typeof boardNameOrData === 'object') {
+        // We received a board object directly
+        this.state = {
+          ...boardNameOrData,
+          isDragging: false
+        };
+        this.notifyListeners();
+        return boardNameOrData;
+      }
+      
+      // We received a board name, save it to localStorage
+      // Make sure boardName is a string and not undefined or null
+      const boardName = boardNameOrData || 'default';
+      localStorage.setItem('selectedBoard', boardName);
+      
+      try {
+        // First try to load from API
         try {
-            // Update the state with the new board data
-            this.state = {
+          // Make sure we're passing a valid string to the API service
+          const data = await apiService.loadBoard(String(boardName));
+          this.state = {
+            ...data,
+            isDragging: false
+          };
+          this.notifyListeners();
+          return data;
+        } catch (apiError) {
+          console.warn('Could not load board from API, trying local fetch:', apiError);
+          
+          // If API fails, try to fetch from local boards directory
+          try {
+            const response = await fetch(`/boards/${encodeURIComponent(boardName)}.json`);
+            if (!response.ok) {
+              throw new Error(`Failed to load board: ${response.status} ${response.statusText}`);
+            }
+            
+            // Check if the response is valid JSON before parsing
+            const contentType = response.headers.get('content-type');
+            if (contentType && !contentType.includes('application/json')) {
+              console.warn('Response content-type is not JSON:', contentType);
+              // Continue anyway, as some servers might not set the correct content type
+            }
+            
+            const text = await response.text();
+            if (!text || text.trim() === '') {
+              throw new Error('Empty response received');
+            }
+            
+            try {
+              const board = JSON.parse(text);
+              this.state = {
                 ...board,
                 isDragging: false
-            };
-            
-            // Notify all listeners of the state change
-            this.notifyListeners();
-            
-            // Save the state to persist it
-            await apiService.saveBoard(this.state);
-        } catch (error) {
-            console.error('Failed to load board:', error);
-            throw error;
+              };
+              this.notifyListeners();
+              return board;
+            } catch (parseError) {
+              console.error('JSON parse error:', parseError, 'Response text:', text);
+              throw new Error(`Failed to parse board data: ${parseError.message}`);
+            }
+          } catch (localError) {
+            console.warn('Could not load board from local file:', localError);
+            throw localError;
+          }
         }
+      } catch (error) {
+        console.error('Failed to load board:', error);
+        
+        // Create a default board instead of throwing an error
+        console.log('Creating default board as fallback');
+        const defaultBoard = {
+          projectName: boardNameOrData ? `${boardNameOrData} Board` : 'My Kanban Board',
+          columns: [
+            {
+              id: this.generateUUID(),
+              name: 'To Do',
+              items: [{
+                id: this.generateUUID(),
+                title: 'Welcome!',
+                description: '# Welcome to the Enhanced Kanban Board\n\nThis board supports:\n- Markdown formatting\n- Subtasks\n- Tags\n- Dependencies\n- Completion tracking',
+                collapsed: false,
+                subtasks: [
+                  'Try adding a new card',
+                  'Try moving cards between columns',
+                  'Try using markdown in descriptions'
+                ],
+                tags: ['example', 'welcome']
+              }]
+            },
+            {
+              id: this.generateUUID(),
+              name: 'Doing',
+              items: []
+            },
+            {
+              id: this.generateUUID(),
+              name: 'Done',
+              items: []
+            }
+          ]
+        };
+        
+        this.state = {
+          ...defaultBoard,
+          isDragging: false
+        };
+        this.notifyListeners();
+        return defaultBoard;
+      }
     }
 
     /**
@@ -267,3 +361,31 @@ class StateManager {
 
 // Create and export a singleton instance
 export const stateManager = new StateManager();
+
+// Initialize state with previously selected board if available
+export async function initializeState() {
+  try {
+    // Check if there's a previously selected board in localStorage
+    const savedBoard = localStorage.getItem('selectedBoard');
+    
+    // If there is a saved board, load it, otherwise initialize with default
+    if (savedBoard && 
+        typeof savedBoard === 'string' && 
+        savedBoard !== 'undefined' && 
+        savedBoard !== 'null' && 
+        !savedBoard.includes('[object Object]') && 
+        savedBoard.trim() !== '') {
+      console.log('Loading previously selected board:', savedBoard);
+      return stateManager.loadBoard(savedBoard);
+    } else {
+      console.log('No valid saved board found, initializing with default');
+      // Clear invalid value from localStorage
+      localStorage.removeItem('selectedBoard');
+      return stateManager.initialize();
+    }
+  } catch (error) {
+    console.error('Error in initializeState:', error);
+    // Fall back to default initialization
+    return stateManager.initialize();
+  }
+}
