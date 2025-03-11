@@ -1,5 +1,5 @@
-const fs = require('fs').promises;
-const path = require('path');
+const fs = require('node:fs').promises;
+const path = require('node:path');
 const config = require('../config/config');
 
 // Ensure directory exists
@@ -20,7 +20,23 @@ async function ensureBoardsDir() {
     await ensureDir(dirToCreate);
 }
 
+// Ensure config directory exists
+async function ensureConfigDir() {
+    const dirToCreate = path.isAbsolute(config.configDataFile) 
+        ? path.dirname(config.configDataFile) 
+        : config.configDir;
+    
+    await ensureDir(dirToCreate);
+}
+
+// Ensure webhooks directory exists
+async function ensureWebhooksDir() {
+    await ensureDir(config.webhooksDir);
+}
+
 module.exports = {
     ensureDir,
-    ensureBoardsDir
+    ensureBoardsDir,
+    ensureConfigDir,
+    ensureWebhooksDir
 };

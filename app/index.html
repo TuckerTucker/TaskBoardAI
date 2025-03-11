@@ -10,9 +10,23 @@
 </head>
 <body>
     <header>
-        <h1 id="project-name" contenteditable="true">My Kanban Board</h1>
-        <div class="board-controls">
-            <button id="add-column-btn">+ Add Column</button>
+        <div class="header-left">
+            <div class="board-header-info">
+                <h1 id="project-name" contenteditable="true">My Kanban Board</h1>
+                <div class="board-selector-container">
+                    <select id="board-selector" title="Select Board">
+                        <!-- Board options will be dynamically populated -->
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="board-controls">
+                <button id="add-column-btn">+ Add Column</button>
+                <button id="settings-btn" class="icon-btn" title="Settings">
+                    <i class="fas fa-cog"></i>
+                </button>
+            </div>
         </div>
     </header>
 
@@ -30,6 +44,145 @@
             <!-- Columns will be dynamically inserted here -->
         </div>
     </main>
+
+    <!-- Modal Framework -->
+    <div id="modal-backdrop" class="modal-backdrop hidden"></div>
+    
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Settings</h2>
+                <button class="close-modal-btn"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="settings-tabs">
+                    <!-- <button class="tab-btn" data-tab="general">General</button> -->
+                    <button class="tab-btn active" data-tab="boards">Boards</button>
+                    <!-- <button class="tab-btn" data-tab="integration">Integrations</button> -->
+                </div>
+                
+                <div class="tab-content" id="general-tab" style="display: none;">
+                    <h3>General Settings</h3>
+                    <div class="settings-form">
+                        <!-- General settings will be added here -->
+                        <div class="form-group">
+                            <label for="theme-select">Theme:</label>
+                            <select id="theme-select">
+                                <option value="light">Light</option>
+                                <option value="dark">Dark</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="storage-select">Data Storage:</label>
+                            <select id="storage-select">
+                                <option value="local">Local Storage</option>
+                                <option value="server">Server Storage</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="api-endpoint">API Endpoint:</label>
+                            <input type="text" id="api-endpoint" placeholder="/api">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="auto-save">
+                                <input type="checkbox" id="auto-save"> Auto Save Changes
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="tab-content active" id="boards-tab">
+                    <h3>Board Management</h3>
+                    <div class="board-management">
+                        <div class="board-list-container">
+                            <h4>Available Boards</h4>
+                            <div id="board-list" class="board-list">
+                                <!-- Board list will be dynamically populated -->
+                            </div>
+                        </div>
+                        
+                        <div class="board-actions-container">
+                            <h4>Create New Board</h4>
+                            <form id="new-board-form" class="settings-form">
+                                <div class="form-group">
+                                    <label for="new-board-name">Board Name:</label>
+                                    <input type="text" id="new-board-name" placeholder="Enter board name" required>
+                                </div>
+                                <button type="submit" class="primary-btn">Create Board</button>
+                            </form>
+                            
+                            <div class="board-import-export">
+                                <h4>Import/Export</h4>
+                                <div class="import-export-buttons">
+                                    <button id="export-board-btn" class="secondary-btn">
+                                        <i class="fas fa-file-export"></i> Export Current Board
+                                    </button>
+                                    <div class="import-container">
+                                        <label for="import-board-file" class="secondary-btn">
+                                            <i class="fas fa-file-import"></i> Import Board
+                                        </label>
+                                        <input type="file" id="import-board-file" accept=".json" style="display: none;">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="tab-content" id="integration-tab" style="display: none;">
+                    <h3>Integration Settings</h3>
+                    <div class="settings-form">
+                        <h4>Webhook Configuration</h4>
+                        <p class="section-description">Configure webhooks to notify external services when changes occur.</p>
+                            
+                        <div class="webhook-section">
+                            <div class="webhook-list-container">
+                                <h5>Active Webhooks</h5>
+                                <div id="webhook-list" class="webhook-list">
+                                    <!-- Webhook list will be dynamically populated -->
+                                </div>
+                            </div>
+                            
+                            <div class="webhook-form-container">
+                                <h5>Add New Webhook</h5>
+                                <form id="webhook-form" class="settings-form">
+                                    <div class="form-group">
+                                        <label for="webhook-name">Name:</label>
+                                        <input type="text" id="webhook-name" placeholder="Enter name" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="webhook-url">URL:</label>
+                                        <input type="url" id="webhook-url" placeholder="https://example.com/webhook" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="webhook-event">Event:</label>
+                                        <select id="webhook-event" required>
+                                            <option value="board.updated">Board Updated</option>
+                                            <option value="item.created">Item Created</option>
+                                            <option value="item.moved">Item Moved</option>
+                                            <option value="item.completed">Item Completed</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-actions">
+                                        <button type="submit" class="primary-btn">Add</button>
+                                        <button type="button" id="test-webhook-btn" class="secondary-btn">Test</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: var(--spacing-md); padding: var(--spacing-md) var(--spacing-lg); border-top: 1px solid var(--border-color); background-color: var(--header-bg);">
+                <button id="save-settings-btn" class="primary-btn" style="background-color: var(--button-primary); color: white; border: none; border-radius: var(--radius-sm); padding: var(--spacing-sm) var(--spacing-md); cursor: pointer; transition: filter 0.2s ease;">Save Settings</button>
+                <button class="close-modal-btn secondary-btn" style="background-color: var(--overlay-light); color: var(--text-primary); border: none; border-radius: var(--radius-sm); padding: var(--spacing-sm) var(--spacing-md); cursor: pointer; transition: background-color 0.2s ease;">Cancel</button>
+            </div>
+        </div>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script type="module" src="js/app.js"></script>

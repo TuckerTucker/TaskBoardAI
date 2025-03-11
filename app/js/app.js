@@ -7,7 +7,11 @@ import { setupDragAndDrop } from './utils/drag-drop.js';
 import { Column } from './components/Column.js';
 import { Card } from './components/Card.js';
 import { NextSteps } from './components/NextSteps.js';
+import { Settings } from './components/Settings.js';
 import { apiService } from './services/api.js';
+
+// Global component references
+let nextSteps;
 
 // Initialize the application
 async function initApp() {
@@ -16,7 +20,8 @@ async function initApp() {
         await stateManager.initialize();
         
         // Initialize components
-        const nextSteps = new NextSteps();
+        nextSteps = new NextSteps();
+        const settings = new Settings();
         
         // Load board data
         try {
@@ -81,6 +86,14 @@ function setupEventListeners() {
             await stateManager.updateProjectName(name);
         }
     });
+    
+    // Initialize modal backdrop if it doesn't exist
+    if (!document.getElementById('modal-backdrop')) {
+        const backdrop = document.createElement('div');
+        backdrop.id = 'modal-backdrop';
+        backdrop.className = 'modal-backdrop hidden';
+        document.body.appendChild(backdrop);
+    }
 }
 
 // Render the board
@@ -96,16 +109,23 @@ function renderBoard() {
     board.innerHTML = '';
     
     // Render columns
-    state.columns.forEach((columnData, index) => {
+    for (let index = 0; index < state.columns.length; index++) {
+        const columnData = state.columns[index];
         const column = new Column(columnData, index);
         board.appendChild(column.render());
         
         // Render cards for this column
-        columnData.items.forEach(cardData => {
+        for (const cardData of columnData.items) {
             const card = new Card(cardData, index);
             column.addCard(card);
-        });
-    });
+        }
+    }
+    
+    // Update Next Steps if available
+    if (state['next-steps'] && nextSteps) {
+        console.log('Updating next steps during render:', state['next-steps']);
+        nextSteps.update(state['next-steps']);
+    }
 }
 
 // Start the application

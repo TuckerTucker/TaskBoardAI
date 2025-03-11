@@ -1,14 +1,21 @@
 {
-  "name": "tkr-droppi-kanban",
+  "name": "tkr-kanban",
   "version": "1.0.0",
   "description": "",
-  "main": "server/kanban-server.js",
+  "main": "server/server.js",
   "scripts": {
-    "start": "node server/kanban-server.js"
+    "start": "node server/server.js",
+    "start:mcp": "node server/mcp/kanbanMcpServer.js",
+    "start:all": "concurrently \"npm run start\" \"npm run start:mcp\""
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.2.0",
+    "axios": "^1.6.7",
     "cors": "^2.8.5",
     "express": "^4.18.2",
     "marked": "^15.0.4"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
   }
 }

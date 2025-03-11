@@ -1,0 +1,13 @@
+#!/bin/sh
+
+# Script to start both the Kanban server and MCP server
+
+# Ensure dependencies are installed
+if [ ! -d "node_modules/@modelcontextprotocol" ] || [ ! -d "node_modules/concurrently" ]; then
+    echo "Installing dependencies..."
+    npm install
+fi
+
+# Start both servers using npm script
+echo "Starting Kanban server and MCP server..."
+npm run start:all
