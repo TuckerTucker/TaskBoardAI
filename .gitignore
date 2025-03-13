@@ -1,6 +1,17 @@
+# Project
 node_modules
 package-lock.json
+
+# System
 .DS_Store
 
+# Documentation
+docs/api/*
+!docs/api/README.md
+
+# Boards
 boards
 !boards/_kanban_example*
+
+# Test Coverage
+/coverage/

@@ -1,20 +1,28 @@
-# Kanban MCP Server
+# TaskBoardAI MCP Server
 
-This is an MCP (Model Context Protocol) server for the Kanban app that allows you to create new boards and update existing boards using Claude for Desktop.
+This documentation covers the Model Context Protocol (MCP) server included with TaskBoardAI that enables AI-powered board management through Claude for Desktop.
+
+## Overview
+
+The MCP server allows you to use Claude to:
+- Create and manage kanban boards through natural language
+- Automate board updates and maintenance
+- Query board information conversationally
 
 ## Features
 
-- Create new kanban boards
-- Update existing boards
+- Create new boards using natural language
+- Update existing boards via AI
 - List all available boards
-- Get board details by ID
+- Get detailed board information by ID
 - Delete boards
+- Start the web server directly from Claude
 
 ## Setup Instructions
 
 ### 1. Install Dependencies
 
-The dependencies are installed automatically when you run the `start_mcp` script, but you can also install them manually:
+Dependencies are installed automatically when you run the `_start_mcp` script, but you can also install them manually:
 
 ```bash
 npm install
@@ -25,16 +33,16 @@ npm install
 You can start just the MCP server:
 
 ```bash
-./start_mcp
+./_start_mcp
 ```
 
-Or you can start both the Kanban server and MCP server simultaneously:
+Or start both the TaskBoardAI web server and MCP server simultaneously:
 
 ```bash
-./start_all
+./_start_all
 ```
 
-Alternatively, you can use npm scripts:
+Using npm scripts:
 
 ```bash
 # Start just the MCP server
@@ -46,13 +54,13 @@ npm run start:all
 
 ### 3. Configure Claude for Desktop
 
-To use the MCP server with Claude for Desktop, you need to configure Claude to connect to the server:
+To connect Claude for Desktop to the TaskBoardAI MCP server:
 
-1. Create or edit the Claude Desktop configuration file at:
+1. Edit your Claude Desktop configuration file at:
    - Mac: `~/Library/Application Support/Claude/claude_desktop_config.json`
    - Windows: `%AppData%\Claude\claude_desktop_config.json`
 
-2. Add the following configuration (adjust the path to match your system):
+2. Add the following configuration (adjust the path to match your installation):
 
 ```json
 {
@@ -60,7 +68,7 @@ To use the MCP server with Claude for Desktop, you need to configure Claude to c
     "kanban": {
       "command": "node",
       "args": [
-        "/Volumes/tkr-riffic/tucker-home-folder/kanban/tkr-kanban/server/mcp/kanbanMcpServer.js"
+        "/path/to/TaskBoardAI/server/mcp/kanbanMcpServer.js"
       ]
     }
   }
@@ -71,24 +79,79 @@ To use the MCP server with Claude for Desktop, you need to configure Claude to c
 
 ### 4. Using the MCP Server with Claude
 
-Once configured, you can ask Claude to perform the following actions:
+Once configured, you can interact with Claude using natural language:
 
-- Create a new board: "Create a new kanban board called 'Project X'"
-- List all boards: "Show me all my kanban boards"
-- Get a specific board: "Show me the details of board with ID [board-id]"
-- Update a board: "Update this board with the following data: [board data in JSON format]"
-- Delete a board: "Delete the board with ID [board-id]"
+- **Create a board**: "Create a new kanban board called 'Project X'"
+- **List boards**: "Show me all my kanban boards"
+- **View board details**: "Show me the board with ID [board-id]"
+- **Update a board**: "Update this board with the following data: [board data in JSON format]"
+- **Delete a board**: "Delete the board with ID [board-id]"
+- **Start the web server**: "Start the TaskBoardAI web server on port 3001"
 
-## Available Tools
+## Available MCP Tools
 
-The MCP server provides the following tools:
+The server provides these specific tools:
 
 1. `get-boards`: Lists all available kanban boards
 2. `create-board`: Creates a new kanban board with a specified name
 3. `get-board`: Gets a specific board by ID
 4. `update-board`: Updates an existing board with new data
 5. `delete-board`: Deletes a board by ID
+6. `start-webserver`: Starts the TaskBoardAI web server on a specified port
+
+## Example Prompts
+
+Here are some example prompts for working with Claude:
+
+```
+Create a new board for my personal project with three columns: "To Do", "In Progress", and "Done"
+```
+
+```
+Show me all of my kanban boards
+```
+
+```
+Start the TaskBoardAI web server on port 3001
+```
+
+```
+Update my Project X board to add a new column for "Testing"
+```
+
+## Advanced Usage
+
+### Board Creation with Custom Structure
+
+Claude can help you create boards with custom structure:
+
+```
+Create a new board named "Software Development" with these columns:
+- Backlog
+- Design
+- Development
+- Testing
+- Done
+
+And add these initial tasks to the Backlog:
+- Set up development environment
+- Create user authentication
+- Design database schema
+```
+
+### Data Migration
+
+Claude can help migrate data from other formats:
+
+```
+I have a list of tasks in CSV format. Please convert this to a TaskBoardAI board:
+
+Task,Status,Priority,Assigned To
+Implement login,In Progress,High,Alex
+Fix homepage CSS,To Do,Medium,Sam
+Deploy to staging,To Do,High,Alex
+```
 
 ## Note
 
-This MCP server updates the project's JSON files directly and does not use local storage, in accordance with the project requirements.
+The MCP server writes board data directly to JSON files in your TaskBoardAI installation. All board operations are performed on these files, making them accessible to both the web interface and the MCP server.

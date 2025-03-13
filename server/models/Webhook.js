@@ -5,7 +5,45 @@ const config = require('../config/config');
 const { ensureWebhooksDir } = require('../utils/fileSystem');
 const axios = require('axios');
 
+/**
+ * @fileoverview Webhook model for managing external integrations.
+ * @module models/Webhook
+ * @requires node:fs
+ * @requires node:path
+ * @requires node:crypto
+ * @requires axios
+ * @requires ../config/config
+ * @requires ../utils/fileSystem
+ */
+
+/**
+ * @typedef {Object} WebhookData
+ * @property {string} id - Unique identifier for the webhook
+ * @property {string} name - Display name of the webhook
+ * @property {string} url - URL endpoint to send webhook data to
+ * @property {string} event - Event type that triggers this webhook
+ * @property {string} created_at - ISO timestamp when webhook was created
+ */
+
+/**
+ * @typedef {Object} WebhookResponse
+ * @property {boolean} success - Whether the webhook request was successful
+ * @property {number} [status] - HTTP status code if successful
+ * @property {string} message - Response message
+ * @property {string} [error] - Error message if unsuccessful
+ */
+
+/**
+ * Class representing a webhook for external integrations
+ * @class
+ * @category Models
+ */
 class Webhook {
+    /**
+     * Create a Webhook instance
+     * @param {WebhookData} [data=null] - Webhook data
+     * @param {string} [filePath=null] - Path to the webhook's JSON file
+     */
     constructor(data = null, filePath = null) {
         this.data = data || {
             id: crypto.randomUUID(),
@@ -17,7 +55,12 @@ class Webhook {
         this.filePath = filePath;
     }
 
-    // Load all webhooks
+    /**
+     * Get all webhooks
+     * @static
+     * @async
+     * @returns {Promise<Array<WebhookData>>} Array of webhook data objects
+     */
     static async getAll() {
         await ensureWebhooksDir();
         
@@ -53,7 +96,14 @@ class Webhook {
         }
     }
     
-    // Get a specific webhook by ID
+    /**
+     * Get a specific webhook by ID
+     * @static
+     * @async
+     * @param {string} webhookId - ID of the webhook to retrieve
+     * @returns {Promise<Webhook>} The webhook instance
+     * @throws {Error} If webhook ID is not provided or webhook is not found
+     */
     static async getById(webhookId) {
         if (!webhookId) {
             throw new Error('Webhook ID is required');
@@ -72,7 +122,17 @@ class Webhook {
         }
     }
     
-    // Create a new webhook
+    /**
+     * Create a new webhook
+     * @static
+     * @async
+     * @param {Object} webhookData - Data for the new webhook
+     * @param {string} webhookData.name - Name for the webhook
+     * @param {string} webhookData.url - URL endpoint
+     * @param {string} webhookData.event - Event type
+     * @returns {Promise<WebhookData>} Data of the created webhook
+     * @throws {Error} If required fields are missing
+     */
     static async create(webhookData) {
         await ensureWebhooksDir();
         
@@ -94,7 +154,11 @@ class Webhook {
         return webhook.data;
     }
     
-    // Save webhook data to file
+    /**
+     * Save webhook to file
+     * @async
+     * @returns {Promise<void>}
+     */
     async save() {
         // Ensure webhook has an ID
         if (!this.data.id) {
@@ -111,7 +175,14 @@ class Webhook {
         await fs.writeFile(filePath, JSON.stringify(this.data, null, 2));
     }
     
-    // Delete a webhook
+    /**
+     * Delete a webhook
+     * @static
+     * @async
+     * @param {string} webhookId - ID of the webhook to delete
+     * @returns {Promise<Object>} Result of the delete operation
+     * @throws {Error} If webhook ID is not provided or webhook is not found
+     */
     static async delete(webhookId) {
         if (!webhookId) {
             throw new Error('Webhook ID is required');
@@ -131,7 +202,13 @@ class Webhook {
         }
     }
     
-    // Test a webhook
+    /**
+     * Test a webhook by sending a test payload
+     * @static
+     * @async
+     * @param {string} webhookId - ID of the webhook to test
+     * @returns {Promise<WebhookResponse>} Result of the test
+     */
     static async test(webhookId) {
         const webhook = await Webhook.getById(webhookId);
         
@@ -169,7 +246,14 @@ class Webhook {
         }
     }
     
-    // Test a webhook connection without saving
+    /**
+     * Test a webhook connection without saving the webhook
+     * @static
+     * @async
+     * @param {string} url - URL to test
+     * @returns {Promise<WebhookResponse>} Result of the connection test
+     * @throws {Error} If URL is not provided
+     */
     static async testConnection(url) {
         if (!url) {
             throw new Error('URL is required');
@@ -209,7 +293,10 @@ class Webhook {
         }
     }
     
-    // Validate webhook data structure
+    /**
+     * Validate webhook data structure
+     * @returns {boolean} True if the webhook data is valid
+     */
     validate() {
         return (
             this.data &&

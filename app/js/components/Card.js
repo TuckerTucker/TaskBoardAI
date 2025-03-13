@@ -1,14 +1,28 @@
 /**
- * Card Component
- * Represents a single card in the kanban board
+ * @fileoverview Card component representing a task in the kanban board
+ * @module components/Card
+ * @requires ../core/state
  */
 
 import { stateManager } from '../core/state.js';
 
+/**
+ * Class representing a card in the kanban board
+ * @class
+ * @classdesc Renders and manages a task card with title, description, subtasks, tags, and dependencies
+ * @category Components
+ */
 export class Card {
     /**
      * Create a new Card
      * @param {Object} data - Card data
+     * @param {string} data.id - Unique identifier for the card
+     * @param {string} data.title - Card title
+     * @param {string} [data.content] - Markdown content for card description
+     * @param {boolean} [data.collapsed=false] - Whether the card is collapsed
+     * @param {Array<string>} [data.subtasks] - List of subtasks
+     * @param {Array<string>} [data.tags] - List of tags
+     * @param {Array<string>} [data.dependencies] - List of dependency card IDs
      * @param {number} columnIndex - Parent column index
      */
     constructor(data, columnIndex) {

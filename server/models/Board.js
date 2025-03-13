@@ -4,7 +4,53 @@ const crypto = require('node:crypto');
 const config = require('../config/config');
 const { ensureBoardsDir } = require('../utils/fileSystem');
 
+/**
+ * @fileoverview Board model that handles all kanban board operations.
+ * @module models/Board
+ * @requires node:fs
+ * @requires node:path
+ * @requires node:crypto
+ * @requires ../config/config
+ * @requires ../utils/fileSystem
+ */
+
+/**
+ * @typedef {Object} BoardSummary
+ * @property {string} id - Unique identifier for the board
+ * @property {string} name - Display name of the board
+ * @property {string} lastUpdated - ISO timestamp of last update
+ */
+
+/**
+ * @typedef {Object} BoardColumn
+ * @property {string} id - Unique identifier for the column
+ * @property {string} name - Display name of the column
+ * @property {Array<BoardItem>} items - Array of items in this column
+ */
+
+/**
+ * @typedef {Object} BoardItem
+ * @property {string} id - Unique identifier for the item
+ * @property {string} title - Title of the item
+ * @property {string} [content] - Markdown content for the item
+ * @property {boolean} [collapsed=false] - Whether the item is collapsed
+ * @property {Array<string>} [subtasks] - List of subtasks
+ * @property {Array<string>} [tags] - List of tags
+ * @property {Array<string>} [dependencies] - List of dependent item IDs
+ * @property {string} [completed_at] - ISO timestamp when item was completed
+ */
+
+/**
+ * Class representing a Kanban board
+ * @class
+ * @category Models
+ */
 class Board {
+    /**
+     * Create a Board instance
+     * @param {Object} data - The board data
+     * @param {string} [filePath=null] - Path to the board's JSON file
+     */
     constructor(data = null, filePath = null) {
         this.data = data || {
             id: crypto.randomUUID(),
@@ -14,7 +60,14 @@ class Board {
         this.filePath = filePath;
     }
 
-    // Load board data from file
+    /**
+     * Load a board from file
+     * @static
+     * @async
+     * @param {string} [boardId=null] - ID of the board to load (if null, loads default board)
+     * @returns {Promise<Board>} The loaded board instance
+     * @throws {Error} If the board is not found or cannot be loaded
+     */
     static async load(boardId = null) {
         try {
             // If no boardId is provided, load the default board
@@ -38,7 +91,12 @@ class Board {
         }
     }
     
-    // Get list of all available boards
+    /**
+     * Get a list of all available boards
+     * @static
+     * @async
+     * @returns {Promise<Array<BoardSummary>>} Array of board summary objects
+     */
     static async list() {
         await ensureBoardsDir();
         
@@ -72,7 +130,13 @@ class Board {
         }
     }
     
-    // Create a new board
+    /**
+     * Create a new board
+     * @static
+     * @async
+     * @param {string} name - Name for the new board
+     * @returns {Promise<BoardSummary>} Summary of the created board
+     */
     static async create(name) {
         await ensureBoardsDir();
         
@@ -93,7 +157,11 @@ class Board {
         };
     }
 
-    // Save board data to file
+    /**
+     * Save the board to its file
+     * @async
+     * @returns {Promise<void>}
+     */
     async save() {
         // Ensure board has an ID
         if (!this.data.id) {
@@ -132,7 +200,14 @@ class Board {
         await fs.writeFile(filePath, JSON.stringify(this.data, null, 2));
     }
     
-    // Delete a board
+    /**
+     * Delete a board
+     * @static
+     * @async
+     * @param {string} boardId - ID of the board to delete
+     * @returns {Promise<Object>} Result of the delete operation
+     * @throws {Error} If the board is not found or cannot be deleted
+     */
     static async delete(boardId) {
         if (!boardId) {
             throw new Error('Board ID is required');
@@ -152,7 +227,14 @@ class Board {
         }
     }
     
-    // Import a board
+    /**
+     * Import a board from external data
+     * @static
+     * @async
+     * @param {Object} boardData - Complete board data to import
+     * @returns {Promise<BoardSummary>} Summary of the imported board
+     * @throws {Error} If the board data is invalid
+     */
     static async import(boardData) {
         // Validate the board data
         const board = new Board(boardData);
@@ -178,7 +260,10 @@ class Board {
         };
     }
 
-    // Validate board data structure
+    /**
+     * Validate board data structure
+     * @returns {boolean} True if the board data is valid
+     */
     validate() {
         return (
             this.data &&
@@ -192,7 +277,11 @@ class Board {
         );
     }
 
-    // Validate column structure
+    /**
+     * Validate a column object
+     * @param {BoardColumn} column - The column to validate
+     * @returns {boolean} True if the column is valid
+     */
     validateColumn(column) {
         return (
             column &&
@@ -204,7 +293,12 @@ class Board {
         );
     }
 
-    // Validate item structure
+    /**
+     * Validate a board item object
+     * @static
+     * @param {BoardItem} item - The item to validate
+     * @returns {boolean} True if the item is valid
+     */
     static validateItem(item) {
         if (!item || typeof item !== 'object') return false;
         if (!item.id || typeof item.id !== 'string') return false;

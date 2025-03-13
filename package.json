@@ -1,12 +1,17 @@
 {
-  "name": "tkr-kanban",
+  "name": "taskboardai",
   "version": "1.0.0",
-  "description": "",
+  "description": "A lightweight, file-based kanban board with AI integration through Claude",
   "main": "server/server.js",
   "scripts": {
     "start": "node server/server.js",
     "start:mcp": "node server/mcp/kanbanMcpServer.js",
-    "start:all": "concurrently \"npm run start\" \"npm run start:mcp\""
+    "start:all": "concurrently \"npm run start\" \"npm run start:mcp\"",
+    "docs": "jsdoc -c jsdoc.json",
+    "docs:serve": "http-server docs/api -o -p 8080",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.2.0",
@@ -16,6 +21,32 @@
     "marked": "^15.0.4"
   },
   "devDependencies": {
-    "concurrently": "^9.1.2"
-  }
+    "better-docs": "^2.7.3",
+    "concurrently": "^9.1.2",
+    "http-server": "^14.1.1",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "jest-mock": "^29.7.0",
+    "jsdoc": "^4.0.2",
+    "supertest": "^6.3.4",
+    "taffydb": "^2.7.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TuckerTucker/TaskBoardAI.git"
+  },
+  "keywords": [
+    "kanban",
+    "taskboard",
+    "project-management",
+    "claude",
+    "ai",
+    "mcp"
+  ],
+  "author": "TuckerTucker",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/TuckerTucker/TaskBoardAI/issues"
+  },
+  "homepage": "https://github.com/TuckerTucker/TaskBoardAI"
 }

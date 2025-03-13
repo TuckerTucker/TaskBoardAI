@@ -1,8 +1,21 @@
+/**
+ * @fileoverview Controller handling board-related API endpoints
+ * @module controllers/boardController
+ * @requires ../models/Board
+ * @requires ../config/config
+ * @requires node:path
+ */
+
 const Board = require('../models/Board');
 const config = require('../config/config');
 const path = require('node:path');
 
-// Get board info
+/**
+ * Get information about the current board file configuration
+ * @function getBoardInfo
+ * @param {import('express').Request} req - Express request object
+ * @param {import('express').Response} res - Express response object
+ */
 exports.getBoardInfo = (req, res) => {
     res.json({
         boardFile: config.boardFile,
@@ -10,7 +23,13 @@ exports.getBoardInfo = (req, res) => {
     });
 };
 
-// Get board data
+/**
+ * Get the default board data
+ * @async
+ * @function getBoard
+ * @param {import('express').Request} req - Express request object
+ * @param {import('express').Response} res - Express response object
+ */
 exports.getBoard = async (req, res) => {
     try {
         const board = await Board.load();
@@ -21,7 +40,13 @@ exports.getBoard = async (req, res) => {
     }
 };
 
-// Get specific board by ID
+/**
+ * Get a specific board by ID
+ * @async
+ * @function getBoardById
+ * @param {import('express').Request} req - Express request object with board ID in params
+ * @param {import('express').Response} res - Express response object
+ */
 exports.getBoardById = async (req, res) => {
     try {
         const boardId = req.params.id;
@@ -33,7 +58,13 @@ exports.getBoardById = async (req, res) => {
     }
 };
 
-// Get list of all boards
+/**
+ * Get a list of all available boards
+ * @async
+ * @function getBoards
+ * @param {import('express').Request} req - Express request object
+ * @param {import('express').Response} res - Express response object
+ */
 exports.getBoards = async (req, res) => {
     try {
         const boards = await Board.list();
@@ -44,7 +75,13 @@ exports.getBoards = async (req, res) => {
     }
 };
 
-// Create a new board
+/**
+ * Create a new board
+ * @async
+ * @function createBoard
+ * @param {import('express').Request} req - Express request object with board name in body
+ * @param {import('express').Response} res - Express response object
+ */
 exports.createBoard = async (req, res) => {
     try {
         const { name } = req.body;
@@ -61,7 +98,13 @@ exports.createBoard = async (req, res) => {
     }
 };
 
-// Delete a board
+/**
+ * Delete a board by ID
+ * @async
+ * @function deleteBoard
+ * @param {import('express').Request} req - Express request object with board ID in params
+ * @param {import('express').Response} res - Express response object
+ */
 exports.deleteBoard = async (req, res) => {
     try {
         const boardId = req.params.id;
@@ -73,7 +116,13 @@ exports.deleteBoard = async (req, res) => {
     }
 };
 
-// Import a board
+/**
+ * Import a board from provided data
+ * @async
+ * @function importBoard
+ * @param {import('express').Request} req - Express request object with board data in body
+ * @param {import('express').Response} res - Express response object
+ */
 exports.importBoard = async (req, res) => {
     try {
         const boardData = req.body;
@@ -90,7 +139,13 @@ exports.importBoard = async (req, res) => {
     }
 };
 
-// Update board data
+/**
+ * Update an existing board
+ * @async
+ * @function updateBoard
+ * @param {import('express').Request} req - Express request object with updated board data in body
+ * @param {import('express').Response} res - Express response object
+ */
 exports.updateBoard = async (req, res) => {
     try {
         const board = new Board(req.body);

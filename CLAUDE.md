@@ -7,6 +7,12 @@
 - List available boards: `./_start_kanban --list`
 - Stop running instances: `./_start_kanban --stop`
 
+## Testing Commands
+- Run all tests: `npm test`
+- Run tests with coverage: `npm run test:coverage`
+- Run tests in watch mode: `npm run test:watch`
+- Run specific test: `npx jest path/to/test.js`
+
 ## Code Style Guidelines
 
 ### File Structure
@@ -32,6 +38,10 @@
 - Provide user-friendly error messages via UI
 - Return appropriate HTTP status codes from API
 
+### Testing
+- use a Testing Pyramid process
+- use jest
+- generate test coverage when test writing is complete
 
 ## Slash Actions
 Slash actions may appear in the user's message.

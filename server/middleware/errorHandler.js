@@ -1,4 +1,17 @@
-// Error handling middleware
+/**
+ * @fileoverview Error handling middleware for the application
+ * @module middleware/errorHandler
+ */
+
+/**
+ * Express error handling middleware
+ * @function errorHandler
+ * @param {Error} err - Error object
+ * @param {import('express').Request} req - Express request object
+ * @param {import('express').Response} res - Express response object
+ * @param {import('express').NextFunction} next - Express next function
+ * @returns {void}
+ */
 const errorHandler = (err, req, res, next) => {
     console.error(err.stack);
     

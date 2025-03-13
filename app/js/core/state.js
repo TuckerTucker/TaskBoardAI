@@ -1,17 +1,40 @@
 /**
- * State Management Module
- * Centralized state management for the kanban board
+ * @fileoverview Centralized state management for the kanban board
+ * @module core/state
+ * @requires ../services/api
  */
 
 import { apiService } from '../services/api.js';
 
+/**
+ * Class for managing application state
+ * @class
+ * @classdesc Handles state management, persistence, and board operations
+ * @category Core
+ */
 class StateManager {
+    /**
+     * Create a StateManager instance
+     */
     constructor() {
+        /**
+         * Application state object
+         * @type {Object}
+         * @property {string} projectName - Name of the board project
+         * @property {Array<Column>} columns - Columns in the board
+         * @property {boolean} isDragging - Whether a drag operation is in progress
+         */
         this.state = {
             projectName: 'My Kanban Board',
             columns: [],
             isDragging: false
         };
+        
+        /**
+         * Set of state change listeners
+         * @type {Set<Function>}
+         * @private
+         */
         this.listeners = new Set();
     }
 
@@ -359,10 +382,18 @@ class StateManager {
     }
 }
 
-// Create and export a singleton instance
+/**
+ * Singleton instance of StateManager
+ * @type {StateManager}
+ */
 export const stateManager = new StateManager();
 
-// Initialize state with previously selected board if available
+/**
+ * Initialize application state with previously selected board if available
+ * @async
+ * @function initializeState
+ * @returns {Promise<Object>} Initialized board data
+ */
 export async function initializeState() {
   try {
     // Check if there's a previously selected board in localStorage

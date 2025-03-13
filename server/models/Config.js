@@ -2,7 +2,38 @@ const fs = require('node:fs').promises;
 const path = require('node:path');
 const config = require('../config/config');
 
+/**
+ * @fileoverview Configuration model that handles app settings.
+ * @module models/Config
+ * @requires node:fs
+ * @requires node:path
+ * @requires ../config/config
+ */
+
+/**
+ * @typedef {Object} ServerOptions
+ * @property {string} apiEndpoint - Base API endpoint path
+ * @property {boolean} autoSave - Whether to automatically save board changes
+ */
+
+/**
+ * @typedef {Object} ConfigData
+ * @property {string} theme - UI theme ('light' or 'dark')
+ * @property {string} dataStorage - Storage method ('local' or 'remote')
+ * @property {ServerOptions} serverOptions - Server configuration options
+ * @property {string} [last_updated] - ISO timestamp of last update
+ */
+
+/**
+ * Class representing application configuration
+ * @class
+ * @category Models
+ */
 class Config {
+    /**
+     * Create a Config instance
+     * @param {ConfigData} [data=null] - Configuration data
+     */
     constructor(data = null) {
         this.data = data || {
             theme: 'light',
@@ -14,7 +45,13 @@ class Config {
         };
     }
 
-    // Load configuration data from file
+    /**
+     * Load configuration from file
+     * @static
+     * @async
+     * @returns {Promise<Config>} The loaded configuration instance
+     * @throws {Error} If the configuration cannot be loaded
+     */
     static async load() {
         try {
             const data = await fs.readFile(config.configDataFile, 'utf8');
@@ -30,7 +67,12 @@ class Config {
         }
     }
 
-    // Save configuration data to file
+    /**
+     * Save configuration to file
+     * @async
+     * @returns {Promise<void>}
+     * @throws {Error} If the configuration cannot be saved
+     */
     async save() {
         // Ensure config directory exists
         try {
@@ -47,7 +89,10 @@ class Config {
         await fs.writeFile(config.configDataFile, JSON.stringify(this.data, null, 2));
     }
 
-    // Validate configuration data structure
+    /**
+     * Validate configuration data structure
+     * @returns {boolean} True if the configuration data is valid
+     */
     validate() {
         return (
             this.data &&

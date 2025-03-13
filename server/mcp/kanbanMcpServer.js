@@ -46,7 +46,7 @@ const checkRateLimit = () => {
 
 // Create server instance
 const server = new McpServer({
-  name: "kanban",
+  name: "TaskBoardAI",
   version: "1.0.0",
 });
 

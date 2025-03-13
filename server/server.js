@@ -1,3 +1,17 @@
+/**
+ * @fileoverview Main server entry point for the TaskBoardAI application.
+ * @module server
+ * @requires express
+ * @requires cors
+ * @requires node:path
+ * @requires ./config/config
+ * @requires ./routes/boardRoutes
+ * @requires ./routes/configRoutes
+ * @requires ./routes/webhookRoutes
+ * @requires ./middleware/errorHandler
+ * @requires ./utils/fileSystem
+ */
+
 const express = require('express');
 const cors = require('cors');
 const path = require('node:path');
@@ -8,6 +22,10 @@ const webhookRoutes = require('./routes/webhookRoutes');
 const errorHandler = require('./middleware/errorHandler');
 const { ensureBoardsDir, ensureConfigDir, ensureWebhooksDir } = require('./utils/fileSystem');
 
+/**
+ * Express application instance
+ * @type {import('express').Application}
+ */
 const app = express();
 
 // Middleware
@@ -24,7 +42,14 @@ app.use('/api', boardRoutes);
 app.use('/api', configRoutes);
 app.use('/api', webhookRoutes);
 
-// Serve index.html for all other routes
+/**
+ * Catch-all route to serve index.html for SPA navigation
+ * @name get/*
+ * @function
+ * @memberof module:server
+ * @param {import('express').Request} req - Express request object
+ * @param {import('express').Response} res - Express response object
+ */
 app.get('*', (req, res) => {
     res.sendFile(path.join(config.appDir, 'index.html'));
 });
@@ -32,7 +57,12 @@ app.get('*', (req, res) => {
 // Error handling
 app.use(errorHandler);
 
-// Initialize server
+/**
+ * Initialize the server with port availability check
+ * @async
+ * @function init
+ * @memberof module:server
+ */
 async function init() {
   // Check if port is in use before starting the server
   const net = require('net');
@@ -69,9 +99,14 @@ async function init() {
     .listen(3001);
 }
 
+/**
+ * Start the Express server on port 3001
+ * @function startServer
+ * @memberof module:server
+ */
 function startServer() {
   app.listen(3001, () => {
-    console.log('Kanban server running on port 3001');
+    console.log('TaskBoardAI server running on port 3001');
   });
 }
 

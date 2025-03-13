@@ -1,0 +1,17 @@
+{
+  "getting-started": {
+    "title": "Getting Started with TaskBoardAI",
+    "description": "Learn the basics of setting up and using TaskBoardAI",
+    "sort": 1
+  },
+  "webhooks": {
+    "title": "Using Webhooks with TaskBoardAI",
+    "description": "Integrate TaskBoardAI with other services using webhooks",
+    "sort": 2
+  },
+  "mcp-integration": {
+    "title": "AI Integration with Claude",
+    "description": "Use Claude for Desktop to interact with your kanban boards",
+    "sort": 3
+  }
+}
