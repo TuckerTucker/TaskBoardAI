@@ -74,9 +74,4 @@ jobs:
           name: docs-logs
           path: docs.log
           retention-days: 30
-      - name: Deploy to GitHub Pages
-        if: github.ref == 'refs/heads/main'
-        uses: JamesIves/github-pages-deploy-action@v4
-        with:
-          folder: docs/api
-          branch: gh-pages
+      # Removed GitHub Pages deployment - now handled in release workflow
