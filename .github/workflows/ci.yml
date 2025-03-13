@@ -22,9 +22,16 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
       - run: npm ci
-      - run: npm test
-      - run: npm run test:coverage
-      - name: Upload coverage reports
+      - run: npm test 2>&1 | tee test.log
+      - run: npm run test:coverage 2>&1 | tee coverage.log
+      - name: Upload Logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-logs-${{ matrix.node-version }}
+          path: |
+            test.log
+            coverage.log
+      - name: Upload Coverage Reports
         uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
@@ -42,7 +49,12 @@ jobs:
       - name: Install ESLint
         run: npm install eslint --save-dev
       - name: Run ESLint
-        run: npx eslint .
+        run: npx eslint . 2>&1 | tee lint.log
+      - name: Upload Logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: lint-logs
+          path: lint.log
 
   docs:
     runs-on: ubuntu-latest
@@ -54,8 +66,14 @@ jobs:
           node-version: '18.x'
           cache: 'npm'
       - run: npm ci
-      - name: Generate documentation
-        run: npm run docs
+      - name: Generate Documentation
+        run: npm run docs 2>&1 | tee docs.log
+      - name: Upload Logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs-logs
+          path: docs.log
+          retention-days: 30
       - name: Deploy to GitHub Pages
         if: github.ref == 'refs/heads/main'
         uses: JamesIves/github-pages-deploy-action@v4
