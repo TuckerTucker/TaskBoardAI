@@ -36,6 +36,7 @@ app.use(express.json());
 app.use(express.static(config.appDir));
 app.use('/css', express.static(config.staticDirs.css));
 app.use('/img', express.static(config.staticDirs.img));
+app.use('/public', express.static(config.staticDirs.public));
 
 // API routes
 app.use('/api', boardRoutes);

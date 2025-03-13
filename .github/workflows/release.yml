@@ -1,0 +1,58 @@
+name: Release Pipeline
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18.x'
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'npm'
+      
+      - run: npm ci
+      - run: npm test
+      
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+          
+      - name: Generate release file
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/}
+          echo "# TaskBoardAI ${VERSION} Release Notes" > releases/${VERSION}.md
+          echo "" >> releases/${VERSION}.md
+          echo "## Changes in this release" >> releases/${VERSION}.md
+          git log $(git describe --tags --abbrev=0 HEAD^)..HEAD --pretty=format:"- %s" >> releases/${VERSION}.md
+          echo "" >> releases/${VERSION}.md
+          echo "## Getting Started" >> releases/${VERSION}.md
+          echo "See the [README.md](../README.md) for installation and usage instructions." >> releases/${VERSION}.md
+      
+      - name: Upload Release Notes
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./releases/${{ github.ref_name }}.md
+          asset_name: release-notes.md
+          asset_content_type: text/markdown
+          
+      # Only uncomment if you want to publish to NPM
+      # - run: npm publish
+      #   env:
+      #     NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

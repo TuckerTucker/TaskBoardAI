@@ -16,7 +16,8 @@ const config = {
     // Static directories
     staticDirs: {
         css: path.join(__dirname, '../../app/css'),
-        img: path.join(__dirname, '../../img')
+        img: path.join(__dirname, '../../img'),
+        public: path.join(__dirname, '../../app/public')
     }
 };
 

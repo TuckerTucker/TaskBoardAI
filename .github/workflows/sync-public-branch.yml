@@ -1,0 +1,119 @@
+name: Sync Public Branch
+
+on:
+  workflow_dispatch:
+    inputs:
+      message:
+        description: 'Reason for manual sync'
+        required: true
+        default: 'Manual sync to public-release branch'
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    if: github.repository == 'TuckerTucker/tkr-kanban'
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      
+      - name: Configure Git
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+      
+      - name: Create or checkout public-release branch
+        run: |
+          git fetch origin public-release || true
+          if git rev-parse --verify origin/public-release >/dev/null 2>&1; then
+            git checkout public-release
+            git pull origin public-release
+          else
+            git checkout -b public-release
+          fi
+      
+      - name: Clear branch for clean sync
+        run: |
+          git rm -rf .
+          mkdir -p .github/workflows
+          git commit -m "Clear branch for public release sync" || true
+      
+      - name: Copy core files
+        run: |
+          # Copy application code
+          git checkout main -- app/
+          git checkout main -- server/
+          git checkout main -- package.json
+          git checkout main -- start_*
+          
+          # Copy core workflows
+          git checkout main -- .github/workflows/ci.yml
+          git checkout main -- .github/workflows/release.yml
+          
+          # Copy documentation
+          git checkout main -- README.md
+          git checkout main -- README_MCP.md
+          git checkout main -- README_CLI.md
+          git checkout main -- CODE_OF_CONDUCT.md
+          git checkout main -- CONTRIBUTING.md
+          git checkout main -- LICENSE.md
+          
+          # Copy configuration templates
+          git checkout main -- config/
+          
+          # Copy examples, tests, docs directories
+          git checkout main -- tests/
+          git checkout main -- docs/
+          git checkout main -- releases/
+          git checkout main -- tutorials/
+          
+          # Create placeholder directories
+          mkdir -p boards webhooks
+          touch boards/.gitkeep webhooks/.gitkeep
+          
+          # Copy example board if it exists
+          git checkout main -- boards/_kanban_example.json || true
+          
+          # Add .gitignore
+          cat > .gitignore << EOF
+          # Node modules
+          node_modules/
+          
+          # Personal boards
+          boards/*.json
+          !boards/_kanban_example.json
+          
+          # Webhook configurations
+          webhooks/*.json
+          
+          # Environment variables
+          .env
+          .env.*
+          
+          # IDE files
+          .vscode/
+          .idea/
+          *.sublime-*
+          
+          # OS files
+          .DS_Store
+          Thumbs.db
+          
+          # Logs
+          logs/
+          *.log
+          npm-debug.log*
+          
+          # Coverage
+          coverage/
+          
+          # Build artifacts
+          dist/
+          build/
+          EOF
+          
+          git add .
+          git commit -m "${{ github.event.inputs.message || 'Sync public-release branch with latest main branch changes' }}" || true
+      
+      - name: Push changes
+        run: git push origin public-release

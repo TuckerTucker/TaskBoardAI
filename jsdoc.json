@@ -29,7 +29,7 @@
     "monospaceLinks": false,
     "better-docs": {
       "name": "TaskBoardAI Documentation",
-      "logo": "img/favicon.png",
+      "logo": "app/public/favicon.png",
       "title": "TaskBoardAI API Docs",
       "css": "style.css",
       "hideGenerator": true,
