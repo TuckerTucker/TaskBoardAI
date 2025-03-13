@@ -1,10 +1,7 @@
-# System
-.DS_Store
-
 # Project
 node_modules
 package-lock.json
-
+.gitignore
 
 # Documentation
 docs/api/*
@@ -40,4 +37,12 @@ build/
 
 # Test Coverage
 /coverage/
+
+# Agents
+.windsurfrules
+CLAUDE.md 
+
+# Project files
+_archive
+_oss_plan
 
