@@ -24,7 +24,7 @@ const { ensureBoardsDir, ensureConfigDir, ensureWebhooksDir } = require('./utils
 
 /**
  * Express application instance
- * @type {import('express').Application}
+ * @type {Object}
  */
 const app = express();
 
@@ -48,8 +48,8 @@ app.use('/api', webhookRoutes);
  * @name get/*
  * @function
  * @memberof module:server
- * @param {import('express').Request} req - Express request object
- * @param {import('express').Response} res - Express response object
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
  */
 app.get('*', (req, res) => {
     res.sendFile(path.join(config.appDir, 'index.html'));
