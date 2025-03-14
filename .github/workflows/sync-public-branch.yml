@@ -115,11 +115,11 @@ jobs:
           git add .
           git commit -m "${{ github.event.inputs.message || 'Sync public-release branch with latest main branch changes' }}" || true
       
-      - name: Add public remote
+      - name: Add public remote with token
         run: |
           git remote -v
           git remote remove public || true
-          git remote add public https://github.com/TuckerTucker/TaskBoardAI.git
+          git remote add public https://${{ secrets.REPO_ACCESS_TOKEN }}@github.com/TuckerTucker/TaskBoardAI.git
           git remote -v
       
       - name: Push changes
