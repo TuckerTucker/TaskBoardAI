@@ -5,10 +5,10 @@
     --header-bg: #242424;
     
     /* Column Colors */
-    --column-todo-bg: #2d333b;
-    --column-doing-bg: #2d3b33;
-    --column-review-bg: #3b332d;
-    --column-done-bg: #33372d;
+    --column-todo-bg: #0066ff44;
+    --column-doing-bg: #66ff9944;
+    --column-review-bg: #ff991144;
+    --column-done-bg: #66666644;
     --column-header-bg: rgba(0, 0, 0, 0.2);
     --column-header-hover-bg: rgba(0, 0, 0, 0.3);
     --column-scrollbar: rgba(255, 255, 255, 0.1);
@@ -26,8 +26,8 @@
     
     /* Text Colors */
     --text-primary: #ffffff;
-    --text-secondary: #a0a0a0;
-    --text-tertiary: #707070;
+    --text-secondary: #cccccc;
+    --text-tertiary: #909090;
     
     /* Button Colors */
     --button-primary: #4a9eff;

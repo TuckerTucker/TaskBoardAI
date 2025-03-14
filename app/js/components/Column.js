@@ -9,7 +9,7 @@ import { Card } from './Card.js';
 const COLUMN_TYPES = {
     TODO: ['todo', 'to do', 'backlog', 'pending', 'new'],
     DOING: ['doing', 'in progress', 'working', 'active'],
-    REVIEW: ['review', 'testing', 'qa', 'verify'],
+    REVIEW: ['review', 'testing', 'qa', 'verify', 'on hold', 'blocked'],
     DONE: ['done', 'complete', 'finished', 'completed']
 };
 
