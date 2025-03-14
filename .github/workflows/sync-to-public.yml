@@ -1,12 +1,12 @@
-name: Sync Public Branch
+name: Sync to Public Repository
 
 on:
   workflow_dispatch:
     inputs:
       message:
-        description: 'Reason for manual sync'
+        description: 'Reason for manual sync to public repository'
         required: true
-        default: 'Manual sync to public-release branch'
+        default: 'Sync private repository to public repository'
 
 permissions:
   contents: write
@@ -25,14 +25,14 @@ jobs:
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
       
-      - name: Create or checkout public-release branch
+      - name: Create or checkout public-content branch
         run: |
-          git fetch origin public-release || true
-          if git rev-parse --verify origin/public-release >/dev/null 2>&1; then
-            git checkout public-release
-            git pull origin public-release
+          git fetch origin public-content || true
+          if git rev-parse --verify origin/public-content >/dev/null 2>&1; then
+            git checkout public-content
+            git pull origin public-content
           else
-            git checkout -b public-release
+            git checkout -b public-content
           fi
       
       - name: Clear branch for clean sync
@@ -143,5 +143,6 @@ jobs:
       - name: Push changes
         run: |
           echo "Pushing to public remote using SSH..."
-          git push -f public public-release
+          # Push local public-content branch to public/main
+          git push -f public public-content:main
           echo "Push completed"
