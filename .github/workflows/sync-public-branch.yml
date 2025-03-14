@@ -11,7 +11,7 @@ on:
 jobs:
   sync:
     runs-on: ubuntu-latest
-    if: github.repository == 'TuckerTucker/TaskBoardAI'
+    if: github.repository == 'TuckerTucker/tkr-kanban'
     steps:
       - uses: actions/checkout@v4
         with:
