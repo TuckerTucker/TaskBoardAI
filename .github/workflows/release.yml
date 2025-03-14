@@ -46,7 +46,7 @@ jobs:
           echo "See the [README.md](../README.md) for installation and usage instructions." >> releases/${VERSION}.md
       
       - name: Save artifacts locally
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: release-artifacts
           path: |
