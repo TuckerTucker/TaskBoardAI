@@ -8,6 +8,9 @@ on:
         required: true
         default: 'Manual sync to public-release branch'
 
+permissions:
+  contents: write
+
 jobs:
   sync:
     runs-on: ubuntu-latest
