@@ -21,6 +21,7 @@ jobs:
       
       - run: npm ci
       - run: npm test
+      - run: npm run test:coverage
       
       - name: Create Release
         id: create_release
@@ -44,101 +45,10 @@ jobs:
           echo "## Getting Started" >> releases/${VERSION}.md
           echo "See the [README.md](../README.md) for installation and usage instructions." >> releases/${VERSION}.md
       
-      - name: Upload Release Notes
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Save artifacts locally
+        uses: actions/upload-artifact@v3
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./releases/${{ github.ref_name }}.md
-          asset_name: release-notes.md
-          asset_content_type: text/markdown
-          
-      - name: Generate Versioned Documentation
-        run: |
-          # Extract version without 'v' prefix
-          VERSION=${GITHUB_REF#refs/tags/v}
-          
-          # Generate docs
-          npm run docs
-          
-          # Create version-specific directory structure
-          mkdir -p docs/versioned
-          cp -r docs/api docs/versioned/$VERSION
-          
-          # Update latest version pointer
-          echo $VERSION > docs/latest-version.txt
-          mkdir -p docs/latest
-          cp -r docs/api/* docs/latest/
-          
-          # Create version index
-          echo "# TaskBoardAI Documentation Versions" > docs/versions.md
-          echo "" >> docs/versions.md
-          echo "## Latest Version" >> docs/versions.md
-          echo "- [v$VERSION (latest)](/latest/)" >> docs/versions.md
-          echo "" >> docs/versions.md
-          echo "## All Versions" >> docs/versions.md
-          
-          # Add this version
-          echo "- [v$VERSION](/versioned/$VERSION/)" >> docs/versions.md
-          
-          # Add previous versions if the gh-pages branch exists and has versioned docs
-          if git ls-remote --heads origin gh-pages 2>/dev/null | grep -q refs/heads/gh-pages; then
-            echo "gh-pages branch exists, fetching previous versions..."
-            git fetch origin gh-pages:gh-pages-temp
-            if [ -f gh-pages-temp/versions.md ]; then
-              # Extract previous versions and append
-              grep -oP '- \[v\K[0-9]+\.[0-9]+\.[0-9]+(?=\].*)' gh-pages-temp/versions.md | 
-              grep -v "$VERSION" | 
-              sort -rV | 
-              while read v; do 
-                echo "- [v$v](/versioned/$v/)" >> docs/versions.md
-              done
-            fi
-            git branch -D gh-pages-temp || true
-          else
-            echo "gh-pages branch does not exist yet, this is the first release with docs"
-          fi
-          
-          # Create root index.html with redirect to latest
-          cat > docs/index.html << EOF
-          <!DOCTYPE html>
-          <html>
-            <head>
-              <meta charset="utf-8">
-              <title>TaskBoardAI Documentation</title>
-              <meta http-equiv="refresh" content="0; url=./latest/">
-              <style>
-                body {
-                  font-family: sans-serif;
-                  margin: 2em;
-                  text-align: center;
-                }
-                .container {
-                  max-width: 600px;
-                  margin: 0 auto;
-                }
-              </style>
-            </head>
-            <body>
-              <div class="container">
-                <h1>TaskBoardAI Documentation</h1>
-                <p>Redirecting to the latest version...</p>
-                <p>If you are not redirected, <a href="./latest/">click here</a>.</p>
-                <p>For other versions, see the <a href="./versions.md">versions list</a>.</p>
-              </div>
-            </body>
-          </html>
-          EOF
-        
-      - name: Deploy Documentation to GitHub Pages
-        uses: JamesIves/github-pages-deploy-action@v4
-        with:
-          folder: docs
-          branch: gh-pages
-          commit-message: "Deploy documentation for ${{ github.ref_name }}"
-          
-      # Only uncomment if you want to publish to NPM
-      # - run: npm publish
-      #   env:
-      #     NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          name: release-artifacts
+          path: |
+            ./releases/${{ github.ref_name }}.md
+            ./coverage/

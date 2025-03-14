@@ -55,23 +55,3 @@ jobs:
         with:
           name: lint-logs
           path: lint.log
-
-  docs:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Use Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20.x'
-          cache: 'npm'
-      - run: npm ci
-      - name: Generate Documentation
-        run: npm run docs 2>&1 | tee docs.log
-      - name: Upload Logs
-        uses: actions/upload-artifact@v4
-        with:
-          name: docs-logs
-          path: docs.log
-          retention-days: 30
-      # Removed GitHub Pages deployment - now handled in release workflow
