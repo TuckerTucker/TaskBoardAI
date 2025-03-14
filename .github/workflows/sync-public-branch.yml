@@ -120,11 +120,19 @@ jobs:
       
       - name: Add public remote with token
         run: |
+          echo "Setting up remote with token..."
           git remote -v
           git remote remove public || true
-          git remote add public https://${{ secrets.REPO_ACCESS_TOKEN }}@github.com/TuckerTucker/TaskBoardAI.git
+          
+          # Using token for authentication
+          echo "Adding remote with authentication..."
+          git remote add public https://x-access-token:${{ secrets.REPO_ACCESS_TOKEN }}@github.com/TuckerTucker/TaskBoardAI.git
+          
+          # Verify remote (token will be hidden in logs)
           git remote -v
       
       - name: Push changes
         run: |
-          git push public public-release
+          echo "Pushing to public remote..."
+          git push -f public public-release
+          echo "Push completed"
