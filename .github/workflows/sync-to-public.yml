@@ -115,7 +115,7 @@ jobs:
             if [ -z "$AUTO_MESSAGE" ]; then
               SYNC_MESSAGE="Sync recent changes from private repo to public repo"
             else
-              SYNC_MESSAGE="Sync changes including:\\n$AUTO_MESSAGE"
+              SYNC_MESSAGE="$AUTO_MESSAGE"
             fi
           fi
           
@@ -247,11 +247,8 @@ jobs:
             TRIGGER="automated sync"
           fi
           
-          # Add timestamp and trigger info for tracking
-          COMMIT_MSG="$COMMIT_MSG
-          
-          Synced at: $(date -u '+%Y-%m-%d %H:%M:%S UTC')
-          Triggered by: $TRIGGER"
+          # Add timestamp and trigger info for tracking with proper newlines
+          COMMIT_MSG=$(printf "%s\n\nSynced at: %s\nTriggered by: %s" "$COMMIT_MSG" "$(date -u '+%Y-%m-%d %H:%M:%S UTC')" "$TRIGGER")
           
           git commit -m "$COMMIT_MSG" || true
       
