@@ -1,6 +1,17 @@
 # TaskBoardAI
 
-A lightweight, file-based kanban board for managing tasks and projects. Features drag-and-drop cards, markdown support, subtasks, tags, dependencies, and AI integration through Claude.
+A lightweight, file-based kanban board designed for AI Agents. 
+Includes web interface for HIL collaboration. 
+
+AIX Features: 
+- JSON board files to allow for full project context
+- MCP Server for access to create/delete/update/read boards
+
+HIL Features: 
+- Drag-and-drop sorting of cards and columns
+- Add/Delete cards and columns
+- Drop down selection of available boards
+
 
 ![TaskBoardAI Screenshot](img/screenshot.png)
 
@@ -78,6 +89,7 @@ npm test -- tests/integration
 ```
 
 ### Using an External Board Location
+_*not yet supported via MCP_
 
 1. Create a new board directory anywhere on your system
 2. Copy the example board:
@@ -93,6 +105,7 @@ cp /path/to/TaskBoardAI/boards/_kanban_example.json /your/board/location/board_n
 ## Board Structure
 
 The kanban board is defined in a JSON file with the following structure:
+This allows the Agent to have full context of the project
 
 ```json
 {
@@ -127,8 +140,8 @@ The kanban board is defined in a JSON file with the following structure:
 ```
 
 ## MCP Server for AI Integration
-
-TaskBoardAI includes an MCP (Model Context Protocol) server that allows you to create and manage boards using Claude for Desktop. The MCP server has comprehensive test coverage including unit tests for individual tools and integration tests for full workflows.
+_[What Is Model Context Protocol (MCP)?](https://modelcontextprotocol.io)_ </br>
+TaskBoardAI includes an MCP (Model Context Protocol) server that allows you to create and manage boards using any tools supporting MCP (i.e. Claude Code, Cursor, Windsurf ... ). 
 
 ### Starting the MCP Server
 
@@ -142,36 +155,16 @@ Or start both the Kanban board and MCP server together:
 ./_start_all
 ```
 
-### Configure Claude for Desktop
 
-1. Edit your Claude Desktop configuration file:
-   - Mac: `~/Library/Application Support/Claude/claude_desktop_config.json`
-   - Windows: `%AppData%\Claude\claude_desktop_config.json`
+### Using with Agents
 
-2. Add the following configuration (adjust the path to match your system):
-```json
-{
-  "mcpServers": {
-    "kanban": {
-      "command": "node",
-      "args": [
-        "/path/to/TaskBoardAI/server/mcp/kanbanMcpServer.js"
-      ]
-    }
-  }
-}
-```
-
-3. Restart Claude for Desktop
-
-### Using with Claude
-
-Once configured, you can ask Claude to:
-- Create a new board: "Create a new kanban board called 'Project X'"
+Once configured, you can ask the agent to:
 - List all boards: "Show me all my kanban boards"
-- Get a specific board: "Show me the details of board with ID [board-id]"
-- Update a board: "Update this board with the following data: [board data in JSON format]"
-- Delete a board: "Delete the board with ID [board-id]"
+- Create a new board: "Create a new kanban board called 'Project X'"
+- Get a specific board by ID: "Show me the details of board with ID [board-id]"
+- Get a specific board by Name: "Show me the details of Project X"
+- Update a board: "Update the Project X board with our progress"
+- Delete a board: "Delete the Project X board"
 
 ## Webhook Integration
 
@@ -180,12 +173,6 @@ TaskBoardAI supports webhooks for integrating with other services:
 1. Create webhook configurations to trigger on events like board updates
 2. Test webhook connections through the API
 3. Receive real-time updates when changes occur on your boards
-
-## Customization
-
-- Modify board columns and structure through the Settings panel
-- Customize UI theme in the configuration
-- Add custom tags and card templates
 
 ## Contributing
 
