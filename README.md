@@ -12,17 +12,15 @@ HIL Features:
 - Add/Delete cards and columns
 - Drop down selection of available boards
 
-
-> It's important to note that there is no ai integration in this project. 
-> 
-> The board json should be served from your project dir using the CLI
-> [See 'Using an External Board Location'](#using-an-external-board-location)
->
-> or in your repo's chat using MCP 
-> [See 'Using an External Board Location'](#using-an-external-board-location)
-
-
 ![TaskBoardAI Screenshot](docs/images/taskboardai.png)
+
+
+**Note** <br>
+TaskBoardAI doesn't have it's own llm integration. <br>
+You'll want to use context of your project to update the board. <br>
+- [See 'Using an External Board Location'](#using-an-external-board-location)
+- [See 'Using MCP'](#mcp-server-for-ai-integration)
+
 
 ## Features
 
@@ -173,17 +171,12 @@ npm test -- tests/integration
 
 ## Generating Docs
 
-API documentation is automatically generated for each release and available at:
-- Latest version: https://tuckertucker.github.io/TaskBoardAI/latest/
-- Specific versions: https://tuckertucker.github.io/TaskBoardAI/versioned/[version]/
-- Version index: https://tuckertucker.github.io/TaskBoardAI/versions.md
-
-To generate documentation locally:
+To generate documentation:
 ```bash
-# Install dependencies if not already installed
+# Install dependencies (if not already installed)
 npm install
 
-# Generate docs in docs/api directory
+# Generate docs (docs/api directory)
 npm run docs
 ```
 
