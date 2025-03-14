@@ -1,6 +1,12 @@
-# Project
+# Project files
+_archive
+_oss_plan
+release.sh
 node_modules
 package-lock.json
+
+# Git
+.github
 .gitignore
 
 # Documentation
@@ -42,9 +48,4 @@ build/
 .windsurfrules
 CLAUDE.md 
 
-# Project files
-_archive
-_oss_plan
-release.sh
-.github
 
