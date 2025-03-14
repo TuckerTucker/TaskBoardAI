@@ -83,7 +83,8 @@ jobs:
           echo "- [v$VERSION](/versioned/$VERSION/)" >> docs/versions.md
           
           # Add previous versions if the gh-pages branch exists and has versioned docs
-          if git ls-remote --heads origin gh-pages > /dev/null; then
+          if git ls-remote --heads origin gh-pages 2>/dev/null | grep -q refs/heads/gh-pages; then
+            echo "gh-pages branch exists, fetching previous versions..."
             git fetch origin gh-pages:gh-pages-temp
             if [ -f gh-pages-temp/versions.md ]; then
               # Extract previous versions and append
@@ -95,6 +96,8 @@ jobs:
               done
             fi
             git branch -D gh-pages-temp || true
+          else
+            echo "gh-pages branch does not exist yet, this is the first release with docs"
           fi
           
           # Create root index.html with redirect to latest
