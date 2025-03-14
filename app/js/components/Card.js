@@ -58,9 +58,14 @@ export class Card {
         card.innerHTML = `
             <div class="card-header">
                 <h3>${this.data.title}</h3>
-                <button class="collapse-btn" title="Toggle Card">
-                    <i class="fas fa-chevron-${this.isCollapsed ? 'down' : 'up'}"></i>
-                </button>
+                <div class="card-actions">
+                    <button class="delete-card-btn" title="Delete Card">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                    <button class="collapse-btn" title="Toggle Card">
+                        <i class="fas fa-chevron-${this.isCollapsed ? 'down' : 'up'}"></i>
+                    </button>
+                </div>
             </div>
             <div class="card-content ${this.isCollapsed ? 'collapsed' : ''}">
                 <div class="description">
@@ -190,11 +195,23 @@ export class Card {
                 this.setCollapsed(!this.isCollapsed);
             });
         }
+        
+        // Delete card button
+        const deleteBtn = this.element.querySelector('.delete-card-btn');
+        if (deleteBtn) {
+            deleteBtn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (confirm('Are you sure you want to delete this card?')) {
+                    await stateManager.removeCard(this.data.id, this.columnIndex);
+                }
+            });
+        }
 
         // Double click to edit
         this.element.addEventListener('dblclick', (e) => {
-            // Don't trigger if clicking collapse button
-            if (e.target.closest('.collapse-btn')) return;
+            // Don't trigger if clicking buttons
+            if (e.target.closest('.collapse-btn') || e.target.closest('.delete-card-btn')) return;
             
             const title = prompt('Edit card title:', this.data.title);
             if (title && title !== this.data.title) {

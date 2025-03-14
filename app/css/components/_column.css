@@ -83,10 +83,14 @@
 }
 
 .column button.collapse-all-btn:hover,
-.column button.expand-all-btn:hover,
-.column button.delete-column-btn:hover {
+.column button.expand-all-btn:hover {
     background: var(--overlay-light);
     color: var(--text-primary);
+}
+
+.column button.delete-column-btn:hover {
+    background: var(--overlay-light);
+    color: var(--btn-danger, #dc3545);
 }
 
 .column button.collapse-all-btn i,

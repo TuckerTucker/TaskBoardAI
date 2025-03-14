@@ -64,14 +64,14 @@ export class Column {
             <div class="column-header">
                 <h2>${this.data.name}</h2>
                 <div class="column-actions">
+                    <button class="delete-column-btn" title="Delete Column">
+                        <i class="fas fa-trash"></i>
+                    </button>
                     <button class="collapse-all-btn" title="Collapse All Cards">
                         <i class="fas fa-circle-chevron-up"></i>
                     </button>
                     <button class="expand-all-btn" title="Expand All Cards">
                         <i class="fas fa-circle-chevron-down"></i>
-                    </button>
-                    <button class="delete-column-btn" title="Delete Column">
-                        <i class="fas fa-trash"></i>
                     </button>
                 </div>
             </div>

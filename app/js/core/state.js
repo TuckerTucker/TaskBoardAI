@@ -230,6 +230,22 @@ class StateManager {
         
         await this.saveState();
     }
+    
+    /**
+     * Remove a card from a column
+     * @param {string} cardId - Card ID
+     * @param {number} columnIndex - Column index
+     */
+    async removeCard(cardId, columnIndex) {
+        const column = this.state.columns[columnIndex];
+        if (!column) return;
+        
+        const cardIndex = column.items.findIndex(item => item.id === cardId);
+        if (cardIndex === -1) return;
+        
+        column.items.splice(cardIndex, 1);
+        await this.saveState();
+    }
 
     /**
      * Save current state to server
