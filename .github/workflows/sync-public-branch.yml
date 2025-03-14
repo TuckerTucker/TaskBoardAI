@@ -118,21 +118,30 @@ jobs:
           git add .
           git commit -m "${{ github.event.inputs.message || 'Sync public-release branch with latest main branch changes' }}" || true
       
-      - name: Add public remote with token
+      - name: Set up SSH Deploy Key
+        uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.DEPLOY_KEY }}
+
+      - name: Add public remote with SSH
         run: |
-          echo "Setting up remote with token..."
+          echo "Setting up remote with SSH key..."
           git remote -v
           git remote remove public || true
           
-          # Using token for authentication
-          echo "Adding remote with authentication..."
-          git remote add public https://x-access-token:${{ secrets.REPO_ACCESS_TOKEN }}@github.com/TuckerTucker/TaskBoardAI.git
+          # Using SSH for authentication
+          echo "Adding remote with SSH authentication..."
+          git remote add public git@github.com:TuckerTucker/TaskBoardAI.git
           
-          # Verify remote (token will be hidden in logs)
+          # Verify remote
           git remote -v
+          
+          # Setup known hosts to avoid prompts
+          mkdir -p ~/.ssh
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
       
       - name: Push changes
         run: |
-          echo "Pushing to public remote..."
+          echo "Pushing to public remote using SSH..."
           git push -f public public-release
           echo "Push completed"
