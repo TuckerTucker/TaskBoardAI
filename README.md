@@ -22,7 +22,7 @@ HIL Features:
 > [See 'Using an External Board Location'](#using-an-external-board-location)
 
 
-![TaskBoardAI Screenshot](img/screenshot.png)
+![TaskBoardAI Screenshot](docs/images/taskboardai.png)
 
 ## Features
 
