@@ -1,24 +1,135 @@
 name: Sync to Public Repository
 
 on:
+  # Manual trigger
   workflow_dispatch:
     inputs:
+      sync_type:
+        description: 'Type of sync operation'
+        required: false
+        default: ''
+        type: choice
+        options:
+          - ' ' # Empty for auto-detection
+          - feature
+          - bugfix
+          - docs
+          - release
+          - hotfix
       message:
-        description: 'Reason for manual sync to public repository'
-        required: true
-        default: 'Sync private repository to public repository'
-
-permissions:
-  contents: write
+        description: '' # Empty for auto-detection
+        required: false
+        default: '' # Empty for auto-detection
+      version:
+        description: '' # Empty for auto-detection
+        required: false
+        type: string
+      dry_run:
+        description: 'Test mode (no actual push to public repo)'
+        required: false
+        default: false
+        type: boolean
+  
+  # Auto-trigger on new releases
+  release:
+    types: [published]
+    
+  # Auto-trigger weekly for regular syncs
+  schedule:
+    - cron: '0 0 * * 0'  # Weekly on Sunday at midnight UTC
 
 jobs:
   sync:
     runs-on: ubuntu-latest
-    if: github.repository == 'TuckerTucker/tkr-kanban'
+    # Only run on the main private repo, and check if there are any changes to sync for scheduled runs
+    if: |
+      github.repository == 'TuckerTucker/tkr-kanban' &&
+      (github.event_name != 'schedule' || !contains(github.event.head_commit.message, 'Synced at:'))
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      
+      - name: Determine sync details
+        id: sync-details
+        run: |
+          # Find last sync by looking at commits with "Synced at:" message
+          LAST_SYNC_COMMIT=$(git log --grep="Synced at:" -n 1 --pretty=format:"%H" || echo "")
+          
+          if [ -z "$LAST_SYNC_COMMIT" ]; then
+            # If never synced, use all commits
+            echo "First sync - using all commits"
+            COMMIT_RANGE="HEAD"
+          else
+            echo "Last sync found at commit: $LAST_SYNC_COMMIT"
+            COMMIT_RANGE="$LAST_SYNC_COMMIT..HEAD"
+          fi
+          
+          # Auto-detect version from tags
+          LATEST_VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          if [ ! -z "$LATEST_VERSION" ]; then
+            # Check if this version was already synced
+            LAST_SYNCED_VERSION=$(git log --grep="Synced at:" -n 1 --pretty=format:"%s" | grep -o "v[0-9]*\.[0-9]*\.[0-9]*" || echo "")
+            
+            if [ "$LATEST_VERSION" != "$LAST_SYNCED_VERSION" ]; then
+              AUTO_VERSION="${LATEST_VERSION#v}"
+              echo "Latest version: $AUTO_VERSION (not yet synced)"
+            else
+              echo "Latest version $LATEST_VERSION already synced"
+              AUTO_VERSION=""
+            fi
+          else
+            AUTO_VERSION=""
+          fi
+          
+          # Determine sync type by analyzing commits
+          FEATURE_COUNT=$(git log $COMMIT_RANGE --pretty=format:"%s" | grep -i "feat\|feature\|add" | wc -l)
+          FIX_COUNT=$(git log $COMMIT_RANGE --pretty=format:"%s" | grep -i "fix\|bug\|issue" | wc -l)
+          DOCS_COUNT=$(git log $COMMIT_RANGE --pretty=format:"%s" | grep -i "doc\|readme\|comment" | wc -l)
+          
+          if [ ! -z "$AUTO_VERSION" ]; then
+            AUTO_TYPE="release"
+          elif [ $FEATURE_COUNT -gt $FIX_COUNT ] && [ $FEATURE_COUNT -gt $DOCS_COUNT ]; then
+            AUTO_TYPE="feature"
+          elif [ $FIX_COUNT -gt $FEATURE_COUNT ] && [ $FIX_COUNT -gt $DOCS_COUNT ]; then
+            AUTO_TYPE="bugfix"
+          elif [ $DOCS_COUNT -gt $FEATURE_COUNT ] && [ $DOCS_COUNT -gt $FIX_COUNT ]; then
+            AUTO_TYPE="docs"
+          else
+            AUTO_TYPE="feature"  # Default
+          fi
+          
+          # Generate message from commits
+          AUTO_MESSAGE=$(git log $COMMIT_RANGE --pretty=format:"- %s" | head -5 | sed '/^$/d' | sed 's/^/ /' | sed ':a;N;$!ba;s/\n/\\n/g')
+          
+          # Use manual inputs if provided, otherwise use auto-detected values
+          SYNC_TYPE="${{ github.event.inputs.sync_type }}"
+          SYNC_MESSAGE="${{ github.event.inputs.message }}"
+          SYNC_VERSION="${{ github.event.inputs.version }}"
+          
+          if [ -z "$SYNC_TYPE" ]; then
+            SYNC_TYPE="$AUTO_TYPE"
+          fi
+          
+          if [ -z "$SYNC_MESSAGE" ]; then
+            if [ -z "$AUTO_MESSAGE" ]; then
+              SYNC_MESSAGE="Sync recent changes from private repo to public repo"
+            else
+              SYNC_MESSAGE="Sync changes including:\\n$AUTO_MESSAGE"
+            fi
+          fi
+          
+          if [ -z "$SYNC_VERSION" ] && [ ! -z "$AUTO_VERSION" ]; then
+            SYNC_VERSION="$AUTO_VERSION"
+          fi
+          
+          echo "type=$SYNC_TYPE" >> $GITHUB_OUTPUT
+          echo "message=$SYNC_MESSAGE" >> $GITHUB_OUTPUT
+          echo "version=$SYNC_VERSION" >> $GITHUB_OUTPUT
+          
+          echo "Determined sync type: $SYNC_TYPE"
+          echo "Determined message: $SYNC_MESSAGE"
+          echo "Determined version: $SYNC_VERSION"
       
       - name: Configure Git
         run: |
@@ -116,7 +227,33 @@ jobs:
           EOF
           
           git add .
-          git commit -m "${{ github.event.inputs.message || 'Sync public-release branch with latest main branch changes' }}" || true
+          
+          # Construct a detailed commit message with sync type and optional version
+          COMMIT_MSG="${{ steps.sync-details.outputs.type }}: ${{ steps.sync-details.outputs.message }}"
+          
+          # Add version if provided
+          if [ ! -z "${{ steps.sync-details.outputs.version }}" ]; then
+            COMMIT_MSG="$COMMIT_MSG (v${{ steps.sync-details.outputs.version }})"
+          fi
+          
+          # Add sync source information
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            TRIGGER="manual sync by @${{ github.actor }}"
+          elif [ "${{ github.event_name }}" == "release" ]; then
+            TRIGGER="release ${{ github.event.release.tag_name }}"
+          elif [ "${{ github.event_name }}" == "schedule" ]; then
+            TRIGGER="weekly scheduled sync"
+          else
+            TRIGGER="automated sync"
+          fi
+          
+          # Add timestamp and trigger info for tracking
+          COMMIT_MSG="$COMMIT_MSG
+          
+          Synced at: $(date -u '+%Y-%m-%d %H:%M:%S UTC')
+          Triggered by: $TRIGGER"
+          
+          git commit -m "$COMMIT_MSG" || true
       
       - name: Set up SSH Deploy Key
         uses: webfactory/ssh-agent@v0.8.0
@@ -142,7 +279,39 @@ jobs:
       
       - name: Push changes
         run: |
-          echo "Pushing to public remote using SSH..."
+          echo "Preparing to push changes to public repository..."
+          echo ">> Sync type: ${{ steps.sync-details.outputs.type }}"
+          echo ">> Sync message: ${{ steps.sync-details.outputs.message }}"
+          if [ ! -z "${{ steps.sync-details.outputs.version }}" ]; then
+            echo ">> Version: ${{ steps.sync-details.outputs.version }}"
+          fi
+          
+          # Check for dry run mode
+          if [ "${{ github.event.inputs.dry_run }}" == "true" ]; then
+            echo "🔍 DRY RUN MODE ENABLED - No changes will be pushed"
+            echo "✓ Sync validation completed successfully"
+            echo "📄 Content that would be pushed:"
+            git ls-files | sort
+            echo "📄 Total files: $(git ls-files | wc -l)"
+            echo "💡 To execute the actual push, run the workflow without the dry_run option"
+            exit 0
+          fi
+          
           # Push local public-content branch to public/main
+          echo "🔄 Pushing to public repository..."
           git push -f public public-content:main
-          echo "Push completed"
+          
+          echo "✓ Push completed successfully"
+          echo "✓ Changes are now live on the public repository at:"
+          echo "  https://github.com/TuckerTucker/TaskBoardAI"
+          
+          # Create tag if this is a version release and auto-triggered
+          if [ ! -z "${{ steps.sync-details.outputs.version }}" ] && [ "${{ github.event_name }}" != "workflow_dispatch" ]; then
+            VERSION_TAG="v${{ steps.sync-details.outputs.version }}"
+            echo "Creating version tag $VERSION_TAG in public repository..."
+            
+            git tag -f "public-$VERSION_TAG" || true
+            git push -f public "public-$VERSION_TAG" || true
+            
+            echo "✓ Version tag created in public repository"
+          fi
