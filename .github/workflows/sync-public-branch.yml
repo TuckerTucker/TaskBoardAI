@@ -11,7 +11,7 @@ on:
 jobs:
   sync:
     runs-on: ubuntu-latest
-    if: github.repository == 'TuckerTucker/tkr-kanban'
+    if: github.repository == 'TuckerTucker/TaskBoardAI'
     steps:
       - uses: actions/checkout@v4
         with:
@@ -116,4 +116,4 @@ jobs:
           git commit -m "${{ github.event.inputs.message || 'Sync public-release branch with latest main branch changes' }}" || true
       
       - name: Push changes
-        run: git push origin public-release
+        run: git push public public-release
