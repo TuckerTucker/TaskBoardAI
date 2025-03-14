@@ -75,7 +75,7 @@ export class Column {
                     </button>
                 </div>
             </div>
-            <button class="add-card-btn">+ Add Card</button>
+            <!-- button class="add-card-btn">+ Add Card</button -->
             <div class="cards"></div>
         `;
 
@@ -130,7 +130,10 @@ export class Column {
     /**
      * Setup event listeners for the column
      */
+
+    
     setupEventListeners() {
+        /**
         // Add card button
         const addCardBtn = this.element.querySelector('.add-card-btn');
         addCardBtn.addEventListener('click', async () => {
@@ -143,8 +146,9 @@ export class Column {
                     tags: []
                 });
             }
-        });
-
+            
+        });*/
+        
         // Delete column button
         const deleteBtn = this.element.querySelector('.delete-column-btn');
         deleteBtn.addEventListener('click', async () => {
@@ -165,7 +169,7 @@ export class Column {
             this.setAllCardsCollapsed(false);
         });
         
-        // Column edit on double click
+        // Column Title edit on double click
         this.element.querySelector('.column-header h2').addEventListener('dblclick', (e) => {
             const newName = prompt('Enter column name:', this.data.name);
             if (newName && newName !== this.data.name) {
