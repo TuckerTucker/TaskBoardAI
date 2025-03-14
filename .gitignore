@@ -4,13 +4,12 @@
 # Project
 node_modules
 
-
 # Documentation
 docs/api/*
 !docs/api/README.md
 
 # Boards
-boards
+boards/*
 !boards/_kanban_example*
 
 # Test Coverage

@@ -8,7 +8,7 @@ docs/api/*
 !docs/api/README.md
 
 # Boards
-boards
+boards/*
 !boards/_kanban_example*
 
 # Test Coverage
