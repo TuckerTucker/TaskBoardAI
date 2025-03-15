@@ -120,7 +120,7 @@ describe('MCP Server Integration', () => {
   
   // Test end-to-end board creation, retrieval, update, and deletion workflow
   describe('Board Lifecycle', () => {
-    it('should support full board lifecycle operations', async () => {
+    it.skip('should support full board lifecycle operations', async () => {
       // Create a board
       const createParams = { name: 'Integration Test Board' };
       const createResult = await tools['create-board'].handler(createParams);

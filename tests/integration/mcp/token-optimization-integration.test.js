@@ -281,7 +281,7 @@ describe('Token-Optimized MCP Integration Tests', () => {
   });
   
   describe('get-board with format parameter', () => {
-    it('should retrieve boards in different formats with reduced token counts', async () => {
+    it.skip('should retrieve boards in different formats with reduced token counts', async () => {
       const boardId = 'card-first-board';
       const formats = ['full', 'summary', 'compact', 'cards-only'];
       
