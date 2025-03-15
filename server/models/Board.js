@@ -25,19 +25,23 @@ const { ensureBoardsDir } = require('../utils/fileSystem');
  * @typedef {Object} BoardColumn
  * @property {string} id - Unique identifier for the column
  * @property {string} name - Display name of the column
- * @property {Array<BoardItem>} items - Array of items in this column
  */
 
 /**
- * @typedef {Object} BoardItem
- * @property {string} id - Unique identifier for the item
- * @property {string} title - Title of the item
- * @property {string} [content] - Markdown content for the item
- * @property {boolean} [collapsed=false] - Whether the item is collapsed
+ * @typedef {Object} BoardCard
+ * @property {string} id - Unique identifier for the card
+ * @property {string} title - Title of the card
+ * @property {string} [content] - Markdown content for the card description
+ * @property {string} columnId - ID of the column this card belongs to
+ * @property {number} position - Position within the column (0-indexed)
+ * @property {boolean} [collapsed=false] - Whether the card is collapsed
  * @property {Array<string>} [subtasks] - List of subtasks
  * @property {Array<string>} [tags] - List of tags
- * @property {Array<string>} [dependencies] - List of dependent item IDs
- * @property {string} [completed_at] - ISO timestamp when item was completed
+ * @property {Array<string>} [dependencies] - List of dependent card IDs
+ * @property {string} [created_at] - ISO timestamp when card was created
+ * @property {string} [updated_at] - ISO timestamp of last card update
+ * @property {string} [completed_at] - ISO timestamp when card was completed
+ * @property {string} [blocked_at] - ISO timestamp when card was blocked
  */
 
 /**
@@ -171,20 +175,41 @@ class Board {
         // Update last_updated timestamp
         this.data.last_updated = new Date().toISOString();
 
-        // Handle completion timestamps
-        if (this.data.columns) {
-            for (const column of this.data.columns) {
-                if (column.name.toLowerCase() === 'done') {
-                    for (const item of column.items) {
-                        if (!item.completed_at) {
-                            item.completed_at = new Date().toISOString();
-                        }
+        // Handle completion timestamps for card-first architecture
+        if (this.data.columns && this.data.cards) {
+            const doneColumns = this.data.columns
+                .filter(column => column.name.toLowerCase() === 'done')
+                .map(column => column.id);
+                
+            for (const card of this.data.cards) {
+                if (doneColumns.includes(card.columnId)) {
+                    // Set completed_at timestamp if card is in a Done column
+                    if (!card.completed_at) {
+                        card.completed_at = new Date().toISOString();
                     }
                 } else {
-                    // Remove completion timestamp if moved out of Done
-                    for (const item of column.items) {
-                        // Set to null instead of using delete operator
-                        item.completed_at = null;
+                    // Remove completion timestamp if not in a Done column
+                    card.completed_at = null;
+                }
+            }
+        }
+        
+        // Legacy support for column-based architecture
+        if (this.data.columns && !this.data.cards) {
+            for (const column of this.data.columns) {
+                if (column.items && Array.isArray(column.items)) {
+                    if (column.name.toLowerCase() === 'done') {
+                        for (const item of column.items) {
+                            if (!item.completed_at) {
+                                item.completed_at = new Date().toISOString();
+                            }
+                        }
+                    } else {
+                        // Remove completion timestamp if moved out of Done
+                        for (const item of column.items) {
+                            // Set to null instead of using delete operator
+                            item.completed_at = null;
+                        }
                     }
                 }
             }
@@ -265,7 +290,7 @@ class Board {
      * @returns {boolean} True if the board data is valid
      */
     validate() {
-        return (
+        const basicValidation = (
             this.data &&
             typeof this.data === 'object' &&
             typeof this.data.projectName === 'string' &&
@@ -275,6 +300,14 @@ class Board {
             (this.data.description === undefined || typeof this.data.description === 'string') &&
             (this.data.last_updated === undefined || !Number.isNaN(new Date(this.data.last_updated).getTime()))
         );
+        
+        // Check if it's using the card-first architecture
+        if (Array.isArray(this.data.cards)) {
+            return basicValidation && this.data.cards.every(Board.validateItem);
+        }
+        
+        // Legacy column-based architecture
+        return basicValidation;
     }
 
     /**
@@ -283,6 +316,15 @@ class Board {
      * @returns {boolean} True if the column is valid
      */
     validateColumn(column) {
+        // For card-first architecture
+        if (column &&
+            typeof column === 'object' &&
+            typeof column.id === 'string' &&
+            typeof column.name === 'string') {
+            return true;
+        }
+        
+        // Legacy support for column-based architecture
         return (
             column &&
             typeof column === 'object' &&
@@ -296,7 +338,7 @@ class Board {
     /**
      * Validate a board item object
      * @static
-     * @param {BoardItem} item - The item to validate
+     * @param {BoardItem|BoardCard} item - The item/card to validate
      * @returns {boolean} True if the item is valid
      */
     static validateItem(item) {
@@ -308,8 +350,21 @@ class Board {
         // Content/description validation
         if (item.content && typeof item.content !== 'string') return false;
         if (item.description && typeof item.description !== 'string') return false;
+        
+        // Card-first architecture specific fields
+        if (item.columnId !== undefined && typeof item.columnId !== 'string') return false;
+        if (item.position !== undefined && typeof item.position !== 'number') return false;
+        
+        // Timestamp validations
+        const timestampFields = ['created_at', 'updated_at', 'completed_at', 'blocked_at'];
+        for (const field of timestampFields) {
+            if (item[field] !== undefined && item[field] !== null) {
+                const timestamp = new Date(item[field]);
+                if (Number.isNaN(timestamp.getTime())) return false;
+            }
+        }
 
-        // V2.1 fields validation
+        // Array fields validation
         if (item.subtasks !== undefined) {
             if (!Array.isArray(item.subtasks)) return false;
             if (!item.subtasks.every(task => typeof task === 'string')) return false;
@@ -323,11 +378,6 @@ class Board {
         if (item.dependencies !== undefined) {
             if (!Array.isArray(item.dependencies)) return false;
             if (!item.dependencies.every(dep => typeof dep === 'string')) return false;
-        }
-
-        if (item.completed_at !== undefined) {
-            const timestamp = new Date(item.completed_at);
-            if (Number.isNaN(timestamp.getTime())) return false;
         }
 
         return true;

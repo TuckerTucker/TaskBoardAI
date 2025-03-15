@@ -87,11 +87,24 @@ describe('Board Routes', () => {
   });
   
   describe('PUT /api/boards', () => {
-    it('should update a board', async () => {
+    it('should update a board with card-first architecture', async () => {
       const boardData = {
         id: 'board123',
         projectName: 'Updated Board',
-        columns: []
+        columns: [
+          {
+            id: 'col1',
+            name: 'To Do'
+          }
+        ],
+        cards: [
+          {
+            id: 'card1',
+            title: 'Task 1',
+            columnId: 'col1',
+            position: 0
+          }
+        ]
       };
       
       const response = await request(app)
@@ -118,10 +131,27 @@ describe('Board Routes', () => {
   });
   
   describe('POST /api/boards/import', () => {
-    it('should import a board', async () => {
+    it('should import a board with card-first architecture', async () => {
       const boardData = {
         projectName: 'Imported Board',
-        columns: []
+        columns: [
+          {
+            id: 'col1',
+            name: 'To Do'
+          }
+        ],
+        cards: [
+          {
+            id: 'card1',
+            title: 'Task 1',
+            content: 'Task description',
+            columnId: 'col1',
+            position: 0,
+            collapsed: false,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }
+        ]
       };
       
       const response = await request(app)

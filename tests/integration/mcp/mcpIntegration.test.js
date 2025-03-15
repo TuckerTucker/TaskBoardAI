@@ -154,14 +154,18 @@ describe('MCP Server Integration', () => {
         columns: [
           {
             id: 'col1',
-            name: 'To Do',
-            items: [
-              {
-                id: 'item1',
-                title: 'Test Task',
-                content: 'This is a test task'
-              }
-            ]
+            name: 'To Do'
+          }
+        ],
+        cards: [
+          {
+            id: 'item1',
+            title: 'Test Task',
+            content: 'This is a test task',
+            columnId: 'col1',
+            position: 0,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
           }
         ]
       };
@@ -176,7 +180,8 @@ describe('MCP Server Integration', () => {
       const updatedRetrievedBoard = JSON.parse(getUpdatedResult.content[0].text);
       expect(updatedRetrievedBoard).toHaveProperty('projectName', 'Updated Integration Test Board');
       expect(updatedRetrievedBoard.columns).toHaveLength(1);
-      expect(updatedRetrievedBoard.columns[0].items).toHaveLength(1);
+      expect(updatedRetrievedBoard.cards).toHaveLength(1);
+      expect(updatedRetrievedBoard.cards[0].columnId).toBe('col1');
       
       // Delete the board
       const deleteResult = await tools['delete-board'].handler({ boardId });

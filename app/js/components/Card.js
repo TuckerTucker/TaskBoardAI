@@ -38,11 +38,8 @@ export class Card {
      * @returns {string} Card title or empty string if not found
      */
     getDependencyTitle(id) {
-        for (const column of stateManager.getState().columns) {
-            const card = column.items.find(item => item.id === id);
-            if (card) return card.title;
-        }
-        return '';
+        const card = stateManager.getState().cards?.find(card => card.id === id);
+        return card ? card.title : '';
     }
 
     /**
@@ -171,14 +168,10 @@ export class Card {
         }
 
         // Find and update the card in the state
-        const columns = stateManager.getState().columns;
-        const column = columns[this.columnIndex];
-        if (column) {
-            const cardIndex = column.items.findIndex(item => item.id === this.data.id);
-            if (cardIndex !== -1) {
-                column.items[cardIndex].collapsed = collapsed;
-                stateManager.saveState();  // Persist the change
-            }
+        const cardIndex = stateManager.getState().cards.findIndex(card => card.id === this.data.id);
+        if (cardIndex !== -1) {
+            stateManager.getState().cards[cardIndex].collapsed = collapsed;
+            stateManager.saveState();  // Persist the change
         }
     }
 

@@ -21,12 +21,14 @@ class StateManager {
          * Application state object
          * @type {Object}
          * @property {string} projectName - Name of the board project
-         * @property {Array<Column>} columns - Columns in the board
+         * @property {Array<Column>} columns - Column definitions in the board
+         * @property {Array<Card>} cards - All cards in the board
          * @property {boolean} isDragging - Whether a drag operation is in progress
          */
         this.state = {
             projectName: 'My Kanban Board',
             columns: [],
+            cards: [],
             isDragging: false
         };
         
@@ -49,40 +51,89 @@ class StateManager {
                 ...data,
                 isDragging: false
             };
+            
+            // If using legacy format (cards nested in columns), convert to new format
+            if (this.state.columns && !this.state.cards) {
+                this.convertToCardFirst(this.state);
+            }
+            
             this.notifyListeners();
         } catch (error) {
             console.error('Failed to initialize state:', error);
-            // Create default columns if loading fails
+            // Create default columns and cards if loading fails
             if (this.state.columns.length === 0) {
                 this.state.columns = [
                     {
                         id: this.generateUUID(),
-                        name: 'To Do',
-                        items: [{
-                            id: this.generateUUID(),
-                            title: 'Welcome!',
-                            description: '# Welcome to the Enhanced Kanban Board\n\nThis board supports:\n- Markdown formatting\n- Subtasks\n- Tags\n- Dependencies\n- Completion tracking',
-                            collapsed: false,
-                            subtasks: [
-                                'Try adding a new card',
-                                'Try moving cards between columns',
-                                'Try using markdown in descriptions'
-                            ],
-                            tags: ['example', 'welcome']
-                        }]
+                        name: 'To Do'
                     },
                     {
                         id: this.generateUUID(),
-                        name: 'Doing',
-                        items: []
+                        name: 'Doing'
                     },
                     {
                         id: this.generateUUID(),
-                        name: 'Done',
-                        items: []
+                        name: 'Done'
                     }
                 ];
+                
+                const todoColumnId = this.state.columns[0].id;
+                this.state.cards = [{
+                    id: this.generateUUID(),
+                    title: 'Welcome!',
+                    content: '# Welcome to the Enhanced Kanban Board\n\nThis board supports:\n- Markdown formatting\n- Subtasks\n- Tags\n- Dependencies\n- Completion tracking',
+                    columnId: todoColumnId,
+                    position: 0,
+                    collapsed: false,
+                    subtasks: [
+                        'Try adding a new card',
+                        'Try moving cards between columns',
+                        'Try using markdown in descriptions'
+                    ],
+                    tags: ['example', 'welcome'],
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                }];
+                
                 this.notifyListeners();
+            }
+        }
+    }
+    
+    /**
+     * Convert legacy column-based state to card-first state
+     * @param {Object} state - State object to convert
+     * @private
+     */
+    convertToCardFirst(state) {
+        // Create cards array if it doesn't exist
+        if (!state.cards) {
+            state.cards = [];
+        }
+        
+        // Extract all cards from columns
+        if (state.columns && Array.isArray(state.columns)) {
+            for (let columnIndex = 0; columnIndex < state.columns.length; columnIndex++) {
+                const column = state.columns[columnIndex];
+                
+                if (column.items && Array.isArray(column.items)) {
+                    // Process each card in the column
+                    for (let cardIndex = 0; cardIndex < column.items.length; cardIndex++) {
+                        const card = column.items[cardIndex];
+                        
+                        // Add the card to the cards array with columnId and position
+                        state.cards.push({
+                            ...card,
+                            columnId: column.id,
+                            position: cardIndex,
+                            created_at: card.created_at || new Date().toISOString(),
+                            updated_at: card.updated_at || new Date().toISOString()
+                        });
+                    }
+                }
+                
+                // Remove items array from column
+                delete column.items;
             }
         }
     }
@@ -122,8 +173,7 @@ class StateManager {
     async addColumn(name) {
         const column = {
             id: this.generateUUID(),
-            name: name || 'New Column',
-            items: []
+            name: name || 'New Column'
         };
         this.state.columns.push(column);
         await this.saveState();
@@ -136,7 +186,14 @@ class StateManager {
      */
     async removeColumn(columnIndex) {
         if (columnIndex >= 0 && columnIndex < this.state.columns.length) {
+            const columnId = this.state.columns[columnIndex].id;
+            
+            // Remove column from columns array
             this.state.columns.splice(columnIndex, 1);
+            
+            // Find and remove cards in this column
+            this.state.cards = this.state.cards.filter(card => card.columnId !== columnId);
+            
             await this.saveState();
         }
     }
@@ -167,14 +224,24 @@ class StateManager {
      */
     async addCard(columnIndex, card) {
         if (columnIndex >= 0 && columnIndex < this.state.columns.length) {
+            const columnId = this.state.columns[columnIndex].id;
+            
+            // Calculate highest position value for this column
+            const position = this.getCardsInColumn(columnId).length;
+            
             const newCard = {
                 id: this.generateUUID(),
                 ...card,
+                columnId,
+                position,
                 collapsed: false,
                 subtasks: card.subtasks || [],
-                tags: card.tags || []
+                tags: card.tags || [],
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
             };
-            this.state.columns[columnIndex].items.push(newCard);
+            
+            this.state.cards.push(newCard);
             await this.saveState();
             return newCard;
         }
@@ -188,18 +255,48 @@ class StateManager {
      * @param {number} newIndex - New position index
      */
     async reorderCard(cardId, columnIndex, newIndex) {
-        const column = this.state.columns[columnIndex];
-        if (!column) return;
-
-        // Find the card's current index
-        const currentIndex = column.items.findIndex(item => item.id === cardId);
-        if (currentIndex === -1) return;
-
-        // Remove card from current position
-        const [card] = column.items.splice(currentIndex, 1);
+        const card = this.state.cards.find(c => c.id === cardId);
+        if (!card) return;
         
-        // Insert at new position
-        column.items.splice(newIndex, 0, card);
+        const columnId = this.state.columns[columnIndex].id;
+        const columnCards = this.getCardsInColumn(columnId);
+        
+        // Update positions for all affected cards
+        if (newIndex >= 0 && newIndex < columnCards.length) {
+            // Remove card from its current position (keeping it in the cards array)
+            const sortedCards = [...columnCards];
+            const cardToMove = sortedCards.find(c => c.id === cardId);
+            const currentIndex = sortedCards.indexOf(cardToMove);
+            
+            if (currentIndex !== -1) {
+                // Update card positions based on their new order
+                if (currentIndex < newIndex) {
+                    // Moving down: decrement positions of cards between old and new position
+                    for (let i = currentIndex + 1; i <= newIndex; i++) {
+                        const c = sortedCards[i];
+                        const cardIndex = this.state.cards.findIndex(sc => sc.id === c.id);
+                        if (cardIndex !== -1) {
+                            this.state.cards[cardIndex].position = i - 1;
+                        }
+                    }
+                } else if (currentIndex > newIndex) {
+                    // Moving up: increment positions of cards between new and old position
+                    for (let i = newIndex; i < currentIndex; i++) {
+                        const c = sortedCards[i];
+                        const cardIndex = this.state.cards.findIndex(sc => sc.id === c.id);
+                        if (cardIndex !== -1) {
+                            this.state.cards[cardIndex].position = i + 1;
+                        }
+                    }
+                }
+                
+                // Set the card's new position
+                const cardIndex = this.state.cards.findIndex(c => c.id === cardId);
+                if (cardIndex !== -1) {
+                    this.state.cards[cardIndex].position = newIndex;
+                }
+            }
+        }
         
         await this.saveState();
     }
@@ -212,39 +309,72 @@ class StateManager {
      * @param {number} newIndex - New position index (optional)
      */
     async moveCard(cardId, sourceColumnIndex, targetColumnIndex, newIndex = -1) {
-        const sourceColumn = this.state.columns[sourceColumnIndex];
-        const targetColumn = this.state.columns[targetColumnIndex];
-        
-        if (!sourceColumn || !targetColumn) return;
-
-        const cardIndex = sourceColumn.items.findIndex(item => item.id === cardId);
+        const cardIndex = this.state.cards.findIndex(card => card.id === cardId);
         if (cardIndex === -1) return;
-
-        const [card] = sourceColumn.items.splice(cardIndex, 1);
         
-        if (newIndex >= 0) {
-            targetColumn.items.splice(newIndex, 0, card);
+        // Find source and target column IDs
+        const sourceColumnId = this.state.columns[sourceColumnIndex]?.id;
+        const targetColumnId = this.state.columns[targetColumnIndex]?.id;
+        
+        if (!sourceColumnId || !targetColumnId) return;
+        
+        // Update columnId
+        this.state.cards[cardIndex].columnId = targetColumnId;
+        this.state.cards[cardIndex].updated_at = new Date().toISOString();
+        
+        // Position handling
+        const targetCards = this.getCardsInColumn(targetColumnId);
+        
+        if (targetColumnId.toLowerCase().includes('done')) {
+            // Set completed_at timestamp when moved to "Done" column
+            this.state.cards[cardIndex].completed_at = new Date().toISOString();
         } else {
-            targetColumn.items.push(card);
+            // Remove completed_at when moved out of "Done"
+            this.state.cards[cardIndex].completed_at = null;
+        }
+        
+        // Update position based on drop position
+        if (newIndex >= 0 && newIndex <= targetCards.length) {
+            // Increment positions of all cards after the insertion point
+            for (const c of this.state.cards) {
+                if (c.id !== cardId && c.columnId === targetColumnId && c.position >= newIndex) {
+                    c.position++;
+                }
+            }
+            
+            // Set card position
+            this.state.cards[cardIndex].position = newIndex;
+        } else {
+            // Add to the end
+            this.state.cards[cardIndex].position = targetCards.length;
         }
         
         await this.saveState();
     }
     
     /**
-     * Remove a card from a column
+     * Remove a card
      * @param {string} cardId - Card ID
-     * @param {number} columnIndex - Column index
+     * @param {number} columnIndex - Column index (for backwards compatibility)
      */
     async removeCard(cardId, columnIndex) {
-        const column = this.state.columns[columnIndex];
-        if (!column) return;
-        
-        const cardIndex = column.items.findIndex(item => item.id === cardId);
+        const cardIndex = this.state.cards.findIndex(card => card.id === cardId);
         if (cardIndex === -1) return;
         
-        column.items.splice(cardIndex, 1);
+        // Remove the card
+        this.state.cards.splice(cardIndex, 1);
         await this.saveState();
+    }
+    
+    /**
+     * Get cards in a specific column, sorted by position
+     * @param {string} columnId - Column ID
+     * @returns {Array} Array of cards in the column
+     */
+    getCardsInColumn(columnId) {
+        return this.state.cards
+            .filter(card => card.columnId === columnId)
+            .sort((a, b) => a.position - b.position);
     }
 
     /**
@@ -272,6 +402,12 @@ class StateManager {
           ...boardNameOrData,
           isDragging: false
         };
+        
+        // Convert to card-first if using legacy format
+        if (this.state.columns && !this.state.cards) {
+            this.convertToCardFirst(this.state);
+        }
+        
         this.notifyListeners();
         return boardNameOrData;
       }
@@ -290,6 +426,12 @@ class StateManager {
             ...data,
             isDragging: false
           };
+          
+          // Convert to card-first if using legacy format
+          if (this.state.columns && !this.state.cards) {
+              this.convertToCardFirst(this.state);
+          }
+          
           this.notifyListeners();
           return data;
         } catch (apiError) {
@@ -320,6 +462,12 @@ class StateManager {
                 ...board,
                 isDragging: false
               };
+              
+              // Convert to card-first if using legacy format
+              if (this.state.columns && !this.state.cards) {
+                  this.convertToCardFirst(this.state);
+              }
+              
               this.notifyListeners();
               return board;
             } catch (parseError) {
@@ -336,36 +484,42 @@ class StateManager {
         
         // Create a default board instead of throwing an error
         console.log('Creating default board as fallback');
+        const todoColumnId = this.generateUUID();
+        const doingColumnId = this.generateUUID();
+        const doneColumnId = this.generateUUID();
+        
         const defaultBoard = {
           projectName: boardNameOrData ? `${boardNameOrData} Board` : 'My Kanban Board',
           columns: [
             {
-              id: this.generateUUID(),
-              name: 'To Do',
-              items: [{
-                id: this.generateUUID(),
-                title: 'Welcome!',
-                description: '# Welcome to the Enhanced Kanban Board\n\nThis board supports:\n- Markdown formatting\n- Subtasks\n- Tags\n- Dependencies\n- Completion tracking',
-                collapsed: false,
-                subtasks: [
-                  'Try adding a new card',
-                  'Try moving cards between columns',
-                  'Try using markdown in descriptions'
-                ],
-                tags: ['example', 'welcome']
-              }]
+              id: todoColumnId,
+              name: 'To Do'
             },
             {
-              id: this.generateUUID(),
-              name: 'Doing',
-              items: []
+              id: doingColumnId,
+              name: 'Doing'
             },
             {
-              id: this.generateUUID(),
-              name: 'Done',
-              items: []
+              id: doneColumnId,
+              name: 'Done'
             }
-          ]
+          ],
+          cards: [{
+            id: this.generateUUID(),
+            title: 'Welcome!',
+            content: '# Welcome to the Enhanced Kanban Board\n\nThis board supports:\n- Markdown formatting\n- Subtasks\n- Tags\n- Dependencies\n- Completion tracking',
+            columnId: todoColumnId,
+            position: 0,
+            collapsed: false,
+            subtasks: [
+              'Try adding a new card',
+              'Try moving cards between columns',
+              'Try using markdown in descriptions'
+            ],
+            tags: ['example', 'welcome'],
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }]
         };
         
         this.state = {

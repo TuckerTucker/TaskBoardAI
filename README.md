@@ -88,25 +88,30 @@ This allows the Agent to have full context of the project
 ```json
 {
   "projectName": "Project Name",
+  "id": "unique-board-id",
   "columns": [
     {
       "id": "column-id",
-      "name": "Column Name",
-      "items": [
-        {
-          "id": "card-id",
-          "title": "Card Title",
-          "content": "Markdown supported content",
-          "collapsed": false,
-          "subtasks": [
-            "✓ Completed task",
-            "Pending task"
-          ],
-          "tags": ["feature", "frontend"],
-          "dependencies": ["other-card-id"],
-          "completed_at": "2025-01-19T18:12:35.604Z"
-        }
-      ]
+      "name": "Column Name"
+    }
+  ],
+  "cards": [
+    {
+      "id": "card-id",
+      "title": "Card Title",
+      "content": "Markdown supported content",
+      "columnId": "column-id",
+      "position": 0,
+      "collapsed": false,
+      "subtasks": [
+        "✓ Completed task",
+        "Pending task"
+      ],
+      "tags": ["feature", "frontend"],
+      "dependencies": ["other-card-id"],
+      "created_at": "2025-01-18T10:00:00.000Z",
+      "updated_at": "2025-01-19T12:30:00.000Z",
+      "completed_at": "2025-01-19T18:12:35.604Z"
     }
   ],
   "next-steps": [
@@ -116,6 +121,8 @@ This allows the Agent to have full context of the project
   "last_updated": "2025-01-19T19:20:14.802Z"
 }
 ```
+
+> Note: The board structure has been updated to a card-first architecture, where cards are stored in a top-level array rather than nested within columns.
 
 ## MCP Server for AI Integration
 _[What Is Model Context Protocol (MCP)?](https://modelcontextprotocol.io)_ </br>

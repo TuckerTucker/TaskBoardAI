@@ -9,14 +9,45 @@ jest.mock('node:fs', () => {
   return {
     ...originalModule,
     promises: {
-      readFile: jest.fn(),
-      writeFile: jest.fn(),
-      mkdir: jest.fn(),
-      readdir: jest.fn(),
-      access: jest.fn(),
-      unlink: jest.fn(),
+      readFile: jest.fn(() => Promise.resolve('')),
+      writeFile: jest.fn(() => Promise.resolve()),
+      mkdir: jest.fn(() => Promise.resolve()),
+      readdir: jest.fn(() => Promise.resolve([])),
+      access: jest.fn(() => Promise.resolve()),
+      unlink: jest.fn(() => Promise.resolve()),
+      mock: {
+        calls: []
+      }
     }
   };
+});
+
+// Setup mocks for each test
+beforeEach(() => {
+  // Setup fs.readFile to be mockable with mockResolvedValueOnce
+  const fs = require('node:fs').promises;
+  fs.readFile.mockResolvedValue = jest.fn((value) => {
+    return fs.readFile.mockImplementationOnce(() => Promise.resolve(value));
+  });
+  fs.readFile.mockRejectedValue = jest.fn((err) => {
+    return fs.readFile.mockImplementationOnce(() => Promise.reject(err));
+  });
+  fs.readFile.mockResolvedValueOnce = fs.readFile.mockResolvedValue;
+  fs.readFile.mockRejectedValueOnce = fs.readFile.mockRejectedValue;
+  
+  // Setup fs.writeFile to capture calls
+  fs.writeFile.mock = { calls: [] };
+  const originalWrite = fs.writeFile;
+  fs.writeFile = jest.fn((path, content) => {
+    fs.writeFile.mock.calls.push([path, content]);
+    return Promise.resolve();
+  });
+  fs.writeFile.mockResolvedValueOnce = jest.fn(() => Promise.resolve());
+  
+  // Setup fs.readdir
+  fs.readdir.mockResolvedValueOnce = jest.fn((value) => {
+    return fs.readdir.mockImplementationOnce(() => Promise.resolve(value));
+  });
 });
 
 // Mock the fileSystem utility
@@ -95,7 +126,29 @@ describe('Board Model', () => {
   });
 
   describe('validate', () => {
-    it('should return true for valid board data', () => {
+    it('should return true for valid board data with card-first architecture', () => {
+      const board = new Board({
+        projectName: 'Valid Board',
+        columns: [
+          {
+            id: 'col1',
+            name: 'To Do'
+          }
+        ],
+        cards: [
+          {
+            id: 'card1',
+            title: 'Task 1',
+            columnId: 'col1',
+            position: 0
+          }
+        ]
+      });
+      
+      expect(board.validate()).toBe(true);
+    });
+
+    it('should return true for valid legacy board data', () => {
       const board = new Board({
         projectName: 'Valid Board',
         columns: [
@@ -126,7 +179,26 @@ describe('Board Model', () => {
   });
 
   describe('validateItem', () => {
-    it('should return true for valid items', () => {
+    it('should return true for valid items in card-first architecture', () => {
+      const validItem = {
+        id: 'card1',
+        title: 'Task 1',
+        content: 'Description',
+        columnId: 'col1',
+        position: 0,
+        collapsed: true,
+        subtasks: ['Subtask 1'],
+        tags: ['Tag 1'],
+        dependencies: ['card2'],
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        completed_at: new Date().toISOString()
+      };
+      
+      expect(Board.validateItem(validItem)).toBe(true);
+    });
+    
+    it('should return true for valid items in legacy architecture', () => {
       const validItem = {
         id: 'item1',
         title: 'Task 1',
@@ -198,7 +270,7 @@ describe('Board Model', () => {
       expect(savedData.last_updated).toBeDefined();
     });
     
-    it('should handle items in "Done" column by adding completed_at timestamps', async () => {
+    it('should handle items in "Done" column by adding completed_at timestamps in legacy format', async () => {
       const board = new Board({
         id: '123',
         projectName: 'Test Board',
@@ -216,6 +288,31 @@ describe('Board Model', () => {
       await board.save();
       
       expect(board.data.columns[0].items[0].completed_at).toBeDefined();
+    });
+    
+    it('should handle cards in "Done" column by adding completed_at timestamps in card-first architecture', async () => {
+      const board = new Board({
+        id: '123',
+        projectName: 'Test Board',
+        columns: [
+          {
+            id: 'done-col',
+            name: 'Done'
+          }
+        ],
+        cards: [
+          { 
+            id: 'card1', 
+            title: 'Task 1',
+            columnId: 'done-col',
+            position: 0
+          }
+        ]
+      });
+      
+      await board.save();
+      
+      expect(board.data.cards[0].completed_at).toBeDefined();
     });
   });
 

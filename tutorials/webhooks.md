@@ -104,12 +104,14 @@ Webhook payloads follow this general structure:
   "data": {
     "boardId": "53f0aa65-635e-4b5c-852f-dba9c36c767b",
     "boardName": "Project X",
-    "columnId": "in-progress",
-    "columnName": "In Progress",
     "card": {
       "id": "task-1234",
       "title": "Implement webhook feature",
-      "tags": ["feature", "backend"]
+      "columnId": "in-progress",
+      "position": 0,
+      "tags": ["feature", "backend"],
+      "created_at": "2025-03-12T18:45:22.531Z",
+      "updated_at": "2025-03-12T18:45:22.531Z"
     }
   }
 }
@@ -126,16 +128,13 @@ Webhook payloads follow this general structure:
     "boardName": "Project X",
     "card": {
       "id": "task-1234",
-      "title": "Implement webhook feature"
+      "title": "Implement webhook feature",
+      "position": 0,
+      "updated_at": "2025-03-12T18:45:22.531Z",
+      "completed_at": "2025-03-12T18:45:22.531Z"
     },
-    "fromColumn": {
-      "id": "in-progress",
-      "name": "In Progress"
-    },
-    "toColumn": {
-      "id": "done",
-      "name": "Done"
-    }
+    "fromColumnId": "in-progress",
+    "toColumnId": "done"
   }
 }
 ```

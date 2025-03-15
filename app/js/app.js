@@ -133,8 +133,12 @@ function renderBoard() {
         const column = new Column(columnData, index);
         board.appendChild(column.render());
         
-        // Render cards for this column
-        for (const cardData of columnData.items) {
+        // Render cards for this column based on the card-first architecture
+        const columnCards = state.cards
+            .filter(card => card.columnId === columnData.id)
+            .sort((a, b) => a.position - b.position);
+        
+        for (const cardData of columnCards) {
             const card = new Card(cardData, index);
             column.addCard(card);
         }

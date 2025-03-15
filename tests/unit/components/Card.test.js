@@ -38,19 +38,21 @@ describe('Card Component', () => {
       collapsed: false
     };
     
-    // Setup mock state data
+    // Setup mock state data using card-first architecture
     mockStateData = {
       columns: [
         {
           id: 'col1',
-          name: 'To Do',
-          items: [
-            mockCardData,
-            {
-              id: 'card456',
-              title: 'Dependency Card'
-            }
-          ]
+          name: 'To Do'
+        }
+      ],
+      cards: [
+        mockCardData,
+        {
+          id: 'card456',
+          title: 'Dependency Card',
+          columnId: 'col1',
+          position: 1
         }
       ]
     };

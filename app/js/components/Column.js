@@ -117,9 +117,9 @@ export class Column {
             content.classList.toggle('collapsed', collapsed);
             
             // Update the card data in the state
-            const cardData = this.data.items.find(item => item.id === cardId);
-            if (cardData) {
-                cardData.collapsed = collapsed;
+            const cardIndex = stateManager.getState().cards.findIndex(card => card.id === cardId);
+            if (cardIndex !== -1) {
+                stateManager.getState().cards[cardIndex].collapsed = collapsed;
             }
         });
         
@@ -130,25 +130,7 @@ export class Column {
     /**
      * Setup event listeners for the column
      */
-
-    
     setupEventListeners() {
-        /**
-        // Add card button
-        const addCardBtn = this.element.querySelector('.add-card-btn');
-        addCardBtn.addEventListener('click', async () => {
-            const title = prompt('Enter card title:');
-            if (title) {
-                await stateManager.addCard(this.index, {
-                    title,
-                    description: '',
-                    subtasks: [],
-                    tags: []
-                });
-            }
-            
-        });*/
-        
         // Delete column button
         const deleteBtn = this.element.querySelector('.delete-column-btn');
         deleteBtn.addEventListener('click', async () => {
