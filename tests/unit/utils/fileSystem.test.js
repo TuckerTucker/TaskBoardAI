@@ -1,3 +1,13 @@
+// Setup the fs mock before any imports that use fs
+const { mockFs } = require('../../utils/fs-mock');
+jest.mock('node:fs', () => {
+  const originalModule = jest.requireActual('node:fs');
+  return {
+    ...originalModule,
+    promises: mockFs.promises
+  };
+});
+
 const fs = require('node:fs').promises;
 const path = require('node:path');
 const config = require('../../../server/config/config');
@@ -8,24 +18,13 @@ const {
   ensureWebhooksDir 
 } = require('../../../server/utils/fileSystem');
 
-// Mock the fs module
-jest.mock('node:fs', () => {
-  return {
-    promises: {
-      mkdir: jest.fn().mockImplementation(() => Promise.resolve())
-    }
-  };
-});
-
 describe('FileSystem Utilities', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    mockFs.reset();
   });
 
   describe('ensureDir', () => {
     it('should create directory if it does not exist', async () => {
-      fs.mkdir.mockResolvedValueOnce(undefined);
-      
       await ensureDir('/test/dir');
       
       expect(fs.mkdir).toHaveBeenCalledWith('/test/dir', { recursive: true });
@@ -53,8 +52,6 @@ describe('FileSystem Utilities', () => {
       const original = { ...config };
       Object.defineProperty(config, 'dataFile', { value: 'relative/path.json' });
       
-      fs.mkdir.mockResolvedValueOnce(undefined);
-      
       await ensureBoardsDir();
       
       expect(fs.mkdir).toHaveBeenCalledWith(config.boardsDir, { recursive: true });
@@ -67,8 +64,6 @@ describe('FileSystem Utilities', () => {
       const original = { ...config };
       Object.defineProperty(config, 'dataFile', { value: '/absolute/path/file.json' });
       
-      fs.mkdir.mockResolvedValueOnce(undefined);
-      
       await ensureBoardsDir();
       
       expect(fs.mkdir).toHaveBeenCalledWith('/absolute/path', { recursive: true });
@@ -80,8 +75,6 @@ describe('FileSystem Utilities', () => {
 
   describe('ensureConfigDir', () => {
     it('should call ensureDir with the correct path', async () => {
-      fs.mkdir.mockResolvedValueOnce(undefined);
-      
       await ensureConfigDir();
       
       expect(fs.mkdir).toHaveBeenCalledWith(
@@ -93,8 +86,6 @@ describe('FileSystem Utilities', () => {
 
   describe('ensureWebhooksDir', () => {
     it('should call ensureDir with the webhooks directory path', async () => {
-      fs.mkdir.mockResolvedValueOnce(undefined);
-      
       await ensureWebhooksDir();
       
       expect(fs.mkdir).toHaveBeenCalledWith(config.webhooksDir, { recursive: true });

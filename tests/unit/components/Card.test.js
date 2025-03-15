@@ -2,6 +2,8 @@
  * @jest-environment jsdom
  */
 
+// Setup mocks before requiring any modules
+
 // Mock the state manager
 jest.mock('../../../app/js/core/state.js', () => ({
   stateManager: {
@@ -16,8 +18,16 @@ global.marked = {
   parse: jest.fn(text => `<p>${text}</p>`)
 };
 
-import { Card } from '../../../app/js/components/Card.js';
-import { stateManager } from '../../../app/js/core/state.js';
+// Convert ES modules to CommonJS for testing
+jest.mock('../../../app/js/components/Card.js', () => {
+  const actual = jest.requireActual('../../../app/js/components/Card.js');
+  return {
+    Card: actual.Card
+  };
+});
+
+const { Card } = require('../../../app/js/components/Card.js');
+const { stateManager } = require('../../../app/js/core/state.js');
 
 describe('Card Component', () => {
   let mockCardData;

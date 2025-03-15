@@ -25,10 +25,22 @@ module.exports = {
     '/_archive/',
     // Temporarily ignore failing tests during initial setup
     'tests/unit/controllers/boardController.test.js',
-    'tests/unit/utils/fileSystem.test.js',
-    'tests/unit/models/Board.test.js',
-    'tests/integration/routes/boardRoutes.test.js',
-    'tests/unit/components/Card.test.js'
+    // 'tests/unit/utils/fileSystem.test.js', // Re-enabled after fixing mocking framework
+    // 'tests/unit/models/Board.test.js', // Re-enabled after fixing mocking framework
+    // 'tests/unit/components/Card.test.js', // Re-enabled after fixing module format
+    'tests/integration/routes/boardRoutes.test.js'
   ],
-  transform: {},
+  transform: {
+    "^.+\\.js$": "babel-jest"
+  },
+  // Setup for ES modules support
+  transformIgnorePatterns: [
+    '/node_modules/(?!(uuid)/)'
+  ],
+  // Override the default environment for component tests
+  testEnvironmentOptions: {
+    url: 'http://localhost'
+  },
+  // Setup file to run before tests
+  setupFilesAfterEnv: [],
 };

@@ -23,6 +23,7 @@
     "marked": "^15.0.4"
   },
   "devDependencies": {
+    "@babel/preset-env": "^7.26.9",
     "better-docs": "^2.7.3",
     "concurrently": "^9.1.2",
     "http-server": "^14.1.1",
