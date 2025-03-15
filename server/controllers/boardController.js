@@ -29,11 +29,19 @@ exports.getBoardInfo = (req, res) => {
  * @function getBoard
  * @param {Object} req - Express request object
  * @param {Object} res - Express response object
+ * @param {string} [req.query.format='full'] - Format to return the board data in ('full', 'summary', 'compact', 'cards-only')
+ * @param {string} [req.query.columnId] - Filter cards by column ID (only used with 'cards-only' format)
  */
 exports.getBoard = async (req, res) => {
     try {
+        const format = req.query.format || 'full';
+        const columnId = req.query.columnId;
+        const options = { columnId };
+        
         const board = await Board.load();
-        res.json(board.data);
+        const formattedData = board.format(format, options);
+        
+        res.json(formattedData);
     } catch (error) {
         console.error('Error reading board data:', error);
         res.status(500).json({ error: 'Failed to read board data' });
@@ -46,12 +54,20 @@ exports.getBoard = async (req, res) => {
  * @function getBoardById
  * @param {Object} req - Express request object with board ID in params
  * @param {Object} res - Express response object
+ * @param {string} [req.query.format='full'] - Format to return the board data in ('full', 'summary', 'compact', 'cards-only')
+ * @param {string} [req.query.columnId] - Filter cards by column ID (only used with 'cards-only' format)
  */
 exports.getBoardById = async (req, res) => {
     try {
         const boardId = req.params.id;
+        const format = req.query.format || 'full';
+        const columnId = req.query.columnId;
+        const options = { columnId };
+        
         const board = await Board.load(boardId);
-        res.json(board.data);
+        const formattedData = board.format(format, options);
+        
+        res.json(formattedData);
     } catch (error) {
         console.error(`Error reading board ${req.params.id}:`, error);
         res.status(404).json({ error: error.message || 'Board not found' });

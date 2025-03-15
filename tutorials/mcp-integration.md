@@ -100,6 +100,41 @@ Fix homepage CSS,To Do,Medium,Sam
 Deploy to staging,To Do,High,Alex
 ```
 
+#### Token-Optimized Card Operations
+
+TaskBoardAI now supports token-optimized operations for more efficient integration with Claude:
+
+```
+Get just the card with ID a1b2c3d4 from board 5ec8b002
+```
+
+```
+Update the title and tags of card a1b2c3d4 on board 5ec8b002 to "Implement OAuth login" with tags "security", "frontend"
+```
+
+```
+Move card a1b2c3d4 from the "In Progress" column to the top of the "Testing" column
+```
+
+#### Batch Operations for Efficiency
+
+```
+Perform the following operations on board 5ec8b002 in a single transaction:
+1. Update card a1b2c3 to add "High" priority tag
+2. Move card b2c3d4 to "In Progress" column
+3. Update card c3d4e5 title to "Revised feature specification"
+```
+
+#### Format-Specific Queries
+
+```
+Give me a summary view of board 5ec8b002 showing just the project progress statistics
+```
+
+```
+Show me only the cards in the "Blocked" column of board 5ec8b002
+```
+
 #### Board Analysis and Insights
 
 ```
@@ -115,6 +150,38 @@ The MCP integration uses Claude's Model Context Protocol to establish a bidirect
 3. **API Communication**: The tools communicate with the TaskBoardAI API
 4. **Response Processing**: Results are formatted and returned to Claude
 5. **Natural Language Interface**: Claude translates between your natural language and the structured API calls
+
+## Token Optimization Features
+
+The latest version includes token-optimized operations for more efficient Claude integration:
+
+### Card-First Architecture
+
+TaskBoardAI now uses a "card-first" architecture that enables direct operations on individual cards without loading the entire board context. This results in:
+
+- **Reduced token usage**: 60-95% fewer tokens for common operations
+- **Faster processing**: Less data to parse means quicker responses
+- **Improved scalability**: More efficient handling of large boards
+
+### Token-Optimized Tools
+
+The following token-optimized MCP tools are available:
+
+- **get-card**: Retrieve a single card by ID
+- **update-card**: Update specific properties of a card
+- **move-card**: Change a card's column or position
+- **batch-cards**: Process multiple card operations in one transaction
+
+### Format Parameter Options
+
+The `get-board` tool now supports format options to control response size:
+
+- **full**: Complete board data (default)
+- **summary**: Board metadata and statistics
+- **compact**: Abbreviated property names for smaller response
+- **cards-only**: Only returns the cards array, optionally filtered by column
+
+For detailed documentation, see the [MCP Tools Documentation](/docs/api/mcp-tools.md) and [Migration Guide](/docs/api/migration-guide.md).
 
 ## Advanced Configuration
 

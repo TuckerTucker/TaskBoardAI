@@ -357,4 +357,150 @@ describe('Board Model', () => {
       expect(boards[0].id).toBe('board1');
     });
   });
+
+  describe('format', () => {
+    // Test data for format tests
+    const testBoardData = {
+      id: 'test-board',
+      projectName: 'Test Board',
+      last_updated: '2025-03-14T10:00:00.000Z',
+      columns: [
+        { id: 'backlog', name: 'Backlog' },
+        { id: 'in-progress', name: 'In Progress' },
+        { id: 'done', name: 'Done' }
+      ],
+      cards: [
+        {
+          id: 'card1',
+          title: 'Task 1',
+          content: 'Description for task 1',
+          columnId: 'backlog',
+          position: 0,
+          collapsed: false,
+          subtasks: ['Subtask 1', 'Subtask 2'],
+          tags: ['backend'],
+          dependencies: [],
+          created_at: '2025-03-14T09:00:00.000Z',
+          updated_at: '2025-03-14T09:30:00.000Z',
+          completed_at: null
+        },
+        {
+          id: 'card2',
+          title: 'Task 2',
+          content: 'Description for task 2',
+          columnId: 'in-progress',
+          position: 0,
+          collapsed: true,
+          subtasks: ['Subtask 1'],
+          tags: ['frontend'],
+          dependencies: ['card1'],
+          created_at: '2025-03-14T09:15:00.000Z',
+          updated_at: '2025-03-14T09:45:00.000Z',
+          completed_at: null
+        },
+        {
+          id: 'card3',
+          title: 'Task 3',
+          content: 'Description for task 3',
+          columnId: 'done',
+          position: 0,
+          collapsed: false,
+          subtasks: [],
+          tags: ['backend'],
+          dependencies: [],
+          created_at: '2025-03-14T08:00:00.000Z',
+          updated_at: '2025-03-14T08:30:00.000Z',
+          completed_at: '2025-03-14T09:00:00.000Z'
+        }
+      ]
+    };
+
+    it('should return full board data when using full format', () => {
+      const board = new Board(testBoardData);
+      const result = board.format('full');
+      
+      expect(result).toEqual(testBoardData);
+    });
+
+    it('should return full board data when using default (no format specified)', () => {
+      const board = new Board(testBoardData);
+      const result = board.format();
+      
+      expect(result).toEqual(testBoardData);
+    });
+
+    it('should return summary format with column stats', () => {
+      const board = new Board(testBoardData);
+      const result = board.format('summary');
+      
+      expect(result).toHaveProperty('id', 'test-board');
+      expect(result).toHaveProperty('projectName', 'Test Board');
+      expect(result).toHaveProperty('last_updated');
+      expect(result).toHaveProperty('columns');
+      expect(result).toHaveProperty('stats');
+      
+      // Check column structure in summary
+      expect(result.columns).toHaveLength(3);
+      expect(result.columns[0]).toHaveProperty('id', 'backlog');
+      expect(result.columns[0]).toHaveProperty('name', 'Backlog');
+      expect(result.columns[0]).toHaveProperty('cardCount', 1);
+      
+      // Check stats
+      expect(result.stats).toHaveProperty('totalCards', 3);
+      expect(result.stats).toHaveProperty('completedCards', 1);
+      expect(result.stats).toHaveProperty('progressPercentage', 33);
+    });
+
+    it('should return compact format with shortened property names', () => {
+      const board = new Board(testBoardData);
+      const result = board.format('compact');
+      
+      expect(result).toHaveProperty('id', 'test-board');
+      expect(result).toHaveProperty('name', 'Test Board');
+      expect(result).toHaveProperty('up');
+      expect(result).toHaveProperty('cols');
+      expect(result).toHaveProperty('cards');
+      
+      // Check compact column structure
+      expect(result.cols).toHaveLength(3);
+      expect(result.cols[0]).toHaveProperty('id', 'backlog');
+      expect(result.cols[0]).toHaveProperty('n', 'Backlog');
+      
+      // Check compact card structure
+      expect(result.cards).toHaveLength(3);
+      expect(result.cards[0]).toHaveProperty('id', 'card1');
+      expect(result.cards[0]).toHaveProperty('t', 'Task 1');
+      expect(result.cards[0]).toHaveProperty('col', 'backlog');
+      expect(result.cards[0]).toHaveProperty('p', 0);
+      expect(result.cards[0]).toHaveProperty('c', 'Description for task 1');
+      expect(result.cards[0]).toHaveProperty('sub');
+      expect(result.cards[0]).toHaveProperty('tag');
+    });
+
+    it('should return cards-only format', () => {
+      const board = new Board(testBoardData);
+      const result = board.format('cards-only');
+      
+      expect(result).toHaveProperty('cards');
+      expect(result.cards).toHaveLength(3);
+      expect(result.cards[0]).toHaveProperty('id', 'card1');
+      expect(result.cards[0]).toHaveProperty('title', 'Task 1');
+      expect(result.cards[0]).toHaveProperty('columnId', 'backlog');
+      
+      // Should not have board metadata
+      expect(result).not.toHaveProperty('id');
+      expect(result).not.toHaveProperty('projectName');
+      expect(result).not.toHaveProperty('columns');
+    });
+
+    it('should filter cards by column when using cards-only format with columnId option', () => {
+      const board = new Board(testBoardData);
+      const result = board.format('cards-only', { columnId: 'backlog' });
+      
+      expect(result).toHaveProperty('cards');
+      expect(result.cards).toHaveLength(1);
+      expect(result.cards[0]).toHaveProperty('id', 'card1');
+      expect(result.cards[0]).toHaveProperty('columnId', 'backlog');
+    });
+  });
 });

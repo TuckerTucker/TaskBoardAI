@@ -14,9 +14,12 @@ class ApiService {
     /**
      * Load board data from server
      * @param {string|Object} boardId - ID of the board to load (optional) or board object
+     * @param {Object} [options] - Additional options for loading the board
+     * @param {string} [options.format='full'] - Format to return the board data in ('full', 'summary', 'compact', 'cards-only')
+     * @param {string} [options.columnId] - Filter cards by column ID (only used with 'cards-only' format)
      * @returns {Promise<Object>} Board data
      */
-    async loadBoard(boardId) {
+    async loadBoard(boardId, options = {}) {
         try {
             // If boardId is an object, return it directly
             if (typeof boardId === 'object' && boardId !== null) {
@@ -30,6 +33,21 @@ class ApiService {
                 url = `${this.baseUrl}${this.boardsPath}/${encodeURIComponent(boardId.trim())}`;
             } else {
                 url = `${this.baseUrl}/kanban`;
+            }
+            
+            // Add query parameters for format and columnId if provided
+            const params = new URLSearchParams();
+            if (options.format) {
+                params.append('format', options.format);
+            }
+            if (options.columnId) {
+                params.append('columnId', options.columnId);
+            }
+            
+            // Append parameters to URL if any exist
+            const queryString = params.toString();
+            if (queryString) {
+                url = `${url}?${queryString}`;
             }
                 
             console.log(`Attempting to load board from: ${url}`);

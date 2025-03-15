@@ -1,10 +1,16 @@
 # TaskBoardAI API Documentation
 
-This directory contains automatically generated API documentation for TaskBoardAI.
+This directory contains API documentation for TaskBoardAI.
 
-## Generating Documentation
+## Documentation Files
 
-To generate the documentation:
+- [MCP Tools Documentation](./mcp-tools.md) - Detailed information about token-optimized MCP tools
+- [MCP Code Examples](./mcp-examples.md) - Practical examples of using MCP tools with token optimization
+- [Migration Guide](./migration-guide.md) - Guide to migrating existing code to token-optimized tools
+
+## Generating JSDoc Documentation
+
+To generate the JSDoc documentation:
 
 ```bash
 npm run docs
@@ -33,10 +39,19 @@ The API documentation is organized into the following sections:
 
 ## API Overview
 
-TaskBoardAI provides a RESTful API for managing kanban boards:
+TaskBoardAI provides both a RESTful API and MCP tools for managing kanban boards:
 
+### REST API
 - **Board Operations**: Create, read, update, and delete boards
 - **Configuration**: Manage application settings
 - **Webhooks**: Configure external integrations
 
-For detailed API endpoint documentation, see the Controllers section.
+### MCP Tools (Token-Optimized)
+- **Board Management**: Create, read, update, and delete boards
+- **Card Operations**: Get, update, and move individual cards
+- **Batch Operations**: Process multiple card updates and moves in a single transaction
+- **Format Controls**: Request data in different formats for token optimization
+
+For detailed REST API endpoint documentation, see the Controllers section.
+
+For detailed MCP tools documentation, see the [MCP Tools Documentation](./mcp-tools.md).

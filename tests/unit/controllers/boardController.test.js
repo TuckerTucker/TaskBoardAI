@@ -14,7 +14,8 @@ jest.mock('../../../server/models/Board', () => {
     // For prototype methods
     prototype: {
       validate: jest.fn(),
-      save: jest.fn()
+      save: jest.fn(),
+      format: jest.fn()
     }
   };
 });
@@ -45,21 +46,84 @@ describe('Board Controller', () => {
   });
   
   describe('getBoard', () => {
-    it('should return the default board data', async () => {
+    it('should return the default board data in full format when no format specified', async () => {
       const mockBoardData = { 
         id: 'default',
         projectName: 'Default Board',
         columns: []
       };
       
-      Board.load.mockResolvedValueOnce({
-        data: mockBoardData
-      });
+      mockRequest.query = {};
+      
+      const mockBoard = {
+        data: mockBoardData,
+        format: jest.fn().mockReturnValue(mockBoardData)
+      };
+      
+      Board.load.mockResolvedValueOnce(mockBoard);
       
       await boardController.getBoard(mockRequest, mockResponse);
       
       expect(Board.load).toHaveBeenCalledWith();
+      expect(mockBoard.format).toHaveBeenCalledWith('full', { columnId: undefined });
       expect(mockResponse.json).toHaveBeenCalledWith(mockBoardData);
+    });
+    
+    it('should respect the format parameter when specified', async () => {
+      const mockBoardData = { 
+        id: 'default',
+        projectName: 'Default Board',
+        columns: []
+      };
+      
+      const mockSummaryData = {
+        id: 'default',
+        projectName: 'Default Board',
+        stats: { totalCards: 0 }
+      };
+      
+      mockRequest.query = { format: 'summary' };
+      
+      const mockBoard = {
+        data: mockBoardData,
+        format: jest.fn().mockReturnValue(mockSummaryData)
+      };
+      
+      Board.load.mockResolvedValueOnce(mockBoard);
+      
+      await boardController.getBoard(mockRequest, mockResponse);
+      
+      expect(Board.load).toHaveBeenCalledWith();
+      expect(mockBoard.format).toHaveBeenCalledWith('summary', { columnId: undefined });
+      expect(mockResponse.json).toHaveBeenCalledWith(mockSummaryData);
+    });
+    
+    it('should pass columnId parameter when using cards-only format', async () => {
+      const mockBoardData = { 
+        id: 'default',
+        projectName: 'Default Board',
+        columns: [],
+        cards: []
+      };
+      
+      const mockCardsOnlyData = {
+        cards: []
+      };
+      
+      mockRequest.query = { format: 'cards-only', columnId: 'backlog' };
+      
+      const mockBoard = {
+        data: mockBoardData,
+        format: jest.fn().mockReturnValue(mockCardsOnlyData)
+      };
+      
+      Board.load.mockResolvedValueOnce(mockBoard);
+      
+      await boardController.getBoard(mockRequest, mockResponse);
+      
+      expect(Board.load).toHaveBeenCalledWith();
+      expect(mockBoard.format).toHaveBeenCalledWith('cards-only', { columnId: 'backlog' });
+      expect(mockResponse.json).toHaveBeenCalledWith(mockCardsOnlyData);
     });
     
     it('should handle errors and return a 500 status', async () => {
@@ -75,8 +139,9 @@ describe('Board Controller', () => {
   });
   
   describe('getBoardById', () => {
-    it('should return a specific board by ID', async () => {
+    it('should return a specific board by ID in full format when no format specified', async () => {
       mockRequest.params = { id: 'board123' };
+      mockRequest.query = {};
       
       const mockBoardData = { 
         id: 'board123',
@@ -84,14 +149,48 @@ describe('Board Controller', () => {
         columns: []
       };
       
-      Board.load.mockResolvedValueOnce({
-        data: mockBoardData
-      });
+      const mockBoard = {
+        data: mockBoardData,
+        format: jest.fn().mockReturnValue(mockBoardData)
+      };
+      
+      Board.load.mockResolvedValueOnce(mockBoard);
       
       await boardController.getBoardById(mockRequest, mockResponse);
       
       expect(Board.load).toHaveBeenCalledWith('board123');
+      expect(mockBoard.format).toHaveBeenCalledWith('full', { columnId: undefined });
       expect(mockResponse.json).toHaveBeenCalledWith(mockBoardData);
+    });
+    
+    it('should respect the format parameter for a specific board', async () => {
+      mockRequest.params = { id: 'board123' };
+      mockRequest.query = { format: 'compact' };
+      
+      const mockBoardData = { 
+        id: 'board123',
+        projectName: 'Test Board',
+        columns: []
+      };
+      
+      const mockCompactData = {
+        id: 'board123', 
+        name: 'Test Board',
+        cols: []
+      };
+      
+      const mockBoard = {
+        data: mockBoardData,
+        format: jest.fn().mockReturnValue(mockCompactData)
+      };
+      
+      Board.load.mockResolvedValueOnce(mockBoard);
+      
+      await boardController.getBoardById(mockRequest, mockResponse);
+      
+      expect(Board.load).toHaveBeenCalledWith('board123');
+      expect(mockBoard.format).toHaveBeenCalledWith('compact', { columnId: undefined });
+      expect(mockResponse.json).toHaveBeenCalledWith(mockCompactData);
     });
     
     it('should return 404 when board is not found', async () => {

@@ -45,6 +45,15 @@ const { ensureBoardsDir } = require('../utils/fileSystem');
  */
 
 /**
+ * @typedef {string} BoardFormat
+ * Supported formats for board data retrieval:
+ * - 'full': Complete board data with all details (default)
+ * - 'summary': Metadata and column structure with card counts and statistics
+ * - 'compact': Shortened property names and essential card data only
+ * - 'cards-only': Returns just the cards array without board metadata
+ */
+
+/**
  * Class representing a Kanban board
  * @class
  * @category Models
@@ -381,6 +390,186 @@ class Board {
         }
 
         return true;
+    }
+
+    /**
+     * Transform board data to specified format for token-optimized operations.
+     * Different formats allow for obtaining only the necessary data for specific operations,
+     * significantly reducing token usage for large boards.
+     * 
+     * @param {BoardFormat} [format='full'] - Format to transform board data to:
+     *   - 'full': Complete board data with all details (default)
+     *   - 'summary': Basic board metadata and statistics
+     *   - 'compact': Abbreviated board representation with shortened property names
+     *   - 'cards-only': Only returns the cards array, optionally filtered by column
+     * 
+     * @param {Object} [options={}] - Additional options for formatting
+     * @param {string} [options.columnId] - When using 'cards-only' format, filter cards by this column ID
+     * 
+     * @returns {Object} Transformed board data
+     * 
+     * @example
+     * // Get only cards from a specific column (token-optimized)
+     * const todoColumnCards = board.format('cards-only', { columnId: 'col-123' });
+     */
+    format(format = 'full', options = {}) {
+        switch (format) {
+            case 'summary':
+                return this.toSummaryFormat();
+            case 'compact':
+                return this.toCompactFormat();
+            case 'cards-only':
+                return this.toCardsOnlyFormat(options.columnId);
+            case 'full':
+            default:
+                return this.data;
+        }
+    }
+
+    /**
+     * Transform board data to summary format for token-optimized retrieval.
+     * This format provides metadata and statistics about the board without including
+     * full card content, significantly reducing token usage.
+     * 
+     * @returns {Object} Summary format containing:
+     *   - Basic board metadata (id, name, last_updated)
+     *   - Column information with card counts
+     *   - Statistics (total cards, completed cards, progress percentage)
+     * 
+     * @example
+     * // Get board summary without loading all card content
+     * const boardSummary = board.toSummaryFormat();
+     * console.log(`Progress: ${boardSummary.stats.progressPercentage}%`);
+     */
+    toSummaryFormat() {
+        const { id, projectName, columns, cards, last_updated } = this.data;
+        
+        // Get card statistics
+        const cardCount = cards ? cards.length : 0;
+        let completedCount = 0;
+        const cardsByColumn = {};
+        
+        // Initialize cardsByColumn with column IDs
+        if (columns) {
+            columns.forEach(column => {
+                cardsByColumn[column.id] = 0;
+            });
+        }
+        
+        // Count cards per column and completed cards
+        if (cards) {
+            cards.forEach(card => {
+                // Increment column count
+                if (cardsByColumn[card.columnId] !== undefined) {
+                    cardsByColumn[card.columnId]++;
+                }
+                
+                // Count completed cards
+                if (card.completed_at) {
+                    completedCount++;
+                }
+            });
+        }
+        
+        return {
+            id,
+            projectName,
+            last_updated,
+            columns: columns ? columns.map(column => ({
+                id: column.id,
+                name: column.name,
+                cardCount: cardsByColumn[column.id] || 0
+            })) : [],
+            stats: {
+                totalCards: cardCount,
+                completedCards: completedCount,
+                progressPercentage: cardCount > 0 ? Math.round((completedCount / cardCount) * 100) : 0
+            }
+        };
+    }
+
+    /**
+     * Transform board data to compact format for maximized token efficiency.
+     * Uses abbreviated property names and omits optional properties when empty,
+     * resulting in significantly smaller JSON payloads.
+     * 
+     * @returns {Object} Compact format with:
+     *   - Shortened property names (id, name→n, columns→cols, etc.)
+     *   - Minimal card representation (title→t, columnId→col, position→p)
+     *   - Optional properties omitted when empty
+     * 
+     * @example
+     * // Property mapping examples:
+     * // - projectName → name
+     * // - last_updated → up
+     * // - columnId → col
+     * // - position → p
+     * // - content → c
+     * // - completed_at → comp
+     * 
+     * // Get token-efficient compact representation of the board
+     * const compactBoard = board.toCompactFormat();
+     */
+    toCompactFormat() {
+        const { id, projectName, columns, cards, last_updated } = this.data;
+        
+        // Transform cards to more compact representation
+        const compactCards = cards ? cards.map(card => ({
+            id: card.id,
+            t: card.title,
+            col: card.columnId,
+            p: card.position,
+            // Only include other properties if they exist
+            ...(card.content ? { c: card.content } : {}),
+            ...(card.collapsed ? { coll: card.collapsed } : {}),
+            ...(card.subtasks && card.subtasks.length ? { sub: card.subtasks } : {}),
+            ...(card.tags && card.tags.length ? { tag: card.tags } : {}),
+            ...(card.dependencies && card.dependencies.length ? { dep: card.dependencies } : {}),
+            ...(card.created_at ? { ca: card.created_at } : {}),
+            ...(card.updated_at ? { ua: card.updated_at } : {}),
+            ...(card.completed_at ? { comp: card.completed_at } : {})
+        })) : [];
+        
+        // Return compact representation
+        return {
+            id,
+            name: projectName,
+            up: last_updated,
+            cols: columns ? columns.map(col => ({ id: col.id, n: col.name })) : [],
+            cards: compactCards
+        };
+    }
+
+    /**
+     * Transform board data to cards-only format for maximum token efficiency.
+     * This format is specifically designed to optimize token usage when only
+     * card data is needed, without column definitions or other board metadata.
+     * 
+     * @param {string} [columnId] - Optional column ID to filter cards by
+     * @returns {Object} Cards-only format data containing just the cards array
+     * 
+     * @example
+     * // Get only cards in the "Done" column
+     * const doneCards = board.toCardsOnlyFormat('col-done');
+     * 
+     * @example
+     * // Get all cards regardless of column
+     * const allCards = board.toCardsOnlyFormat();
+     */
+    toCardsOnlyFormat(columnId) {
+        if (!this.data.cards) {
+            return { cards: [] };
+        }
+        
+        // Filter cards by column if specified
+        let filteredCards = this.data.cards;
+        if (columnId) {
+            filteredCards = this.data.cards.filter(card => card.columnId === columnId);
+        }
+        
+        return { 
+            cards: filteredCards
+        };
     }
 }
 
