@@ -331,6 +331,19 @@ jobs:
         if: steps.sync-details.outputs.version != '' || github.event.inputs.publish_npm == 'true'
         run: npm ci
 
+      - name: Check NPM token
+        if: steps.sync-details.outputs.version != '' || github.event.inputs.publish_npm == 'true'
+        run: |
+          # Verify NPM_TOKEN secret is available (will not print the token)
+          if [ -z "$NODE_AUTH_TOKEN" ]; then
+            echo "::error::NPM_TOKEN secret is not available. Please add it to your repository secrets."
+            exit 1
+          else
+            echo "NPM_TOKEN secret is available."
+          fi
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          
       - name: Publish to NPM
         if: steps.sync-details.outputs.version != '' || github.event.inputs.publish_npm == 'true'
         run: |
@@ -367,10 +380,16 @@ jobs:
             mv "$TMP_FILE" package.json
           fi
           
+          # Create or update .npmrc file with auth token
+          echo "//registry.npmjs.org/:_authToken=\${NODE_AUTH_TOKEN}" > .npmrc
+          
           # Publish to NPM
-          npm publish
+          npm publish --access public
           
           echo "✅ Successfully published version v$PACKAGE_VERSION to NPM registry"
           echo "📦 Package link: https://www.npmjs.com/package/taskboardai/v/$PACKAGE_VERSION"
+          
+          # Remove .npmrc file to avoid committing tokens
+          rm -f .npmrc
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
