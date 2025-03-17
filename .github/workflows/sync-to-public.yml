@@ -163,6 +163,7 @@ jobs:
           git checkout main -- app/
           git checkout main -- server/
           git checkout main -- package.json
+          git checkout main -- package-lock.json
           git checkout main -- start_*
           
           # Copy core workflows
@@ -324,7 +325,8 @@ jobs:
         with:
           node-version: '20.x'
           registry-url: 'https://registry.npmjs.org'
-          cache: 'npm'
+          # Disable cache since lock file is not always copied to the public branch
+          cache: 'none'
 
       - name: Install dependencies
         if: steps.sync-details.outputs.version != '' || github.event.inputs.publish_npm == 'true'
@@ -347,6 +349,8 @@ jobs:
             echo "Updating package.json to match expected version..."
             # Use npm version to update the version (without creating a git tag)
             npm version $VERSION --no-git-tag-version
+            # Ensure package-lock.json is also updated
+            npm install --package-lock-only
             PACKAGE_VERSION=$VERSION
           else
             echo "Using package.json version: $PACKAGE_VERSION"
