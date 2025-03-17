@@ -29,11 +29,11 @@ on:
         required: false
         default: false
         type: boolean
-      publish_npm:
-        description: 'Publish to NPM (even if no version change detected)'
-        required: false
-        default: false
-        type: boolean
+      # publish_npm:
+      #   description: 'Publish to NPM (even if no version change detected)'
+      #   required: false
+      #   default: false
+      #   type: boolean
   
   # Auto-trigger on new releases
   release:
@@ -319,89 +319,92 @@ jobs:
             echo "✓ Version tag created in public repository"
           fi
       
-      - name: Set up Node.js for NPM publishing
-        if: steps.sync-details.outputs.version != '' || github.event.inputs.publish_npm == 'true'
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20.x'
-          registry-url: 'https://registry.npmjs.org'
-          # No cache configuration, since 'none' is not supported
+      # - name: Set up Node.js for NPM publishing
+      #   if: steps.sync-details.outputs.version != '' || github.event.inputs.publish_npm == 'true'
+      #   uses: actions/setup-node@v4
+      #   with:
+      #     node-version: '20.x'
+      #     registry-url: 'https://registry.npmjs.org'
+      #     # No cache configuration, since 'none' is not supported
 
-      - name: Install dependencies
-        if: steps.sync-details.outputs.version != '' || github.event.inputs.publish_npm == 'true'
-        run: npm ci
+      # - name: Install dependencies
+      #   if: steps.sync-details.outputs.version != '' || github.event.inputs.publish_npm == 'true'
+      #   run: npm ci
 
-      - name: Check NPM token
-        if: steps.sync-details.outputs.version != '' || github.event.inputs.publish_npm == 'true'
-        run: |
-          # Verify NPM_TOKEN secret is available (will not print the token)
-          if [ -z "$NODE_AUTH_TOKEN" ]; then
-            echo "::warning::NPM_TOKEN secret is not available. Will prepare package.json but skip publishing to NPM."
-            echo "SKIP_PUBLISH=true" >> $GITHUB_ENV
-          else
-            echo "NPM_TOKEN secret is available."
-            echo "SKIP_PUBLISH=false" >> $GITHUB_ENV
-          fi
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          
-      - name: Publish to NPM
-        if: steps.sync-details.outputs.version != '' || github.event.inputs.publish_npm == 'true'
-        run: |
-          echo "Publishing package to NPM registry..."
-          VERSION="${{ steps.sync-details.outputs.version }}"
-          
-          # Extract version from public package.json
-          PACKAGE_VERSION=$(grep -o '"version": "[^"]*"' package.json | cut -d'"' -f4)
-          
-          echo "Package.json version: $PACKAGE_VERSION"
-          
-          # Check if we need to update the version
-          if [ ! -z "$VERSION" ] && [ "$PACKAGE_VERSION" != "$VERSION" ]; then
-            echo "⚠️ Warning: Package version ($PACKAGE_VERSION) does not match expected version ($VERSION)"
-            echo "Updating package.json to match expected version..."
-            # Use npm version to update the version (without creating a git tag)
-            npm version $VERSION --no-git-tag-version
-            # Ensure package-lock.json is also updated
-            npm install --package-lock-only
-            PACKAGE_VERSION=$VERSION
-          else
-            echo "Using package.json version: $PACKAGE_VERSION"
-          fi
-          
-          # Ensure the package has the publishConfig configuration
-          if ! grep -q '"publishConfig"' package.json; then
-            echo "Adding publishConfig to package.json..."
-            # Using a temporary file since in-place editing is safer this way
-            TMP_FILE=$(mktemp)
-            sed -e '/"version": ".*"/a\
-              "publishConfig": {\
-                "access": "public"\
-              },' package.json > "$TMP_FILE"
-            mv "$TMP_FILE" package.json
-          fi
-          
-          # Check if we should skip publishing
-          if [ "$SKIP_PUBLISH" == "true" ]; then
-            echo "⚠️ Skipping NPM publishing due to missing NPM_TOKEN"
-            echo "✅ Package is prepared and ready for manual publishing. To publish manually:"
-            echo "   1. Clone the public repository: git clone https://github.com/TuckerTucker/TaskBoardAI.git"
-            echo "   2. Install dependencies: npm ci"
-            echo "   3. Login to NPM: npm login"
-            echo "   4. Publish: npm publish --access public"
-            echo "   Note: The package is published as @tuckertucker/taskboardai"
-          else
-            # Create or update .npmrc file with auth token
-            echo "//registry.npmjs.org/:_authToken=\${NODE_AUTH_TOKEN}" > .npmrc
-            
-            # Publish to NPM
-            npm publish --access public
-            
-            echo "✅ Successfully published version v$PACKAGE_VERSION to NPM registry"
-            echo "📦 Package link: https://www.npmjs.com/package/@tuckertucker/taskboardai/v/$PACKAGE_VERSION"
-            
-            # Remove .npmrc file to avoid committing tokens
-            rm -f .npmrc
-          fi
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      # NPM publishing is commented out for now
+      # To re-enable, uncomment the following sections
+      
+      # - name: Check NPM token
+      #   if: steps.sync-details.outputs.version != '' || github.event.inputs.publish_npm == 'true'
+      #   run: |
+      #     # Verify NPM_TOKEN secret is available (will not print the token)
+      #     if [ -z "$NODE_AUTH_TOKEN" ]; then
+      #       echo "::warning::NPM_TOKEN secret is not available. Will prepare package.json but skip publishing to NPM."
+      #       echo "SKIP_PUBLISH=true" >> $GITHUB_ENV
+      #     else
+      #       echo "NPM_TOKEN secret is available."
+      #       echo "SKIP_PUBLISH=false" >> $GITHUB_ENV
+      #     fi
+      #   env:
+      #     NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      #     
+      # - name: Publish to NPM
+      #   if: steps.sync-details.outputs.version != '' || github.event.inputs.publish_npm == 'true'
+      #   run: |
+      #     echo "Publishing package to NPM registry..."
+      #     VERSION="${{ steps.sync-details.outputs.version }}"
+      #     
+      #     # Extract version from public package.json
+      #     PACKAGE_VERSION=$(grep -o '"version": "[^"]*"' package.json | cut -d'"' -f4)
+      #     
+      #     echo "Package.json version: $PACKAGE_VERSION"
+      #     
+      #     # Check if we need to update the version
+      #     if [ ! -z "$VERSION" ] && [ "$PACKAGE_VERSION" != "$VERSION" ]; then
+      #       echo "⚠️ Warning: Package version ($PACKAGE_VERSION) does not match expected version ($VERSION)"
+      #       echo "Updating package.json to match expected version..."
+      #       # Use npm version to update the version (without creating a git tag)
+      #       npm version $VERSION --no-git-tag-version
+      #       # Ensure package-lock.json is also updated
+      #       npm install --package-lock-only
+      #       PACKAGE_VERSION=$VERSION
+      #     else
+      #       echo "Using package.json version: $PACKAGE_VERSION"
+      #     fi
+      #     
+      #     # Ensure the package has the publishConfig configuration
+      #     if ! grep -q '"publishConfig"' package.json; then
+      #       echo "Adding publishConfig to package.json..."
+      #       # Using a temporary file since in-place editing is safer this way
+      #       TMP_FILE=$(mktemp)
+      #       sed -e '/"version": ".*"/a\
+      #         "publishConfig": {\
+      #           "access": "public"\
+      #         },' package.json > "$TMP_FILE"
+      #       mv "$TMP_FILE" package.json
+      #     fi
+      #     
+      #     # Check if we should skip publishing
+      #     if [ "$SKIP_PUBLISH" == "true" ]; then
+      #       echo "⚠️ Skipping NPM publishing due to missing NPM_TOKEN"
+      #       echo "✅ Package is prepared and ready for manual publishing. To publish manually:"
+      #       echo "   1. Clone the public repository: git clone https://github.com/TuckerTucker/TaskBoardAI.git"
+      #       echo "   2. Install dependencies: npm ci"
+      #       echo "   3. Login to NPM: npm login"
+      #       echo "   4. Publish: npm publish --access public"
+      #       echo "   Note: The package is published as @tuckertucker/taskboardai"
+      #     else
+      #       # Create or update .npmrc file with auth token
+      #       echo "//registry.npmjs.org/:_authToken=\${NODE_AUTH_TOKEN}" > .npmrc
+      #       
+      #       # Publish to NPM
+      #       npm publish --access public
+      #       
+      #       echo "✅ Successfully published version v$PACKAGE_VERSION to NPM registry"
+      #       echo "📦 Package link: https://www.npmjs.com/package/@tuckertucker/taskboardai/v/$PACKAGE_VERSION"
+      #       
+      #       # Remove .npmrc file to avoid committing tokens
+      #       rm -f .npmrc
+      #     fi
+      #   env:
+      #     NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
