@@ -48,7 +48,7 @@ const config = {
     
     // User data directories (for storing user's boards, configs, webhooks)
     userDataDir: dataDir,
-    boardsDir: localBoardsDir, // OVERRIDE: Always use local boards directory
+    boardsDir: process.env.USE_LOCAL_BOARDS ? localBoardsDir : userBoardsDir,
     configDir: process.env.USE_LOCAL_CONFIG ? path.join(packageRoot, 'config') : userConfigDir,
     webhooksDir: process.env.USE_LOCAL_WEBHOOKS ? path.join(packageRoot, 'webhooks') : userWebhooksDir,
     
