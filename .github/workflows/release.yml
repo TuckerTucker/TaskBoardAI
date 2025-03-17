@@ -23,10 +23,7 @@ jobs:
       - run: npm test
       - run: npm run test:coverage
       
-      - name: Publish to NPM
-        run: npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      # NPM publishing is now handled by the sync-to-public workflow
       
       - name: Create Release
         id: create_release

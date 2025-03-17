@@ -29,6 +29,11 @@ on:
         required: false
         default: false
         type: boolean
+      publish_npm:
+        description: 'Publish to NPM (even if no version change detected)'
+        required: false
+        default: false
+        type: boolean
   
   # Auto-trigger on new releases
   release:
@@ -313,25 +318,56 @@ jobs:
             echo "✓ Version tag created in public repository"
           fi
       
-      - name: Verify NPM Package Sync
-        if: steps.sync-details.outputs.version != ''
+      - name: Set up Node.js for NPM publishing
+        if: steps.sync-details.outputs.version != '' || github.event.inputs.publish_npm == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'npm'
+
+      - name: Install dependencies
+        if: steps.sync-details.outputs.version != '' || github.event.inputs.publish_npm == 'true'
+        run: npm ci
+
+      - name: Publish to NPM
+        if: steps.sync-details.outputs.version != '' || github.event.inputs.publish_npm == 'true'
         run: |
-          echo "Verifying that NPM package version matches the code in the public repository"
+          echo "Publishing package to NPM registry..."
           VERSION="${{ steps.sync-details.outputs.version }}"
           
           # Extract version from public package.json
           PACKAGE_VERSION=$(grep -o '"version": "[^"]*"' package.json | cut -d'"' -f4)
           
           echo "Package.json version: $PACKAGE_VERSION"
-          echo "Expected version: $VERSION"
           
-          if [ "$PACKAGE_VERSION" != "$VERSION" ]; then
+          # Check if we need to update the version
+          if [ ! -z "$VERSION" ] && [ "$PACKAGE_VERSION" != "$VERSION" ]; then
             echo "⚠️ Warning: Package version ($PACKAGE_VERSION) does not match expected version ($VERSION)"
-            echo "Please check that the correct version is published to NPM"
+            echo "Updating package.json to match expected version..."
+            # Use npm version to update the version (without creating a git tag)
+            npm version $VERSION --no-git-tag-version
+            PACKAGE_VERSION=$VERSION
           else
-            echo "✓ Package version matches expected version"
-            echo "✓ Code and NPM package are in sync"
+            echo "Using package.json version: $PACKAGE_VERSION"
           fi
           
-          # Note: This step only verifies versions but doesn't publish
-          # The npm publish happens in the release workflow when a new tag is created
+          # Ensure the package has the publishConfig configuration
+          if ! grep -q '"publishConfig"' package.json; then
+            echo "Adding publishConfig to package.json..."
+            # Using a temporary file since in-place editing is safer this way
+            TMP_FILE=$(mktemp)
+            sed -e '/"version": ".*"/a\
+              "publishConfig": {\
+                "access": "public"\
+              },' package.json > "$TMP_FILE"
+            mv "$TMP_FILE" package.json
+          fi
+          
+          # Publish to NPM
+          npm publish
+          
+          echo "✅ Successfully published version v$PACKAGE_VERSION to NPM registry"
+          echo "📦 Package link: https://www.npmjs.com/package/taskboardai/v/$PACKAGE_VERSION"
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
