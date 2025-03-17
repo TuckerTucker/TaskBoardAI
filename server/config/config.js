@@ -33,6 +33,9 @@ if (!fs.existsSync(userWebhooksDir)) {
 const packageRoot = path.join(__dirname, '../..');
 const isRunningFromPackage = fs.existsSync(path.join(packageRoot, 'package.json'));
 
+// OVERRIDE: Always use the local boards directory for development
+const localBoardsDir = path.join(packageRoot, 'boards');
+
 // Environment variables and defaults
 const config = {
     port: process.env.PORT || 3001,
@@ -45,7 +48,7 @@ const config = {
     
     // User data directories (for storing user's boards, configs, webhooks)
     userDataDir: dataDir,
-    boardsDir: process.env.USE_LOCAL_BOARDS ? path.join(packageRoot, 'boards') : userBoardsDir,
+    boardsDir: localBoardsDir, // OVERRIDE: Always use local boards directory
     configDir: process.env.USE_LOCAL_CONFIG ? path.join(packageRoot, 'config') : userConfigDir,
     webhooksDir: process.env.USE_LOCAL_WEBHOOKS ? path.join(packageRoot, 'webhooks') : userWebhooksDir,
     
@@ -173,5 +176,7 @@ if (process.env.CONFIG_FILE) {
     
     config.configDataFile = userPath;
 }
+
+console.log('Using boards directory:', config.boardsDir);
 
 module.exports = config;

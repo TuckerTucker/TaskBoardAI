@@ -114,19 +114,28 @@ class Board {
         await ensureBoardsDir();
         
         try {
+            // Get all files in the boards directory
             const files = await fs.readdir(config.boardsDir);
-            // Filter out template files and non-JSON files
-            const boardFiles = files.filter(file => 
-                file.endsWith('.json') && 
-                !file.startsWith('_') && 
-                file !== 'config.json'
-            );
+            console.log('Files in boards directory:', files);
             
             const boards = [];
             
-            for (const file of boardFiles) {
+            // Process each file
+            for (const file of files) {
+                // Skip files that don't match our criteria
+                if (!file.endsWith('.json') || file.startsWith('_') || file === 'config.json') {
+                    continue;
+                }
+                
                 try {
+                    // Check if it's a directory (async)
                     const filePath = path.join(config.boardsDir, file);
+                    const stats = await fs.stat(filePath);
+                    if (stats.isDirectory()) {
+                        continue; // Skip directories
+                    }
+                    
+                    // Read and parse the board file
                     const data = await fs.readFile(filePath, 'utf8');
                     const boardData = JSON.parse(data);
                     
@@ -136,7 +145,6 @@ class Board {
                     // If no last_updated field, try to get file modification time as fallback
                     try {
                         if (!lastUpdated) {
-                            const stats = await fs.stat(filePath);
                             lastUpdated = stats.mtime.toISOString();
                         }
                     } catch (statErr) {

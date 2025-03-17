@@ -6,7 +6,24 @@ const Board = require('../models/Board');
 const { z } = require('zod');
 const fs = require('node:fs').promises;
 const path = require('node:path');
+
+// Load regular config
 const config = require('../config/config');
+
+// Handle environment variables for configuration
+if (process.env.USE_LOCAL_BOARDS === 'true') {
+  console.log('Using local boards directory (from environment variable)');
+}
+
+// Use environment variable for port if specified
+if (process.env.MCP_PORT) {
+  config.mcpPort = parseInt(process.env.MCP_PORT, 10);
+  console.log('Using port from environment variable:', config.mcpPort);
+}
+
+console.log('Configuration loaded from environment variables and config.js')
+
+console.log('MCP Server using boards directory:', config.boardsDir);
 
 // Global rate limiting
 const rateLimits = {
@@ -56,8 +73,69 @@ server.tool(
   {}, // No parameters needed
   async () => {
     try {
-      // Get list of boards with metadata
-      const boards = await Board.list();
+      // Direct filesystem-based board listing (bypass Board.list abstraction)
+      console.log('\n--- GET-BOARDS TRACE ---');
+      console.log('Function calling context: get-boards MCP tool');
+      console.log('Current working directory:', process.cwd());
+      
+      const boardsDir = config.boardsDir;
+      console.log('Configured boardsDir:', boardsDir);
+      console.log('Config object:', { 
+        boardsDir: config.boardsDir,
+        useLocalBoards: process.env.USE_LOCAL_BOARDS,
+        dataDir: config.userDataDir 
+      });
+      
+      // Get all files in the directory
+      const files = await fs.readdir(boardsDir);
+      console.log('Found files:', files);
+      
+      // Filter for JSON files that don't start with underscore
+      const boardFiles = files.filter(file => 
+        file.endsWith('.json') && 
+        !file.startsWith('_') && 
+        file !== 'config.json'
+      );
+      
+      console.log('Filtered to board files:', boardFiles);
+      
+      // Read and parse each board file
+      const boards = [];
+      
+      for (const file of boardFiles) {
+        try {
+          // Skip directories
+          const filePath = path.join(boardsDir, file);
+          const stats = await fs.stat(filePath);
+          if (stats.isDirectory()) {
+            console.log(`Skipping directory: ${file}`);
+            continue;
+          }
+          
+          // Read the file
+          const data = await fs.readFile(filePath, 'utf8');
+          const boardData = JSON.parse(data);
+          
+          // Use file modification time if no last_updated
+          let lastUpdated = boardData.last_updated;
+          if (!lastUpdated) {
+            lastUpdated = stats.mtime.toISOString();
+          }
+          
+          boards.push({
+            id: boardData.id || path.basename(file, '.json'),
+            name: boardData.projectName || 'Unnamed Board',
+            lastUpdated: lastUpdated || new Date().toISOString()
+          });
+        } catch (err) {
+          console.error(`Error reading board file ${file}:`, err);
+        }
+      }
+      
+      // Sort boards by name
+      boards.sort((a, b) => a.name.localeCompare(b.name));
+      
+      console.log('Successfully loaded boards:', boards.length);
       
       // Format the output as a numbered list with name, ID and last modified date
       let formattedOutput = '';
@@ -1362,6 +1440,34 @@ server.tool(
 
 // Start the server when this file is run directly
 if (require.main === module) {
+  // Print environment information for debugging
+  console.log('\nEnvironment Information:');
+  console.log('- Process ID:', process.pid);
+  console.log('- Node Version:', process.version);
+  console.log('- Working Directory:', process.cwd());
+  console.log('- Platform:', process.platform);
+  console.log('- Environment Variables:');
+  console.log('  USE_LOCAL_BOARDS:', process.env.USE_LOCAL_BOARDS);
+  console.log('  BOARD_FILE:', process.env.BOARD_FILE);
+  
+  // Log filesystem access check
+  (async () => {
+    try {
+      console.log('\nFile system access check:');
+      const boardsDir = config.boardsDir;
+      console.log('- Checking access to boardsDir:', boardsDir);
+      await fs.access(boardsDir).then(() => console.log('  ✅ Directory exists and is accessible'));
+      
+      // Try to list files
+      console.log('- Listing files in directory:');
+      const files = await fs.readdir(boardsDir);
+      console.log(`  ✅ Found ${files.length} files/directories`);
+      console.log('  First 5 entries:', files.slice(0, 5));
+    } catch (err) {
+      console.error('❌ Filesystem access error:', err);
+    }
+  })();
+  
   // Create a stdio transport
   const transport = new StdioServerTransport();
   
