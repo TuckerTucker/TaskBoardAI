@@ -19,9 +19,8 @@ NORMALIZED_VERSION=${VERSION#v}
 
 # Update package.json version
 if which jq >/dev/null 2>&1; then
-  # Using jq if available (preserves formatting and comments)
-  TMP_FILE=$(mktemp)
-  jq ".version = \"$NORMALIZED_VERSION\"" package.json > "$TMP_FILE" && mv "$TMP_FILE" package.json
+  # Using npm version which handles package.json and package-lock.json properly
+  npm version $NORMALIZED_VERSION --no-git-tag-version
   
   # Ensure publishConfig exists and is set to public
   if ! jq -e '.publishConfig' package.json >/dev/null 2>&1; then
@@ -30,9 +29,9 @@ if which jq >/dev/null 2>&1; then
     echo "Added publishConfig to package.json"
   fi
 else
-  # Fallback to sed (less reliable but works without dependencies)
-  sed -i.bak -E "s/\"version\":[[:space:]]*\"[^\"]*\"/\"version\": \"$NORMALIZED_VERSION\"/" package.json && rm package.json.bak
-  echo "Updated version in package.json using sed. Please check the file for correct formatting."
+  # Fallback using npm version (works without jq)
+  npm version $NORMALIZED_VERSION --no-git-tag-version
+  echo "Updated version to $NORMALIZED_VERSION using npm version"
 fi
 
 echo "Updated package.json version to $NORMALIZED_VERSION"

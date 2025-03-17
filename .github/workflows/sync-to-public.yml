@@ -389,6 +389,7 @@ jobs:
             echo "   2. Install dependencies: npm ci"
             echo "   3. Login to NPM: npm login"
             echo "   4. Publish: npm publish --access public"
+            echo "   Note: The package is published as @tuckertucker/taskboardai"
           else
             # Create or update .npmrc file with auth token
             echo "//registry.npmjs.org/:_authToken=\${NODE_AUTH_TOKEN}" > .npmrc
@@ -397,7 +398,7 @@ jobs:
             npm publish --access public
             
             echo "✅ Successfully published version v$PACKAGE_VERSION to NPM registry"
-            echo "📦 Package link: https://www.npmjs.com/package/taskboardai/v/$PACKAGE_VERSION"
+            echo "📦 Package link: https://www.npmjs.com/package/@tuckertucker/taskboardai/v/$PACKAGE_VERSION"
             
             # Remove .npmrc file to avoid committing tokens
             rm -f .npmrc

@@ -1,5 +1,5 @@
 {
-  "name": "taskboardai",
+  "name": "@tuckertucker/taskboardai",
   "version": "1.2.1",
   "description": "A lightweight, file-based kanban board with AI integration through Claude",
   "main": "server/server.js",
