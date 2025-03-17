@@ -336,10 +336,11 @@ jobs:
         run: |
           # Verify NPM_TOKEN secret is available (will not print the token)
           if [ -z "$NODE_AUTH_TOKEN" ]; then
-            echo "::error::NPM_TOKEN secret is not available. Please add it to your repository secrets."
-            exit 1
+            echo "::warning::NPM_TOKEN secret is not available. Will prepare package.json but skip publishing to NPM."
+            echo "SKIP_PUBLISH=true" >> $GITHUB_ENV
           else
             echo "NPM_TOKEN secret is available."
+            echo "SKIP_PUBLISH=false" >> $GITHUB_ENV
           fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -380,16 +381,26 @@ jobs:
             mv "$TMP_FILE" package.json
           fi
           
-          # Create or update .npmrc file with auth token
-          echo "//registry.npmjs.org/:_authToken=\${NODE_AUTH_TOKEN}" > .npmrc
-          
-          # Publish to NPM
-          npm publish --access public
-          
-          echo "✅ Successfully published version v$PACKAGE_VERSION to NPM registry"
-          echo "📦 Package link: https://www.npmjs.com/package/taskboardai/v/$PACKAGE_VERSION"
-          
-          # Remove .npmrc file to avoid committing tokens
-          rm -f .npmrc
+          # Check if we should skip publishing
+          if [ "$SKIP_PUBLISH" == "true" ]; then
+            echo "⚠️ Skipping NPM publishing due to missing NPM_TOKEN"
+            echo "✅ Package is prepared and ready for manual publishing. To publish manually:"
+            echo "   1. Clone the public repository: git clone https://github.com/TuckerTucker/TaskBoardAI.git"
+            echo "   2. Install dependencies: npm ci"
+            echo "   3. Login to NPM: npm login"
+            echo "   4. Publish: npm publish --access public"
+          else
+            # Create or update .npmrc file with auth token
+            echo "//registry.npmjs.org/:_authToken=\${NODE_AUTH_TOKEN}" > .npmrc
+            
+            # Publish to NPM
+            npm publish --access public
+            
+            echo "✅ Successfully published version v$PACKAGE_VERSION to NPM registry"
+            echo "📦 Package link: https://www.npmjs.com/package/taskboardai/v/$PACKAGE_VERSION"
+            
+            # Remove .npmrc file to avoid committing tokens
+            rm -f .npmrc
+          fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
