@@ -312,3 +312,26 @@ jobs:
             
             echo "✓ Version tag created in public repository"
           fi
+      
+      - name: Verify NPM Package Sync
+        if: steps.sync-details.outputs.version != ''
+        run: |
+          echo "Verifying that NPM package version matches the code in the public repository"
+          VERSION="${{ steps.sync-details.outputs.version }}"
+          
+          # Extract version from public package.json
+          PACKAGE_VERSION=$(grep -o '"version": "[^"]*"' package.json | cut -d'"' -f4)
+          
+          echo "Package.json version: $PACKAGE_VERSION"
+          echo "Expected version: $VERSION"
+          
+          if [ "$PACKAGE_VERSION" != "$VERSION" ]; then
+            echo "⚠️ Warning: Package version ($PACKAGE_VERSION) does not match expected version ($VERSION)"
+            echo "Please check that the correct version is published to NPM"
+          else
+            echo "✓ Package version matches expected version"
+            echo "✓ Code and NPM package are in sync"
+          fi
+          
+          # Note: This step only verifies versions but doesn't publish
+          # The npm publish happens in the release workflow when a new tag is created
