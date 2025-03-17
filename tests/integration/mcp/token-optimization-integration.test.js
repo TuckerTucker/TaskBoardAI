@@ -29,12 +29,29 @@ jest.mock('@modelcontextprotocol/sdk/server/stdio.js', () => {
   };
 });
 
-// Mock fs.promises for testing
+// Mock fs for testing
 jest.mock('node:fs', () => {
   // Maintain an in-memory filesystem for integration testing
   const mockFs = {
     fileSystem: {},
     backupSystem: {}
+  };
+  
+  // Include the synchronous methods
+  const existsSync = (path) => {
+    return Object.prototype.hasOwnProperty.call(mockFs.fileSystem, path);
+  };
+  
+  const mkdirSync = (path, options) => {
+    mockFs.fileSystem[path] = { isDirectory: true };
+    return undefined;
+  };
+  
+  const copyFileSync = (src, dest) => {
+    if (existsSync(src) && mockFs.fileSystem[src].content) {
+      mockFs.fileSystem[dest] = { content: mockFs.fileSystem[src].content };
+    }
+    return undefined;
   };
   
   const promises = {
@@ -98,7 +115,10 @@ jest.mock('node:fs', () => {
       R_OK: 4,
       W_OK: 2,
       X_OK: 1
-    }
+    },
+    existsSync,
+    mkdirSync,
+    copyFileSync
   };
 });
 

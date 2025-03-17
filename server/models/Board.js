@@ -131,7 +131,7 @@ class Board {
                     // Check if it's a directory (async)
                     const filePath = path.join(config.boardsDir, file);
                     const stats = await fs.stat(filePath);
-                    if (stats.isDirectory()) {
+                    if (stats.isDirectory && stats.isDirectory()) {
                         continue; // Skip directories
                     }
                     

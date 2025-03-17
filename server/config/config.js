@@ -1,5 +1,6 @@
 const path = require('node:path');
 const fs = require('node:fs');
+const fsp = require('node:fs/promises'); 
 const os = require('node:os');
 
 // Get the home directory for the user

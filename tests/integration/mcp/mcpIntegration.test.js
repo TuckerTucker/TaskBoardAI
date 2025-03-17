@@ -71,7 +71,25 @@ const inMemoryFiles = {};
 
 // Custom mock for fs to simulate file operations without touching the disk
 jest.mock('node:fs', () => {
+  // Synchronous methods
+  const existsSync = jest.fn().mockImplementation((filepath) => {
+    return Object.prototype.hasOwnProperty.call(inMemoryFiles, filepath);
+  });
+  
+  const mkdirSync = jest.fn().mockImplementation((dirpath, options) => {
+    inMemoryFiles[dirpath] = 'directory';
+    return undefined;
+  });
+  
+  const copyFileSync = jest.fn().mockImplementation((src, dest) => {
+    if (inMemoryFiles[src]) {
+      inMemoryFiles[dest] = inMemoryFiles[src];
+    }
+    return undefined;
+  });
+  
   return {
+    // Async methods
     promises: {
       readFile: jest.fn().mockImplementation(async (filepath, encoding) => {
         if (inMemoryFiles[filepath]) {
@@ -99,6 +117,16 @@ jest.mock('node:fs', () => {
       }),
       mkdir: jest.fn().mockResolvedValue(undefined),
       readdir: jest.fn().mockResolvedValue([])
+    },
+    // Sync methods
+    existsSync,
+    mkdirSync,
+    copyFileSync,
+    constants: {
+      F_OK: 0,
+      R_OK: 4,
+      W_OK: 2,
+      X_OK: 1
     }
   };
 });
