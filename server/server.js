@@ -35,6 +35,7 @@ app.use(express.json());
 // Static file serving
 app.use(express.static(config.appDir));
 app.use('/css', express.static(config.staticDirs.css));
+app.use('/js', express.static(config.staticDirs.js));
 app.use('/img', express.static(config.staticDirs.img));
 app.use('/public', express.static(config.staticDirs.public));
 
@@ -70,22 +71,29 @@ async function init() {
   const tester = net.createServer()
     .once('error', err => {
       if (err.code === 'EADDRINUSE') {
-        console.log('Port 3001 is already in use. Attempting to kill the process...');
+        console.log(`Port ${config.port} is already in use. Attempting to kill the process...`);
         
-        // For MacOS, find and kill the process using the port
+        // Platform-specific port handling
         const { execSync } = require('child_process');
         try {
-          // Find the PID of the process using port 3001
-          const pid = execSync('lsof -i :3001 -t').toString().trim();
-          if (pid) {
-            console.log(`Killing process with PID: ${pid}`);
-            execSync(`kill -9 ${pid}`);
-            console.log('Process killed successfully. Starting new server...');
-            // Wait a moment for the port to be released
-            setTimeout(() => startServer(), 1000);
+          if (process.platform === 'win32') {
+            // Windows
+            execSync(`FOR /F "tokens=5" %a in ('netstat -ano ^| findstr :${config.port} ^| findstr LISTENING') do taskkill /F /PID %a`);
+          } else {
+            // Unix-like
+            // Find the PID of the process using the port
+            const pid = execSync(`lsof -i :${config.port} -t`).toString().trim();
+            if (pid) {
+              console.log(`Killing process with PID: ${pid}`);
+              execSync(`kill -9 ${pid}`);
+              console.log('Process killed successfully. Starting new server...');
+            }
           }
+          // Wait a moment for the port to be released
+          setTimeout(() => startServer(), 1000);
         } catch (error) {
           console.error('Failed to kill the process:', error.message);
+          console.error('Please manually kill the process using this port or specify a different port with PORT environment variable');
           process.exit(1);
         }
       } else {
@@ -97,17 +105,19 @@ async function init() {
       tester.close();
       startServer();
     })
-    .listen(3001);
+    .listen(config.port);
 }
 
 /**
- * Start the Express server on port 3001
+ * Start the Express server on the configured port
  * @function startServer
  * @memberof module:server
  */
 function startServer() {
-  app.listen(3001, () => {
-    console.log('TaskBoardAI server running on port 3001');
+  app.listen(config.port, () => {
+    console.log(`TaskBoardAI server running on port ${config.port}`);
+    console.log(`Using data directory: ${config.userDataDir}`);
+    console.log(`Board file: ${config.dataFile}`);
   });
 }
 

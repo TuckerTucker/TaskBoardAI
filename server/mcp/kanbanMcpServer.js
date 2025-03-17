@@ -56,11 +56,43 @@ server.tool(
   {}, // No parameters needed
   async () => {
     try {
+      // Get list of boards with metadata
       const boards = await Board.list();
+      
+      // Format the output as a numbered list with name, ID and last modified date
+      let formattedOutput = '';
+      
+      if (boards.length === 0) {
+        formattedOutput = 'No boards found. Create a new board with the create-board tool.';
+      } else {
+        boards.forEach((board, index) => {
+          // Ensure we have a last updated date, or use current date
+          const lastUpdated = board.lastUpdated || new Date().toISOString();
+          
+          // Convert to date object
+          const date = new Date(lastUpdated);
+          
+          // Format date as "Month Day - HH:MMam/pm"
+          const month = date.toLocaleString('en-US', { month: 'short' });
+          const day = date.getDate();
+          const time = date.toLocaleString('en-US', { 
+            hour: 'numeric', 
+            minute: '2-digit', 
+            hour12: true 
+          }).toLowerCase();
+          
+          const formattedDate = `${month} ${day} - ${time}`;
+          
+          // Add to numbered list: "1) Board Name\n(board-id)\nDate"
+          formattedOutput += `${index + 1}) ${board.name}\n(${board.id})\n${formattedDate}\n\n`;
+        });
+      }
+      
       return {
-        content: [{ type: 'text', text: JSON.stringify(boards, null, 2) }]
+        content: [{ type: 'text', text: formattedOutput }]
       };
     } catch (error) {
+      console.error('Error in get-boards tool:', error);
       return {
         content: [{ type: 'text', text: `Error listing boards: ${error.message}` }],
         isError: true
@@ -69,78 +101,125 @@ server.tool(
   }
 );
 
-// Create a new board
+// Create a new board with comprehensive structure and comments
 server.tool(
   'create-board',
   { 
-    name: z.string().min(1, 'Board name is required'),
-    template: z.enum(['empty', 'basic', 'full']).optional().default('basic')
+    name: z.string().min(1, 'Board name is required')
   },
-  async ({ name, template }) => {
+  async ({ name }) => {
     try {
       checkRateLimit();
       
-      // Create the board with basic metadata
+      // Create the board with detailed metadata
       const boardId = require('crypto').randomUUID();
-      const columns = [];
-      const cards = [];
       const now = new Date().toISOString();
       
-      // Add columns based on template
-      if (template === 'empty') {
-        // No columns or cards - just the empty board
-      } else {
-        // Add default columns for basic and full templates
-        const todoColumnId = require('crypto').randomUUID();
-        const inProgressColumnId = require('crypto').randomUUID();
-        const doneColumnId = require('crypto').randomUUID();
-        
-        columns.push(
-          { id: todoColumnId, name: 'To Do' },
-          { id: inProgressColumnId, name: 'In Progress' },
-          { id: doneColumnId, name: 'Done' }
-        );
-        
-        // Add sample cards for full template
-        if (template === 'full') {
-          cards.push({
-            id: require('crypto').randomUUID(),
-            title: 'Welcome to your new board',
-            content: '# Getting Started\n\nThis board uses the card-first architecture, where cards are stored in a top-level array and reference their parent column.\n\n## Features:\n- Markdown formatting\n- Subtasks\n- Tags\n- Dependencies',
-            columnId: todoColumnId,
-            position: 0,
-            collapsed: false,
-            subtasks: ['✓ Create board', 'Add your own cards', 'Customize columns'],
-            tags: ['welcome', 'getting-started'],
-            dependencies: [],
-            created_at: now,
-            updated_at: now
-          });
-          
-          cards.push({
-            id: require('crypto').randomUUID(),
-            title: 'Example Task',
-            content: 'This is an example task in progress',
-            columnId: inProgressColumnId,
-            position: 0,
-            collapsed: false,
-            subtasks: ['✓ Step 1', 'Step 2', 'Step 3'],
-            tags: ['example'],
-            dependencies: [],
-            created_at: now,
-            updated_at: now
-          });
-        }
-      }
+      // Create default columns with comments
+      const todoColumnId = require('crypto').randomUUID();
+      const inProgressColumnId = require('crypto').randomUUID();
+      const doneColumnId = require('crypto').randomUUID();
+      const blockedColumnId = require('crypto').randomUUID();
       
-      // Create the board object
+      const columns = [
+        { id: todoColumnId, name: 'To Do' }, // Column for tasks not yet started
+        { id: inProgressColumnId, name: 'In Progress' }, // Column for tasks currently being worked on
+        { id: doneColumnId, name: 'Done' }, // Column for completed tasks
+        { id: blockedColumnId, name: 'Blocked' } // Column for tasks that cannot proceed due to dependencies or obstacles
+      ];
+      
+      // Create sample cards with comprehensive structure and comments
+      const featureOneId = require('crypto').randomUUID();
+      const featureTwoId = require('crypto').randomUUID();
+      const completedFeatureId = require('crypto').randomUUID();
+      const blockedFeatureId = require('crypto').randomUUID();
+      
+      const cards = [
+        {
+          id: featureOneId, // Unique identifier for the card
+          title: 'Feature One', // Card title displayed in the header
+          content: '## Feature Description\n\n- Point 1\n- Point 2\n\nAdditional details here.', // markdown is supported
+          columnId: todoColumnId, // ID of the column this card belongs to
+          collapsed: false, // Whether the card is currently collapsed (boolean)
+          position: 0, // Position within the column (0-indexed)
+          subtasks: [ // Array of subtask strings, prefix with ✓ to mark as complete
+            '✓ Task One', // completed subtask
+            'Task Two' // task in progress
+          ],
+          tags: [ // Array of tag strings for categorization
+            'feature',
+            'frontend'
+          ],
+          dependencies: [ // Array of card IDs that this card depends on
+            featureTwoId
+          ],
+          created_at: now, // ISO timestamp when card was created
+          updated_at: now // ISO timestamp of last card update
+        },
+        {
+          id: featureTwoId, // Unique identifier
+          title: 'Feature Two', // Display title
+          content: 'A basic feature description', // Markdown content
+          columnId: inProgressColumnId, // Card belongs in "In Progress" column
+          position: 0, // First position in column
+          collapsed: true, // Card is initially collapsed
+          subtasks: [], // No subtasks defined yet
+          tags: ['backend', 'database', 'api'], // Multiple categorization tags
+          dependencies: [], // No dependencies on other cards
+          created_at: now, // Creation timestamp
+          updated_at: now // Last update timestamp
+        },
+        {
+          id: completedFeatureId, // Unique identifier
+          title: 'Completed Feature', // Display title
+          content: 'This feature is done', // Simple markdown content
+          columnId: doneColumnId, // Card belongs in "Done" column
+          position: 0, // First position in column
+          collapsed: false, // Card is expanded
+          subtasks: [ // All subtasks completed
+            '✓ Task One',
+            '✓ Task Two',
+            '✓ Task Three'
+          ],
+          tags: ['complete'], // Tagged as complete
+          dependencies: [], // No dependencies
+          created_at: now, // Creation timestamp
+          updated_at: now, // Last update timestamp
+          completed_at: now // Timestamp when moved to Done column
+        },
+        {
+          id: blockedFeatureId, // Unique identifier
+          title: 'Blocked Feature Example', // Display title
+          content: 'This feature is blocked waiting for dependencies.', // Descriptive content
+          columnId: blockedColumnId, // Card belongs in "Blocked" column
+          position: 0, // First position in column
+          collapsed: false, // Card is expanded
+          subtasks: [ // Mix of complete and incomplete tasks
+            '✓ Initial research',
+            '✓ Requirements gathering',
+            'Implementation - blocked by Feature Two'
+          ],
+          tags: ['blocked', 'backend'], // Relevant tags
+          dependencies: [featureTwoId], // Depends on Feature Two
+          created_at: now, // Creation timestamp
+          updated_at: now, // Last update timestamp
+          blocked_at: now // Timestamp when moved to Blocked column
+        }
+      ];
+      
+      // Create the board object with all components
       const boardData = {
-        id: boardId,
-        projectName: name.trim(),
-        columns: columns,
-        cards: cards,
-        'next-steps': [],
-        last_updated: now
+        id: boardId, // board uuid
+        projectName: name.trim(), // Name displayed at the top of the board
+        columns: columns, // Array of column definitions
+        cards: cards, // Array of all cards in the board
+        'next-steps': [ // Array of next priority tasks and focus areas
+          'Complete Feature Two',
+          'Review completed features for proper types, structures, and architecture'
+        ],
+        last_updated: now, // ISO timestamp of last board update
+        isDragging: false, // Internal state for drag operations
+        scrollToColumn: null // ID of column to auto-scroll to, or null
       };
       
       // Import the board

@@ -430,6 +430,11 @@ describe('Board Model', () => {
         last_updated: '2023-01-02T00:00:00.000Z'
       }));
       
+      // Mock fs.stat for both files
+      fs.stat.mockResolvedValue({
+        mtime: new Date('2023-01-01T00:00:00.000Z')
+      });
+      
       const boards = await Board.list();
       
       expect(boards).toHaveLength(2);
@@ -447,6 +452,11 @@ describe('Board Model', () => {
       }));
       
       fs.readFile.mockRejectedValueOnce(new Error('Invalid JSON'));
+      
+      // Mock fs.stat
+      fs.stat.mockResolvedValue({
+        mtime: new Date('2023-01-01T00:00:00.000Z')
+      });
       
       const boards = await Board.list();
       

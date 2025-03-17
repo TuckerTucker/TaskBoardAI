@@ -77,7 +77,7 @@ describe('MCP Server', () => {
   });
   
   describe('get-boards', () => {
-    it('should return a list of boards', async () => {
+    it('should return a numbered list of boards', async () => {
       // Mock the Board.list method to return sample boards
       const mockBoards = [
         { id: 'board1', name: 'Board 1', lastUpdated: '2025-03-12T12:00:00Z' },
@@ -90,8 +90,23 @@ describe('MCP Server', () => {
       const handler = async () => {
         try {
           const boards = await Board.list();
+          
+          // Format the output as a numbered list with name, ID and last modified date
+          let formattedOutput = '';
+          boards.forEach((board, index) => {
+            // Extract last modified date if available, or use current date
+            const lastUpdated = board.lastUpdated || new Date().toISOString();
+            // Convert to date object
+            const date = new Date(lastUpdated);
+            // Format date as "Month Day - HH:MMam/pm"
+            const formattedDate = `${date.toLocaleString('en-US', { month: 'short' })} ${date.getDate()} - ${date.toLocaleString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase()}`;
+            
+            // Add to numbered list: "1) Board Name\n(board-id)\nDate"
+            formattedOutput += `${index + 1}) ${board.name}\n(${board.id})\n${formattedDate}\n\n`;
+          });
+          
           return {
-            content: [{ type: 'text', text: JSON.stringify(boards, null, 2) }]
+            content: [{ type: 'text', text: formattedOutput }]
           };
         } catch (error) {
           return {
@@ -104,10 +119,12 @@ describe('MCP Server', () => {
       // Execute the handler
       const result = await handler();
       
-      // Verify the result
-      expect(result).toEqual({
-        content: [{ type: 'text', text: JSON.stringify(mockBoards, null, 2) }]
-      });
+      // Verify the result contains text (not checking exact format which depends on locale)
+      expect(result.content[0].type).toBe('text');
+      expect(result.content[0].text).toContain('1) Board 1');
+      expect(result.content[0].text).toContain('(board1)');
+      expect(result.content[0].text).toContain('2) Board 2');
+      expect(result.content[0].text).toContain('(board2)');
       
       expect(Board.list).toHaveBeenCalledTimes(1);
     });
@@ -146,7 +163,7 @@ describe('MCP Server', () => {
   });
   
   describe('create-board', () => {
-    it('should create a new board with basic template', async () => {
+    it('should create a new board with comprehensive structure', async () => {
       // Mock the Board.import method to return a new board
       const boardName = 'New Test Board';
       const mockBoard = { 
@@ -158,89 +175,48 @@ describe('MCP Server', () => {
       Board.import.mockResolvedValue(mockBoard);
       
       // Handler for create-board
-      const handler = async ({ name, template = 'basic' }) => {
+      const handler = async ({ name }) => {
         try {
-          // Create board data with template
+          // Create board data with comprehensive structure
           const boardData = {
             projectName: name,
             columns: [
-              { id: 'col-1', name: 'To Do' },
-              { id: 'col-2', name: 'In Progress' },
-              { id: 'col-3', name: 'Done' }
+              { id: 'col-1', name: 'To Do' }, // Column for tasks not yet started
+              { id: 'col-2', name: 'In Progress' }, // Column for tasks currently being worked on
+              { id: 'col-3', name: 'Done' }, // Column for completed tasks
+              { id: 'col-4', name: 'Blocked' } // Column for tasks that cannot proceed due to dependencies or obstacles
             ],
-            cards: template === 'full' ? [
+            cards: [
               { 
-                id: 'card-1',
-                title: 'Welcome to your new board',
-                columnId: 'col-1',
-                position: 0
-              }
-            ] : []
-          };
-          
-          const board = await Board.import(boardData);
-          return {
-            content: [{ type: 'text', text: JSON.stringify(board, null, 2) }]
-          };
-        } catch (error) {
-          return {
-            content: [{ type: 'text', text: `Error creating board: ${error.message}` }],
-            isError: true
-          };
-        }
-      };
-      
-      // Execute the handler
-      const result = await handler({ 
-        name: boardName,
-        template: 'basic'
-      });
-      
-      // Verify the result
-      expect(result).toEqual({
-        content: [{ type: 'text', text: JSON.stringify(mockBoard, null, 2) }]
-      });
-      
-      // Verify Board.import was called
-      expect(Board.import).toHaveBeenCalled();
-    });
-    
-    it('should create a new board with full template', async () => {
-      // Mock the Board.import method to return a new board
-      const boardName = 'New Full Board';
-      const mockBoard = { 
-        id: 'new-board-id', 
-        name: boardName, 
-        lastUpdated: '2025-03-13T12:00:00Z' 
-      };
-      
-      Board.import.mockResolvedValue(mockBoard);
-      
-      // Handler for create-board
-      const handler = async ({ name, template = 'basic' }) => {
-        try {
-          // Create board data with template
-          const boardData = {
-            projectName: name,
-            columns: [
-              { id: 'col-1', name: 'To Do' },
-              { id: 'col-2', name: 'In Progress' },
-              { id: 'col-3', name: 'Done' }
-            ],
-            cards: template === 'full' ? [
-              { 
-                id: 'card-1',
-                title: 'Welcome to your new board',
-                columnId: 'col-1',
-                position: 0
+                id: 'card-1', // Unique identifier for the card
+                title: 'Feature One', // Card title displayed in the header 
+                content: '## Feature Description\n\n- Point 1\n- Point 2\n\nAdditional details here.', // markdown is supported
+                columnId: 'col-1', // ID of the column this card belongs to
+                position: 0, // Position within the column (0-indexed)
+                subtasks: ['✓ Task One', 'Task Two'], // Mix of completed and in-progress subtasks
+                tags: ['feature', 'frontend'], // Multiple categorization tags
+                dependencies: ['card-2'], // This card depends on card-2
+                created_at: expect.any(String), // Creation timestamp
+                updated_at: expect.any(String) // Last update timestamp
               },
               {
-                id: 'card-2',
-                title: 'Example Task',
-                columnId: 'col-2',
-                position: 0
+                id: 'card-2', // Unique identifier
+                title: 'Feature Two', // Display title
+                content: 'A basic feature description', // Simple markdown content
+                columnId: 'col-2', // Card belongs in "In Progress" column
+                position: 0, // First position in column
+                collapsed: true, // Card is initially collapsed
+                subtasks: [], // No subtasks defined
+                tags: ['backend', 'database', 'api'], // Multiple categorization tags
+                dependencies: [], // No dependencies
+                created_at: expect.any(String),
+                updated_at: expect.any(String)
               }
-            ] : []
+            ],
+            'next-steps': [
+              'Complete Feature Two',
+              'Review completed features'
+            ]
           };
           
           const board = await Board.import(boardData);
@@ -257,8 +233,7 @@ describe('MCP Server', () => {
       
       // Execute the handler
       const result = await handler({ 
-        name: boardName,
-        template: 'full'
+        name: boardName
       });
       
       // Verify the result
@@ -276,15 +251,16 @@ describe('MCP Server', () => {
       Board.import.mockRejectedValue(error);
       
       // Handler for create-board
-      const handler = async ({ name, template = 'basic' }) => {
+      const handler = async ({ name }) => {
         try {
-          // Create board data with template
+          // Create comprehensive board data (error will occur before this matters)
           const boardData = {
             projectName: name,
             columns: [
               { id: 'col-1', name: 'To Do' },
               { id: 'col-2', name: 'In Progress' },
-              { id: 'col-3', name: 'Done' }
+              { id: 'col-3', name: 'Done' },
+              { id: 'col-4', name: 'Blocked' }
             ],
             cards: []
           };

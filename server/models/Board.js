@@ -108,14 +108,19 @@ class Board {
      * Get a list of all available boards
      * @static
      * @async
-     * @returns {Promise<Array<BoardSummary>>} Array of board summary objects
+     * @returns {Promise<Array<{id: string, name: string, lastUpdated: string}>>} Array of simplified board objects with id, name and lastUpdated
      */
     static async list() {
         await ensureBoardsDir();
         
         try {
             const files = await fs.readdir(config.boardsDir);
-            const boardFiles = files.filter(file => file.endsWith('.json'));
+            // Filter out template files and non-JSON files
+            const boardFiles = files.filter(file => 
+                file.endsWith('.json') && 
+                !file.startsWith('_') && 
+                file !== 'config.json'
+            );
             
             const boards = [];
             
@@ -125,16 +130,35 @@ class Board {
                     const data = await fs.readFile(filePath, 'utf8');
                     const boardData = JSON.parse(data);
                     
+                    // Get the file's last modification date if no lastUpdated field exists
+                    let lastUpdated = boardData.last_updated;
+                    
+                    // If no last_updated field, try to get file modification time as fallback
+                    try {
+                        if (!lastUpdated) {
+                            const stats = await fs.stat(filePath);
+                            lastUpdated = stats.mtime.toISOString();
+                        }
+                    } catch (statErr) {
+                        // If stats fail, use current time
+                        console.error(`Error getting file stats for ${file}:`, statErr);
+                        lastUpdated = new Date().toISOString();
+                    }
+                    
+                    // Include id, name, and lastUpdated for the output
                     boards.push({
                         id: boardData.id || path.basename(file, '.json'),
                         name: boardData.projectName || 'Unnamed Board',
-                        lastUpdated: boardData.last_updated || null
+                        lastUpdated: lastUpdated || new Date().toISOString() // Ensure we always have a date
                     });
                 } catch (err) {
                     console.error(`Error reading board file ${file}:`, err);
                     // Skip this file and continue
                 }
             }
+            
+            // Sort boards alphabetically by name for easier viewing
+            boards.sort((a, b) => a.name.localeCompare(b.name));
             
             return boards;
         } catch (error) {

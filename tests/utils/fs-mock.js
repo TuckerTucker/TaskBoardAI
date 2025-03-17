@@ -14,6 +14,7 @@ const mockFs = {
     this.promises.readdir.mockReset();
     this.promises.access.mockReset();
     this.promises.unlink.mockReset();
+    this.promises.stat.mockReset();
     
     // Reset default implementations
     this.promises.readFile.mockResolvedValue('');
@@ -22,6 +23,7 @@ const mockFs = {
     this.promises.readdir.mockResolvedValue([]);
     this.promises.access.mockResolvedValue();
     this.promises.unlink.mockResolvedValue();
+    this.promises.stat.mockResolvedValue({ mtime: new Date() });
   },
 
   // Create the mock structure with all relevant methods
@@ -31,7 +33,8 @@ const mockFs = {
     mkdir: jest.fn().mockResolvedValue(),
     readdir: jest.fn().mockResolvedValue([]),
     access: jest.fn().mockResolvedValue(),
-    unlink: jest.fn().mockResolvedValue()
+    unlink: jest.fn().mockResolvedValue(),
+    stat: jest.fn().mockResolvedValue({ mtime: new Date() })
   }
 };
 

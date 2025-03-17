@@ -34,6 +34,22 @@ You'll want to use context of your project to update the board. <br>
 
 ## Installation
 
+### Option 1: Install via npm (Recommended)
+
+Install globally for command-line access from anywhere:
+
+```bash
+npm install -g taskboardai
+```
+
+Or install locally in your project:
+
+```bash
+npm install taskboardai
+```
+
+### Option 2: Clone the Repository (Development)
+
 1. Clone the repository:
 ```bash
 git clone https://github.com/TuckerTucker/TaskBoardAI.git
@@ -47,7 +63,38 @@ npm install
 
 ## Usage
 
-### Starting a Local Board
+### Using npm-installed Version
+
+When installed globally via npm, you can use the following commands:
+
+1. List available boards:
+```bash
+taskboard --list
+```
+
+2. Create a new board:
+```bash
+taskboard --new my-project
+```
+
+3. Open an existing board:
+```bash
+taskboard my-project
+```
+
+4. Start the MCP server:
+```bash
+taskboard-mcp
+```
+
+5. Start both the board server and MCP server:
+```bash
+taskboard-all
+```
+
+### Using Repository Version
+
+If you've cloned the repository, use the included scripts:
 
 1. List available boards:
 ```bash
@@ -71,14 +118,32 @@ _*not yet supported via MCP_
 
 1. Create a new board directory in your project's repo
 2. Copy the example board:
-```bash
-cp /path/to/TaskBoardAI/boards/_kanban_example.json /your/board/location/board_name.json
-```
+   
+   If installed via npm:
+   ```bash
+   # First, create an example board in your home directory
+   taskboard --new example
+   
+   # Then copy it to your desired location
+   cp ~/.taskboardai/boards/example.json /your/board/location/board_name.json
+   ```
+   
+   If using the repository:
+   ```bash
+   cp /path/to/TaskBoardAI/boards/_kanban_example.json /your/board/location/board_name.json
+   ```
 
 3. Start the server with your external board location:
-```bash
-./_start_kanban --external /your/board/location/board_name.json
-```
+   
+   If installed via npm:
+   ```bash
+   taskboard --external /your/board/location/board_name.json
+   ```
+   
+   If using the repository:
+   ```bash
+   ./_start_kanban --external /your/board/location/board_name.json
+   ```
 
 ## Board Structure
 
@@ -128,7 +193,29 @@ This allows the Agent to have full context of the project
 _[What Is Model Context Protocol (MCP)?](https://modelcontextprotocol.io)_ </br>
 TaskBoardAI includes an MCP (Model Context Protocol) server that allows you to create and manage boards using any tools supporting MCP (i.e. Claude Code, Cursor, Windsurf ... ). 
 
-See the documentation for your IDE or CLI tool on how to add MCP servers. 
+### Starting the MCP Server
+
+If installed via npm:
+```bash
+# Start only the MCP server
+taskboard-mcp
+
+# Or start both the board server and MCP server
+taskboard-all
+```
+
+If using the repository:
+```bash
+# Start only the MCP server
+./_start_mcp
+
+# Or start both servers
+./_start_all
+```
+
+The MCP server runs on port 3002 by default.
+
+See the documentation for your IDE or CLI tool on how to add MCP servers.
 
 ### Using with Agents
 
@@ -187,6 +274,21 @@ npm install
 npm run docs
 ```
 
+
+## Data Directory
+
+When installed via npm, TaskBoardAI stores user data in the following location:
+
+- **Linux/macOS**: `~/.taskboardai/`
+- **Windows**: `C:\Users\<username>\.taskboardai\`
+
+The data directory contains:
+
+- `boards/`: Your kanban board JSON files
+- `config/`: Configuration files
+- `webhooks/`: Webhook configurations
+
+You can access or back up these files directly if needed.
 
 ## Contributing
 

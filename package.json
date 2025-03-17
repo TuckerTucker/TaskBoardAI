@@ -3,6 +3,11 @@
   "version": "1.0.0",
   "description": "A lightweight, file-based kanban board with AI integration through Claude",
   "main": "server/server.js",
+  "bin": {
+    "taskboard": "bin/taskboard.js",
+    "taskboard-mcp": "bin/taskboard-mcp.js",
+    "taskboard-all": "bin/taskboard-all.js"
+  },
   "scripts": {
     "start": "node server/server.js",
     "start:mcp": "node server/mcp/kanbanMcpServer.js",
@@ -51,5 +56,8 @@
   "bugs": {
     "url": "https://github.com/TuckerTucker/TaskBoardAI/issues"
   },
-  "homepage": "https://github.com/TuckerTucker/TaskBoardAI"
+  "homepage": "https://github.com/TuckerTucker/TaskBoardAI",
+  "engines": {
+    "node": ">=16.0.0"
+  }
 }
