@@ -300,7 +300,7 @@ export class Settings {
                 <div class="board-name">${board.name}</div>
                 <div class="board-actions">
                     <button class="icon-btn board-action-btn" data-action="load" data-board-id="${board.id}" title="Load Board">
-                        <i class="fas fa-folder-open"></i>
+                        <i class="fas fa-undo"></i>
                     </button>
                     <button class="icon-btn board-action-btn" data-action="archive" data-board-id="${board.id}" title="Archive Board">
                         <i class="fas fa-archive"></i>
@@ -595,7 +595,7 @@ export class Settings {
             archiveItem.innerHTML = `
                 <div class="board-name">${archive.name}</div>
                 <div class="board-info">
-                    <span class="archive-date">Archived: ${new Date(archive.archivedAt).toLocaleDateString()}</span>
+                    <span class="archive-date">${new Date(archive.archivedAt).toLocaleDateString()} </br> ${new Date(archive.archivedAt).toLocaleTimeString()}</span>
                 </div>
             `;
             

@@ -108,13 +108,14 @@
     margin-bottom: var(--spacing-lg);
     border-bottom: 1px solid var(--border-color);
     background-color: var(--header-bg);
-    justify-content: space-between;
+    justify-content: flex-start;
+    gap: var(--spacing-md);
 }
 
 .tab-btn {
     background: none;
     border: none;
-    padding: var(--spacing-sm) var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
     cursor: pointer;
     color: var(--color-text-light);
     border-bottom: 2px solid transparent;
