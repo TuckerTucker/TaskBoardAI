@@ -180,26 +180,73 @@ class Board {
      * @static
      * @async
      * @param {string} name - Name for the new board
-     * @returns {Promise<BoardSummary>} Summary of the created board
+     * @param {boolean} includeTemplate - Whether to include template documentation
+     * @returns {Promise<Object>} Summary of the created board or full template with documentation
      */
-    static async create(name) {
+    static async create(name, includeTemplate = false) {
         await ensureBoardsDir();
         
         const boardId = crypto.randomUUID();
-        const board = new Board({
-            id: boardId,
-            projectName: name,
-            columns: [],
-            last_updated: new Date().toISOString()
-        }, path.join(config.boardsDir, `${boardId}.json`));
         
-        await board.save();
-        
-        return {
-            id: boardId,
-            name: name,
-            lastUpdated: board.data.last_updated
-        };
+        // Read the example template
+        try {
+            const templatePath = path.join(config.templateBoardsDir, '_kanban_example.json');
+            const templateData = JSON.parse(await fs.readFile(templatePath, 'utf8'));
+            
+            // Create new board data with the template structure but user-provided name
+            const boardData = {
+                ...templateData,
+                id: boardId,
+                projectName: name,
+                last_updated: new Date().toISOString()
+            };
+            
+            const board = new Board(boardData, path.join(config.boardsDir, `${boardId}.json`));
+            await board.save();
+            
+            if (includeTemplate) {
+                // If template documentation is requested, read the documented example
+                try {
+                    const docPath = path.join(config.templateBoardsDir, '_kanban_example_doc.md');
+                    const docContent = await fs.readFile(docPath, 'utf8');
+                    
+                    return {
+                        id: boardId,
+                        name: name,
+                        lastUpdated: board.data.last_updated,
+                        templateDoc: docContent,
+                        fullTemplate: boardData
+                    };
+                } catch (docError) {
+                    console.error('Error reading template documentation:', docError);
+                }
+            }
+            
+            // Return basic board info if no template requested or if loading template failed
+            return {
+                id: boardId,
+                name: name,
+                lastUpdated: board.data.last_updated
+            };
+        } catch (error) {
+            console.error('Error reading board template:', error);
+            
+            // Fallback to empty board if template can't be loaded
+            const board = new Board({
+                id: boardId,
+                projectName: name,
+                columns: [],
+                last_updated: new Date().toISOString()
+            }, path.join(config.boardsDir, `${boardId}.json`));
+            
+            await board.save();
+            
+            return {
+                id: boardId,
+                name: name,
+                lastUpdated: board.data.last_updated
+            };
+        }
     }
 
     /**

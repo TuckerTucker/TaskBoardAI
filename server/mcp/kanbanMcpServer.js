@@ -341,9 +341,126 @@ server.tool(
       const options = columnId ? { columnId } : {};
       const formattedData = board.format(format, options);
       
-      return {
-        content: [{ type: 'text', text: JSON.stringify(formattedData, null, 2) }]
-      };
+      // Format as text for compact option
+      if (format === 'compact') {
+        const data = formattedData;
+        const date = new Date(data.up);
+        
+        // Format date as "Month Day - HH:MMam/pm"
+        const month = date.toLocaleString('en-US', { month: 'short' });
+        const day = date.getDate();
+        const time = date.toLocaleString('en-US', { 
+          hour: 'numeric', 
+          minute: '2-digit', 
+          hour12: true 
+        }).toLowerCase();
+        
+        const formattedDate = `${month} ${day} - ${time}`;
+        
+        // Create text representation
+        let output = `Board: ${data.name}\nupdate: ${formattedDate}\n\n`;
+        
+        // Group cards by column
+        const cardsByColumn = {};
+        data.cols.forEach(col => {
+          cardsByColumn[col.id] = {
+            name: col.n,
+            cards: []
+          };
+        });
+        
+        data.cards.forEach(card => {
+          if (cardsByColumn[card.col]) {
+            cardsByColumn[card.col].cards.push(card);
+          }
+        });
+        
+        // Build output column by column
+        Object.values(cardsByColumn).forEach(column => {
+          output += `[${column.name}]\n`;
+          
+          if (column.cards.length === 0) {
+            output += 'No cards\n\n';
+          } else {
+            column.cards.forEach(card => {
+              output += `- ${card.t}\n`;
+              
+              if (card.tag && card.tag.length > 0) {
+                output += `Tags: ${card.tag.join(', ')}\n`;
+              }
+              
+              if (card.c) {
+                output += `Desc: ${card.c.split('\n')[0]}\n`;
+              }
+              
+              if (card.sub && card.sub.length > 0) {
+                output += `Subs: ${card.sub.join(', ')}\n`;
+              }
+              
+              if (card.dep && card.dep.length > 0) {
+                output += `Deps: ${card.dep.join(', ')}\n`;
+              }
+              
+              if (card.comp) {
+                const compDate = new Date(card.comp);
+                const compMonth = compDate.toLocaleString('en-US', { month: 'short' });
+                const compDay = compDate.getDate();
+                const compTime = compDate.toLocaleString('en-US', { 
+                  hour: 'numeric', 
+                  minute: '2-digit', 
+                  hour12: true 
+                }).toLowerCase();
+                output += `Complete: ${compMonth} ${compDay} - ${compTime}\n`;
+              }
+              
+              output += '\n';
+            });
+          }
+        });
+        
+        return {
+          content: [{ type: 'text', text: output }]
+        };
+      }
+      else if (format === 'summary') {
+        const data = formattedData;
+        const date = new Date(data.last_updated);
+        
+        // Format date as "Month Day - HH:MMam/pm"
+        const month = date.toLocaleString('en-US', { month: 'short' });
+        const day = date.getDate();
+        const time = date.toLocaleString('en-US', { 
+          hour: 'numeric', 
+          minute: '2-digit', 
+          hour12: true 
+        }).toLowerCase();
+        
+        const formattedDate = `${month} ${day} - ${time}`;
+        
+        // Create text representation
+        let output = `Board: ${data.projectName}\n`;
+        output += `Last Updated: ${formattedDate}\n\n`;
+        
+        // Add overall statistics
+        output += `STATS:\n`;
+        output += `Total Cards: ${data.stats.totalCards}\n`;
+        output += `Completed: ${data.stats.completedCards} (${data.stats.progressPercentage}%)\n\n`;
+        
+        // List columns with card counts
+        output += `COLUMNS:\n`;
+        data.columns.forEach(column => {
+          output += `${column.name}: ${column.cardCount} card(s)\n`;
+        });
+        
+        return {
+          content: [{ type: 'text', text: output }]
+        };
+      }
+      else {
+        return {
+          content: [{ type: 'text', text: JSON.stringify(formattedData, null, 2) }]
+        };
+      }
     } catch (error) {
       return {
         content: [{ type: 'text', text: `Error retrieving board: ${error.message}` }],

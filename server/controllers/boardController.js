@@ -100,13 +100,13 @@ exports.getBoards = async (req, res) => {
  */
 exports.createBoard = async (req, res) => {
     try {
-        const { name } = req.body;
+        const { name, includeTemplate } = req.body;
         
         if (!name || typeof name !== 'string' || name.trim() === '') {
             return res.status(400).json({ error: 'Board name is required' });
         }
         
-        const board = await Board.create(name.trim());
+        const board = await Board.create(name.trim(), includeTemplate === true);
         res.status(201).json(board);
     } catch (error) {
         console.error('Error creating board:', error);
