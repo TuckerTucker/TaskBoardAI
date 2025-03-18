@@ -76,33 +76,53 @@ async function initializeApp() {
 
 // Show error message to user
 function showError(message) {
-    const errorDiv = document.createElement('div');
-    errorDiv.className = 'error-message';
-    errorDiv.textContent = message;
-    document.body.appendChild(errorDiv);
+    showMessage(message, 'error');
+}
+
+// Show message to user
+function showMessage(message, type = 'info') {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message message-${type}`;
+    messageDiv.textContent = message;
+    document.body.appendChild(messageDiv);
     
     // Remove after 5 seconds
     setTimeout(() => {
-        errorDiv.remove();
+        messageDiv.classList.add('fade-out');
+        setTimeout(() => {
+            messageDiv.remove();
+        }, 300);
     }, 5000);
 }
 
 // Setup UI event listeners
 function setupEventListeners() {
-    // Add column button
-    document.getElementById('add-column-btn').addEventListener('click', async () => {
-        const name = prompt('Enter column name:');
-        if (name) {
-            await stateManager.addColumn(name);
-        }
-    });
-
     // Project name click
     const projectName = document.getElementById('project-name');
     projectName.addEventListener('click', async () => {
         const name = prompt('Enter new project name:', stateManager.getState().projectName);
         if (name) {
             await stateManager.updateProjectName(name);
+        }
+    });
+    
+    // Archive board button
+    document.getElementById('archive-board-btn').addEventListener('click', async () => {
+        const currentBoard = stateManager.getState();
+        if (currentBoard && currentBoard.id) {
+            if (confirm('Are you sure you want to archive this board? It will be moved to the Archives.')) {
+                try {
+                    await apiService.archiveBoard(currentBoard.id);
+                    showMessage('Board archived successfully!', 'success');
+                    // Redirect to the boards list or load a default board
+                    window.location.reload();
+                } catch (error) {
+                    console.error('Failed to archive board:', error);
+                    showMessage('Failed to archive board', 'error');
+                }
+            }
+        } else {
+            showMessage('No board is currently loaded', 'error');
         }
     });
     
@@ -127,6 +147,16 @@ function renderBoard() {
     // Clear existing columns
     board.innerHTML = '';
     
+    // Add "Add Column" button as the first element
+    const addColumnBtn = document.createElement('div');
+    addColumnBtn.id = 'add-column-container';
+    addColumnBtn.innerHTML = `
+        <button id="add-column-btn" class="circular-btn" title="Add Column">
+            <i class="fas fa-plus"></i>
+        </button>
+    `;
+    board.appendChild(addColumnBtn);
+    
     // Render columns
     for (let index = 0; index < state.columns.length; index++) {
         const columnData = state.columns[index];
@@ -149,6 +179,14 @@ function renderBoard() {
         console.log('Updating next steps during render:', state['next-steps']);
         nextSteps.update(state['next-steps']);
     }
+    
+    // Re-attach event listener for the new add column button
+    document.getElementById('add-column-btn').addEventListener('click', async () => {
+        const name = prompt('Enter column name:');
+        if (name) {
+            await stateManager.addColumn(name);
+        }
+    });
 }
 
 // Start the application
