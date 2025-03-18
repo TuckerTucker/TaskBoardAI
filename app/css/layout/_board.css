@@ -37,8 +37,29 @@ header {
     background: var(--overlay-light);
 }
 
+#copy-board-info-btn {
+    color: var(--text-secondary);
+    background: none;
+    border: none;
+    font-size: 1rem;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+#copy-board-info-btn:hover {
+    color: var(--text-primary);
+    background-color: var(--overlay-light);
+}
+
 .board-controls {
     display: flex;
+    align-items: center;
     gap: var(--spacing-sm);
 }
 

@@ -106,6 +106,24 @@ function setupEventListeners() {
         }
     });
     
+    // Copy board info button
+    document.getElementById('copy-board-info-btn').addEventListener('click', () => {
+        const currentBoard = stateManager.getState();
+        if (currentBoard && currentBoard.id) {
+            const boardInfo = `Board: ${currentBoard.projectName || 'Untitled'}\nID: ${currentBoard.id}`;
+            
+            // Copy to clipboard
+            navigator.clipboard.writeText(boardInfo).then(() => {
+                showMessage('Board info copied to clipboard!', 'success');
+            }).catch(err => {
+                console.error('Failed to copy board info:', err);
+                showMessage('Failed to copy board info', 'error');
+            });
+        } else {
+            showMessage('No board is currently loaded', 'error');
+        }
+    });
+    
     // Archive board button
     document.getElementById('archive-board-btn').addEventListener('click', async () => {
         const currentBoard = stateManager.getState();

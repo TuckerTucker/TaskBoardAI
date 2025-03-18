@@ -12,16 +12,19 @@
     <header>
         <div class="header-left">
             <div class="board-header-info">
+                <button id="copy-board-info-btn" class="icon-btn" title="Copy Board Info">
+                    <i class="fas fa-copy"></i>
+                </button>
                 <h1 id="project-name" contenteditable="true">My Kanban Board</h1>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="board-controls">
                 <div class="board-selector-container">
                     <select id="board-selector" title="Select Board">
                         <!-- Board options will be dynamically populated -->
                     </select>
                 </div>
-            </div>
-        </div>
-        <div class="header-right">
-            <div class="board-controls">
                 <button id="archive-board-btn" title="Archive Board">
                     <i class="fas fa-archive"></i> Archive Board
                 </button>
