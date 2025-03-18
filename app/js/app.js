@@ -112,14 +112,7 @@ function showMessage(message, type = 'info', options = {}) {
 
 // Setup UI event listeners
 function setupEventListeners() {
-    // Project name click
-    const projectName = document.getElementById('project-name');
-    projectName.addEventListener('click', async () => {
-        const name = prompt('Enter new project name:', stateManager.getState().projectName);
-        if (name) {
-            await stateManager.updateProjectName(name);
-        }
-    });
+    // We've removed the project name click-to-edit functionality
     
     // Copy board info button
     document.getElementById('copy-board-info-btn').addEventListener('click', () => {

@@ -26,15 +26,7 @@ header {
     margin: 0;
     font-size: 1.5rem;
     color: var(--text-primary);
-    outline: none;
     padding: var(--spacing-xs) var(--spacing-sm);
-    border-radius: var(--radius-sm);
-    transition: background-color 0.2s ease;
-}
-
-#project-name:hover,
-#project-name:focus {
-    background: var(--overlay-light);
 }
 
 #copy-board-info-btn,
