@@ -79,20 +79,35 @@ function showError(message) {
     showMessage(message, 'error');
 }
 
-// Show message to user
-function showMessage(message, type = 'info') {
+/**
+ * Show message to user with customizable options
+ * @param {string} message - The message to display
+ * @param {string} type - Message type (success, error, info)
+ * @param {Object} options - Additional options
+ * @param {number} options.duration - Duration in milliseconds (default: 3000)
+ * @param {string} options.width - CSS width value (default: auto)
+ */
+function showMessage(message, type = 'info', options = {}) {
+    const { duration = 3000, width = null } = options;
+    
     const messageDiv = document.createElement('div');
     messageDiv.className = `message message-${type}`;
     messageDiv.textContent = message;
+    
+    // Apply custom width if provided
+    if (width) {
+        messageDiv.style.width = width;
+    }
+    
     document.body.appendChild(messageDiv);
     
-    // Remove after 5 seconds
+    // Remove after specified duration
     setTimeout(() => {
         messageDiv.classList.add('fade-out');
         setTimeout(() => {
             messageDiv.remove();
         }, 300);
-    }, 5000);
+    }, duration);
 }
 
 // Setup UI event listeners
@@ -119,6 +134,53 @@ function setupEventListeners() {
                 console.error('Failed to copy board info:', err);
                 showMessage('Failed to copy board info', 'error');
             });
+        } else {
+            showMessage('No board is currently loaded', 'error');
+        }
+    });
+    
+    // Refresh board button
+    document.getElementById('refresh-board-btn').addEventListener('click', async () => {
+        const currentBoard = stateManager.getState();
+        if (currentBoard && currentBoard.id) {
+            // Prevent multiple clicks
+            const refreshBtn = document.getElementById('refresh-board-btn');
+            if (refreshBtn.classList.contains('spinning')) {
+                return; // Already refreshing
+            }
+            
+            try {
+                // Add spinning animation
+                refreshBtn.classList.add('spinning');
+                refreshBtn.setAttribute('disabled', 'true');
+                
+                // Force a small delay to ensure animation starts
+                await new Promise(resolve => setTimeout(resolve, 50));
+                
+                // Load current board data from the server
+                const refreshedBoard = await apiService.loadBoard(currentBoard.id);
+                
+                // Update state with refreshed data
+                await stateManager.loadBoard(refreshedBoard);
+                
+                // Show success message with custom width and duration
+                showMessage('Board refreshed successfully!', 'success', {
+                    width: '350px',
+                    duration: 2500
+                });
+            } catch (error) {
+                console.error('Failed to refresh board:', error);
+                showMessage('Failed to refresh board', 'error', {
+                    width: '350px',
+                    duration: 3500
+                });
+            } finally {
+                // Remove spinning animation after a short delay to ensure it's visible
+                setTimeout(() => {
+                    refreshBtn.classList.remove('spinning');
+                    refreshBtn.removeAttribute('disabled');
+                }, 300);
+            }
         } else {
             showMessage('No board is currently loaded', 'error');
         }

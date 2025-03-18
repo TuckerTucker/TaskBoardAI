@@ -90,14 +90,6 @@
     font-size: 0.875rem;
 }
 
-.card.collapsed .card-content {
-    display: none;
-}
-
-.card.collapsed .collapse-btn i {
-    /* intentionally empty - removing previous transforms */
-}
-
 .card-content.collapsed {
     display: none;
 }

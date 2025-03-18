@@ -47,6 +47,15 @@ export class Settings {
         // Board selector change event
         if (this.boardSelector) {
             this.boardSelector.addEventListener('change', (e) => this.loadBoard(e.target.value));
+            
+            // Add highlight effect when dropdown opens
+            this.boardSelector.addEventListener('focus', () => {
+                document.getElementById('board-select-btn').classList.add('active');
+            });
+            
+            this.boardSelector.addEventListener('blur', () => {
+                document.getElementById('board-select-btn').classList.remove('active');
+            });
         }
         
         // Form submission handlers

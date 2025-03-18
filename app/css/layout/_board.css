@@ -37,7 +37,8 @@ header {
     background: var(--overlay-light);
 }
 
-#copy-board-info-btn {
+#copy-board-info-btn,
+#refresh-board-btn {
     color: var(--text-secondary);
     background: none;
     border: none;
@@ -52,9 +53,25 @@ header {
     transition: all 0.2s ease;
 }
 
-#copy-board-info-btn:hover {
+#copy-board-info-btn:hover,
+#refresh-board-btn:hover {
     color: var(--text-primary);
     background-color: var(--overlay-light);
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+#refresh-board-btn i {
+    transition: transform 0.1s linear;
+}
+
+#refresh-board-btn.spinning i {
+    animation: spin 1s linear infinite;
+    display: inline-block; /* Ensures the transform applies correctly */
+    transform-origin: center center;
 }
 
 .board-controls {
@@ -170,8 +187,8 @@ main {
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background: var(--button-primary);
-    color: var(--button-text);
+    background: var(--overlay-light);
+    color: var(--text-primary);
     border: none;
     cursor: pointer;
     font-size: 1rem;
@@ -183,7 +200,7 @@ main {
 }
 
 .circular-btn:hover {
-    background: var(--button-primary-hover);
+    background: var(--overlay-light-hover);
     transform: scale(1.05);
 }
 
@@ -216,11 +233,14 @@ main {
     box-shadow: var(--shadow-md);
     animation: slideIn 0.3s ease-out;
     z-index: 1000;
+    min-width: 300px;
+    text-align: center;
+    font-weight: 500;
 }
 
 .message-error {
-    background: var(--error-bg);
-    color: var(--error-text);
+    background: var(--error-bg, #f44336);
+    color: var(--error-text, white);
 }
 
 .message-success {
@@ -231,6 +251,14 @@ main {
 .message-info {
     background: var(--info-bg, #2196f3);
     color: var(--info-text, white);
+}
+
+/* Improve message visibility */
+.message {
+    padding: var(--spacing-md) var(--spacing-lg);
+    font-size: 1rem;
+    line-height: 1.4;
+    border-left: 4px solid rgba(0,0,0,0.2);
 }
 
 .message.fade-out {

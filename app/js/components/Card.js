@@ -48,7 +48,7 @@ export class Card {
      */
     render() {
         const card = document.createElement('div');
-        card.className = `card ${this.isCollapsed ? 'collapsed' : ''}`;
+        card.className = 'card';
         card.draggable = true;
         card.dataset.id = this.data.id;
         
@@ -155,12 +155,14 @@ export class Card {
         this.data.collapsed = collapsed;  // Update the data object
         
         if (this.element) {
-            this.element.classList.toggle('collapsed', collapsed);
+            // Only update the icon and content visibility, not the card class
             const icon = this.element.querySelector('.collapse-btn i');
             if (icon) {
                 const newIconClass = collapsed ? 'down' : 'up';
                 icon.className = `fas fa-chevron-${newIconClass}`;
             }
+            
+            // Toggle only the content area
             const content = this.element.querySelector('.card-content');
             if (content) {
                 content.classList.toggle('collapsed', collapsed);

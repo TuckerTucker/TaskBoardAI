@@ -105,14 +105,11 @@ export class Column {
         cardElements.forEach(cardElement => {
             const cardId = cardElement.dataset.id;
             
-            // Update the card's visual state
-            cardElement.classList.toggle('collapsed', collapsed);
-            
             // Update the collapse button icon
             const icon = cardElement.querySelector('.collapse-btn i');
             icon.className = `fas fa-chevron-${collapsed ? 'down' : 'up'}`;
             
-            // Update the content visibility
+            // Update the content visibility - only collapse the content, not the whole card
             const content = cardElement.querySelector('.card-content');
             content.classList.toggle('collapsed', collapsed);
             
