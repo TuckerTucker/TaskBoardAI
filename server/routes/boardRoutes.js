@@ -65,4 +65,25 @@ router.get('/boards/:id', boardController.getBoardById);
  */
 router.delete('/boards/:id', boardController.deleteBoard);
 
+/**
+ * @name POST-/boards/:id/archive
+ * @description Archive a board
+ * @memberof module:routes/boardRoutes
+ */
+router.post('/boards/:id/archive', boardController.archiveBoard);
+
+/**
+ * @name GET-/archives
+ * @description Get list of archived boards
+ * @memberof module:routes/boardRoutes
+ */
+router.get('/archives', boardController.getArchivedBoards);
+
+/**
+ * @name POST-/archives/:id/restore
+ * @description Restore a board from archive
+ * @memberof module:routes/boardRoutes
+ */
+router.post('/archives/:id/restore', boardController.restoreArchivedBoard);
+
 module.exports = router;

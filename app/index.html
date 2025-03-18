@@ -59,6 +59,7 @@
                 <div class="settings-tabs">
                     <!-- <button class="tab-btn" data-tab="general">General</button> -->
                     <button class="tab-btn active" data-tab="boards">Boards</button>
+                    <button class="tab-btn" data-tab="archive">Archive</button>
                     <!-- <button class="tab-btn" data-tab="integration">Integrations</button> -->
                 </div>
                 
@@ -128,6 +129,29 @@
                                         <input type="file" id="import-board-file" accept=".json" style="display: none;">
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="tab-content" id="archive-tab">
+                    <h3>Archived Boards</h3>
+                    <div class="archive-management">
+                        <div class="archive-list-container">
+                            <h4>Board Archives</h4>
+                            <div id="archive-list" class="board-list">
+                                <!-- Archive list will be dynamically populated -->
+                            </div>
+                        </div>
+                        
+                        <div class="archive-actions-container">
+                            <h4>Restore Board</h4>
+                            <p class="section-description">Select a board from the archive list and click the restore button to bring it back to the active boards.</p>
+                            <div class="selected-archive-info">
+                                <p id="selected-archive-name">No archive selected</p>
+                                <button id="restore-archive-btn" class="primary-btn" disabled>
+                                    <i class="fas fa-undo"></i> Restore Selected Board
+                                </button>
                             </div>
                         </div>
                     </div>

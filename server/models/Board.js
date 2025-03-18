@@ -2,7 +2,7 @@ const fs = require('node:fs').promises;
 const path = require('node:path');
 const crypto = require('node:crypto');
 const config = require('../config/config');
-const { ensureBoardsDir } = require('../utils/fileSystem');
+const { ensureBoardsDir, ensureArchivesDir } = require('../utils/fileSystem');
 
 /**
  * @fileoverview Board model that handles all kanban board operations.
@@ -71,6 +71,15 @@ class Board {
             columns: []
         };
         this.filePath = filePath;
+    }
+    
+    /**
+     * Get the path to the archives directory
+     * @static
+     * @returns {string} Archives directory path
+     */
+    static get archivesDir() {
+        return path.join(config.boardsDir, 'archives');
     }
 
     /**
@@ -336,6 +345,164 @@ class Board {
             if (error.code === 'ENOENT') {
                 throw new Error(`Board with ID ${boardId} not found`);
             }
+            throw error;
+        }
+    }
+    
+    /**
+     * Archive a board
+     * @static
+     * @async
+     * @param {string} boardId - ID of the board to archive
+     * @returns {Promise<Object>} Result of the archive operation
+     * @throws {Error} If the board is not found or cannot be archived
+     */
+    static async archive(boardId) {
+        if (!boardId) {
+            throw new Error('Board ID is required');
+        }
+        
+        // Ensure archives directory exists
+        await ensureArchivesDir();
+        
+        const filePath = path.join(config.boardsDir, `${boardId}.json`);
+        
+        try {
+            // Check if source file exists
+            await fs.access(filePath);
+            
+            // Read board data
+            const data = await fs.readFile(filePath, 'utf8');
+            const boardData = JSON.parse(data);
+            
+            // Add archived timestamp
+            boardData.archivedAt = new Date().toISOString();
+            
+            // Write to archives directory
+            const archivePath = path.join(Board.archivesDir, `${boardId}.json`);
+            await fs.writeFile(archivePath, JSON.stringify(boardData, null, 2));
+            
+            // Delete original file
+            await fs.unlink(filePath);
+            
+            return { 
+                success: true, 
+                message: 'Board archived successfully',
+                id: boardId,
+                name: boardData.projectName,
+                archivedAt: boardData.archivedAt
+            };
+        } catch (error) {
+            if (error.code === 'ENOENT') {
+                throw new Error(`Board with ID ${boardId} not found`);
+            }
+            console.error('Error archiving board:', error);
+            throw error;
+        }
+    }
+    
+    /**
+     * List all archived boards
+     * @static
+     * @async
+     * @returns {Promise<Array>} List of archived boards
+     */
+    static async listArchives() {
+        await ensureArchivesDir();
+        
+        try {
+            // Get all files in the archives directory
+            const files = await fs.readdir(Board.archivesDir);
+            
+            const archives = [];
+            
+            // Process each file
+            for (const file of files) {
+                // Skip files that don't match our criteria
+                if (!file.endsWith('.json')) {
+                    continue;
+                }
+                
+                try {
+                    const filePath = path.join(Board.archivesDir, file);
+                    const stats = await fs.stat(filePath);
+                    if (stats.isDirectory && stats.isDirectory()) {
+                        continue; // Skip directories
+                    }
+                    
+                    // Read and parse the archived board file
+                    const data = await fs.readFile(filePath, 'utf8');
+                    const boardData = JSON.parse(data);
+                    
+                    // Include necessary info for the UI
+                    archives.push({
+                        id: boardData.id || path.basename(file, '.json'),
+                        name: boardData.projectName || 'Unnamed Board',
+                        archivedAt: boardData.archivedAt || stats.mtime.toISOString(),
+                        lastUpdated: boardData.last_updated || stats.mtime.toISOString()
+                    });
+                } catch (err) {
+                    console.error(`Error reading archive file ${file}:`, err);
+                    // Skip this file and continue
+                }
+            }
+            
+            // Sort archives by archive date descending (newest first)
+            archives.sort((a, b) => new Date(b.archivedAt) - new Date(a.archivedAt));
+            
+            return archives;
+        } catch (error) {
+            console.error('Error listing archives:', error);
+            return [];
+        }
+    }
+    
+    /**
+     * Restore a board from archive
+     * @static
+     * @async
+     * @param {string} archiveId - ID of the archived board to restore
+     * @returns {Promise<Object>} Restored board data
+     * @throws {Error} If the archive is not found or cannot be restored
+     */
+    static async restore(archiveId) {
+        if (!archiveId) {
+            throw new Error('Archive ID is required');
+        }
+        
+        const archivePath = path.join(Board.archivesDir, `${archiveId}.json`);
+        
+        try {
+            // Check if archive file exists
+            await fs.access(archivePath);
+            
+            // Read archived board data
+            const data = await fs.readFile(archivePath, 'utf8');
+            const boardData = JSON.parse(data);
+            
+            // Remove archivedAt property
+            delete boardData.archivedAt;
+            
+            // Update last_updated time
+            boardData.last_updated = new Date().toISOString();
+            
+            // Write to boards directory
+            const boardPath = path.join(config.boardsDir, `${archiveId}.json`);
+            await fs.writeFile(boardPath, JSON.stringify(boardData, null, 2));
+            
+            // Delete archive file
+            await fs.unlink(archivePath);
+            
+            return {
+                id: boardData.id,
+                name: boardData.projectName,
+                lastUpdated: boardData.last_updated
+            };
+        } catch (error) {
+            if (error.code === 'ENOENT') {
+                throw new Error(`Archive with ID ${archiveId} not found`);
+            }
+            console.error('Error restoring archive:', error);
             throw error;
         }
     }

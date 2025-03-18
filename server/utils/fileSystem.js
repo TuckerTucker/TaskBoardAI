@@ -64,9 +64,20 @@ async function ensureWebhooksDir() {
     await ensureDir(config.webhooksDir);
 }
 
+/**
+ * Ensure the archives directory exists
+ * @async
+ * @function ensureArchivesDir
+ * @returns {Promise<void>}
+ */
+async function ensureArchivesDir() {
+    await ensureDir(path.join(config.boardsDir, 'archives'));
+}
+
 module.exports = {
     ensureDir,
     ensureBoardsDir,
     ensureConfigDir,
-    ensureWebhooksDir
+    ensureWebhooksDir,
+    ensureArchivesDir
 };

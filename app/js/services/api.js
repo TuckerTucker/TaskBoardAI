@@ -9,6 +9,7 @@ class ApiService {
         this.configPath = '/config';
         this.boardsPath = '/boards';
         this.webhooksPath = '/webhooks';
+        this.archivesPath = '/archives';
     }
 
     /**
@@ -385,6 +386,68 @@ class ApiService {
             return await response.json();
         } catch (error) {
             console.error('Error testing webhook connection:', error);
+            throw error;
+        }
+    }
+    
+    /**
+     * Get list of archived boards
+     * @returns {Promise<Array>} List of archived boards
+     */
+    async getArchivedBoards() {
+        try {
+            const response = await fetch(`${this.baseUrl}${this.archivesPath}`);
+            if (!response.ok) {
+                throw new Error('Failed to load archived boards list');
+            }
+            return await response.json();
+        } catch (error) {
+            console.error('Error loading archived boards:', error);
+            // Return empty array as fallback
+            return [];
+        }
+    }
+    
+    /**
+     * Archive a board
+     * @param {string} boardId - ID of the board to archive
+     * @returns {Promise<Object>} Response data
+     */
+    async archiveBoard(boardId) {
+        try {
+            const response = await fetch(`${this.baseUrl}${this.boardsPath}/${boardId}/archive`, {
+                method: 'POST',
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to archive board');
+            }
+            
+            return await response.json();
+        } catch (error) {
+            console.error('Error archiving board:', error);
+            throw error;
+        }
+    }
+    
+    /**
+     * Restore a board from archive
+     * @param {string} archiveId - ID of the archived board to restore
+     * @returns {Promise<Object>} Restored board data
+     */
+    async restoreArchivedBoard(archiveId) {
+        try {
+            const response = await fetch(`${this.baseUrl}${this.archivesPath}/${archiveId}/restore`, {
+                method: 'POST',
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to restore archived board');
+            }
+            
+            return await response.json();
+        } catch (error) {
+            console.error('Error restoring archived board:', error);
             throw error;
         }
     }

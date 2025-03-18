@@ -21,6 +21,8 @@ export class Settings {
         this.boards = [];
         this.currentBoard = null;
         this.webhooks = [];
+        this.archives = [];
+        this.selectedArchive = null;
         
         // Initialize without opening the modal
         this.initialize();
@@ -55,6 +57,9 @@ export class Settings {
         
         // Load available boards
         await this.loadBoards();
+        
+        // Load archived boards
+        await this.loadArchivedBoards();
         
         // Load webhooks
         await this.loadWebhooks();
@@ -93,6 +98,18 @@ export class Settings {
                     this.loadBoard(boardId);
                 } else if (action === 'delete') {
                     this.deleteBoard(boardId);
+                } else if (action === 'archive') {
+                    this.archiveBoard(boardId);
+                }
+            });
+        }
+        
+        // Restore archive button
+        const restoreArchiveBtn = document.getElementById('restore-archive-btn');
+        if (restoreArchiveBtn) {
+            restoreArchiveBtn.addEventListener('click', () => {
+                if (this.selectedArchive) {
+                    this.restoreArchivedBoard(this.selectedArchive.id);
                 }
             });
         }
@@ -284,6 +301,9 @@ export class Settings {
                 <div class="board-actions">
                     <button class="icon-btn board-action-btn" data-action="load" data-board-id="${board.id}" title="Load Board">
                         <i class="fas fa-folder-open"></i>
+                    </button>
+                    <button class="icon-btn board-action-btn" data-action="archive" data-board-id="${board.id}" title="Archive Board">
+                        <i class="fas fa-archive"></i>
                     </button>
                     <button class="icon-btn board-action-btn" data-action="delete" data-board-id="${board.id}" title="Delete Board">
                         <i class="fas fa-trash"></i>
@@ -521,6 +541,177 @@ export class Settings {
             this.showMessage(`Failed to import board: ${error.message || 'Unknown error'}`, 'error');
             // Reset file input
             event.target.value = '';
+        }
+    }
+    
+    /**
+     * Load archived boards
+     */
+    async loadArchivedBoards() {
+        try {
+            // Load archives from API
+            this.archives = await apiService.getArchivedBoards();
+            
+            // Update archive list UI
+            this.updateArchiveList();
+        } catch (error) {
+            console.error('Failed to load archived boards:', error);
+            this.showMessage('Failed to load archived boards', 'error');
+        }
+    }
+    
+    /**
+     * Update archive list in UI
+     */
+    updateArchiveList() {
+        const archiveList = document.getElementById('archive-list');
+        if (!archiveList) return;
+        
+        archiveList.innerHTML = '';
+        
+        if (this.archives.length === 0) {
+            const emptyMessage = document.createElement('div');
+            emptyMessage.className = 'board-item';
+            emptyMessage.textContent = 'No archived boards available.';
+            archiveList.appendChild(emptyMessage);
+            
+            // Disable restore button
+            const restoreButton = document.getElementById('restore-archive-btn');
+            if (restoreButton) {
+                restoreButton.disabled = true;
+            }
+            
+            return;
+        }
+        
+        for (const archive of this.archives) {
+            const archiveItem = document.createElement('div');
+            archiveItem.className = 'board-item';
+            
+            if (this.selectedArchive && this.selectedArchive.id === archive.id) {
+                archiveItem.classList.add('selected');
+            }
+            
+            archiveItem.innerHTML = `
+                <div class="board-name">${archive.name}</div>
+                <div class="board-info">
+                    <span class="archive-date">Archived: ${new Date(archive.archivedAt).toLocaleDateString()}</span>
+                </div>
+            `;
+            
+            // Add click handler to select this archive
+            archiveItem.addEventListener('click', () => {
+                this.selectArchive(archive);
+            });
+            
+            archiveList.appendChild(archiveItem);
+        }
+    }
+    
+    /**
+     * Select an archive to potentially restore
+     * @param {Object} archive - Archive to select
+     */
+    selectArchive(archive) {
+        this.selectedArchive = archive;
+        
+        // Update UI for selected archive
+        const archiveItems = document.querySelectorAll('#archive-list .board-item');
+        for (const item of archiveItems) {
+            if (item.querySelector('.board-name').textContent === archive.name) {
+                item.classList.add('selected');
+            } else {
+                item.classList.remove('selected');
+            }
+        }
+        
+        // Update selected archive name
+        const selectedNameElement = document.getElementById('selected-archive-name');
+        if (selectedNameElement) {
+            selectedNameElement.textContent = archive.name;
+        }
+        
+        // Enable restore button
+        const restoreButton = document.getElementById('restore-archive-btn');
+        if (restoreButton) {
+            restoreButton.disabled = false;
+        }
+    }
+    
+    /**
+     * Archive a board
+     * @param {string} boardId - ID of the board to archive
+     */
+    async archiveBoard(boardId) {
+        if (!confirm('Are you sure you want to archive this board? It will be moved to the Archives.')) {
+            return;
+        }
+        
+        try {
+            await apiService.archiveBoard(boardId);
+            
+            // If archiving current board, reset current board
+            if (this.currentBoard && this.currentBoard.id === boardId) {
+                this.currentBoard = null;
+            }
+            
+            // Remove from local list
+            this.boards = this.boards.filter(board => board.id !== boardId);
+            
+            // Refresh archives list
+            await this.loadArchivedBoards();
+            
+            // Update UI
+            this.updateBoardList();
+            this.updateBoardSelector();
+            
+            // Show success message
+            this.showMessage('Board archived successfully!', 'success');
+        } catch (error) {
+            console.error('Failed to archive board:', error);
+            this.showMessage('Failed to archive board', 'error');
+        }
+    }
+    
+    /**
+     * Restore a board from archive
+     * @param {string} archiveId - ID of the archive to restore
+     */
+    async restoreArchivedBoard(archiveId) {
+        try {
+            const restoredBoard = await apiService.restoreArchivedBoard(archiveId);
+            
+            // Add to local boards list
+            this.boards.push(restoredBoard);
+            
+            // Refresh archives list
+            await this.loadArchivedBoards();
+            
+            // Clear selected archive
+            this.selectedArchive = null;
+            
+            // Update UI
+            this.updateBoardList();
+            this.updateBoardSelector();
+            this.updateArchiveList();
+            
+            // Update selected archive name
+            const selectedNameElement = document.getElementById('selected-archive-name');
+            if (selectedNameElement) {
+                selectedNameElement.textContent = 'No archive selected';
+            }
+            
+            // Disable restore button
+            const restoreButton = document.getElementById('restore-archive-btn');
+            if (restoreButton) {
+                restoreButton.disabled = true;
+            }
+            
+            // Show success message
+            this.showMessage(`Board "${restoredBoard.name}" restored successfully!`, 'success');
+        } catch (error) {
+            console.error('Failed to restore board from archive:', error);
+            this.showMessage('Failed to restore board from archive', 'error');
         }
     }
     

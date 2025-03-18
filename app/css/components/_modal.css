@@ -183,30 +183,48 @@
     background-color: var(--bg-main);
 }
 
-/* Board Management */
-.board-management {
+/* Board Management and Archive Management */
+.board-management,
+.archive-management {
     display: flex;
     flex-direction: column;
     gap: var(--spacing-lg);
 }
 
 @media (min-width: 768px) {
-    .board-management {
+    .board-management,
+    .archive-management {
         flex-direction: row;
         align-items: flex-start;
     }
     
     .board-list-container,
-    .board-actions-container {
+    .board-actions-container,
+    .archive-list-container,
+    .archive-actions-container {
         flex: 1;
     }
 }
 
 .board-list-container,
-.board-actions-container {
+.board-actions-container,
+.archive-list-container,
+.archive-actions-container {
     display: flex;
     flex-direction: column;
     gap: var(--spacing-md);
+}
+
+.selected-archive-info {
+    padding: var(--spacing-md);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background-color: var(--bg-main);
+}
+
+#selected-archive-name {
+    margin-bottom: var(--spacing-md);
+    font-weight: 500;
 }
 
 .board-list {
@@ -241,6 +259,19 @@
 
 .board-name {
     flex: 1;
+    font-weight: 500;
+}
+
+.board-info {
+    display: flex;
+    flex-direction: column;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.archive-date {
+    margin-top: 0.25rem;
+    font-style: italic;
 }
 
 .board-actions {

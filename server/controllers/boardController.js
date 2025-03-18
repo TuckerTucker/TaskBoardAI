@@ -179,3 +179,56 @@ exports.updateBoard = async (req, res) => {
         res.status(500).json({ error: 'Failed to save board data' });
     }
 };
+
+/**
+ * Archive a board
+ * @async
+ * @function archiveBoard
+ * @param {Object} req - Express request object with board ID in params
+ * @param {Object} res - Express response object
+ */
+exports.archiveBoard = async (req, res) => {
+    try {
+        const boardId = req.params.id;
+        const result = await Board.archive(boardId);
+        res.json(result);
+    } catch (error) {
+        console.error(`Error archiving board ${req.params.id}:`, error);
+        res.status(404).json({ error: error.message || 'Failed to archive board' });
+    }
+};
+
+/**
+ * Get list of archived boards
+ * @async
+ * @function getArchivedBoards
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+exports.getArchivedBoards = async (req, res) => {
+    try {
+        const archives = await Board.listArchives();
+        res.json(archives);
+    } catch (error) {
+        console.error('Error listing archived boards:', error);
+        res.status(500).json({ error: 'Failed to list archived boards' });
+    }
+};
+
+/**
+ * Restore a board from archive
+ * @async
+ * @function restoreArchivedBoard
+ * @param {Object} req - Express request object with archive ID in params
+ * @param {Object} res - Express response object
+ */
+exports.restoreArchivedBoard = async (req, res) => {
+    try {
+        const archiveId = req.params.id;
+        const result = await Board.restore(archiveId);
+        res.json(result);
+    } catch (error) {
+        console.error(`Error restoring board ${req.params.id}:`, error);
+        res.status(404).json({ error: error.message || 'Failed to restore board' });
+    }
+};
