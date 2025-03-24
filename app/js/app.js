@@ -220,16 +220,6 @@ function renderBoard() {
     // Clear existing columns
     board.innerHTML = '';
     
-    // Add "Add Column" button as the first element
-    const addColumnBtn = document.createElement('div');
-    addColumnBtn.id = 'add-column-container';
-    addColumnBtn.innerHTML = `
-        <button id="add-column-btn" class="circular-btn" title="Add Column">
-            <i class="fas fa-plus"></i>
-        </button>
-    `;
-    board.appendChild(addColumnBtn);
-    
     // Render columns
     for (let index = 0; index < state.columns.length; index++) {
         const columnData = state.columns[index];
@@ -246,6 +236,16 @@ function renderBoard() {
             column.addCard(card);
         }
     }
+    
+    // Add "Add Column" button as the last element
+    const addColumnBtn = document.createElement('div');
+    addColumnBtn.id = 'add-column-container';
+    addColumnBtn.innerHTML = `
+        <button id="add-column-btn" class="circular-btn" title="Add Column">
+            <i class="fas fa-plus"></i>
+        </button>
+    `;
+    board.appendChild(addColumnBtn);
     
     // Update Next Steps if available
     if (state['next-steps'] && nextSteps) {
