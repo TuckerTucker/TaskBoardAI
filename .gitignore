@@ -1,0 +1,34 @@
+# Node modules
+node_modules/
+
+# Personal boards
+boards/*.json
+!boards/_kanban_example.json
+
+# Webhook configurations
+webhooks/*.json
+
+# Environment variables
+.env
+.env.*
+
+# IDE files
+.vscode/
+.idea/
+*.sublime-*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Coverage
+coverage/
+
+# Build artifacts
+dist/
+build/
