@@ -93,11 +93,17 @@ Once configured, you can interact with Claude using natural language:
 The server provides these specific tools:
 
 1. `get-boards`: Lists all available kanban boards
-2. `create-board`: Creates a new kanban board with a specified name
+2. `create-board`: Creates a new kanban board with a specified name, based on the `_kanban_example.json` template.
 3. `get-board`: Gets a specific board by ID
-4. `update-board`: Updates an existing board with new data
+4. `update-board`: Updates an existing board with new data. Accepts `boardData` as a JSON string or object.
 5. `delete-board`: Deletes a board by ID
-6. `start-webserver`: Starts the TaskBoardAI web server on a specified port
+6. `update-card`: Updates properties of a specific card by ID. Requires `boardId`, `cardId`, and `cardData` (JSON string or object).
+7. `move-card`: Moves a card to a different column or position. Requires `boardId`, `cardId`, `columnId`, and `position` ('first', 'last', 'up', 'down', or index).
+8. `batch-cards`: Batch create, update, and move multiple cards atomically. Requires `boardId` and an array of `operations`.
+   - For 'create': Omit `cardId`, provide `type='create'`, `cardData` (JSON string or object), `columnId`, and optional `position` ('first', 'last', or index).
+   - For 'update': Provide `cardId`, `type='update'`, and `cardData` (JSON string or object).
+   - For 'move': Provide `cardId`, `type='move'`, `columnId`, and `position` ('first', 'last', 'up', 'down', or index).
+9. `start-webserver`: Starts the TaskBoardAI web server on a specified port
 
 ## Example Prompts
 
