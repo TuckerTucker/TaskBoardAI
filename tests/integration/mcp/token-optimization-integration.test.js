@@ -4,20 +4,20 @@
 
 // Mock the MCP SDK classes
 jest.mock('@modelcontextprotocol/sdk/server/mcp.js', () => {
+  const toolsMap = {};
+  
   return {
     McpServer: jest.fn().mockImplementation(() => {
-      const tools = {};
-      
       return {
         name: 'TaskBoardAI',
         version: '1.0.0',
-        tool: jest.fn((name, schema, handler) => {
-          tools[name] = { schema, handler };
+        tool: jest.fn().mockImplementation((name, schema, handler) => {
+          toolsMap[name] = { schema, handler };
         }),
-        connect: jest.fn().mockResolvedValue(undefined),
-        getTools: () => tools
+        connect: jest.fn().mockResolvedValue(undefined)
       };
-    })
+    }),
+    __getToolsMap: () => toolsMap
   };
 });
 
@@ -280,6 +280,7 @@ const countTokens = (data) => {
 
 // Import after mocking
 const server = require('../../../server/mcp/kanbanMcpServer');
+const { __getToolsMap } = require('@modelcontextprotocol/sdk/server/mcp.js');
 const Board = require('../../../server/models/Board');
 
 describe('Token-Optimized MCP Integration Tests', () => {
@@ -287,7 +288,7 @@ describe('Token-Optimized MCP Integration Tests', () => {
   
   beforeAll(() => {
     // Get the registered tools from the mocked server
-    tools = server.getTools();
+    tools = __getToolsMap();
   });
   
   beforeEach(() => {

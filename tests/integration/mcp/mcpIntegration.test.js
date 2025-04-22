@@ -68,8 +68,9 @@ jest.mock('node:net', () => {
 
 // Create in-memory file system for tests
 const inMemoryFiles = {};
+
 // Pre-populate with the example template content for create-board tests
-const exampleTemplatePath = path.join(__dirname, '../../../server/config/_kanban_example.json');
+const templatePath = path.join(__dirname, '../../../server/config/_kanban_example.json');
 const exampleTemplateContent = `{
   "projectName": "Project Example",
   "id": "template-id-should-be-replaced",
@@ -88,7 +89,9 @@ const exampleTemplateContent = `{
   "next-steps": ["Step 1", "Step 2"],
   "last_updated": "2024-01-01T00:00:00Z"
 }`;
-inMemoryFiles[exampleTemplatePath] = exampleTemplateContent;
+
+// Add template to mock filesystem
+inMemoryFiles[templatePath] = exampleTemplateContent;
 
 
 // Custom mock for fs to simulate file operations without touching the disk

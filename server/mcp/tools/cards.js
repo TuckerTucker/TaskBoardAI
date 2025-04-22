@@ -9,7 +9,45 @@ const path = require('node:path');
 const crypto = require('node:crypto'); // Import crypto
 
 function registerCardTools(server, { config, checkRateLimit }) {
-  // get-card already implemented above
+  server.tool(
+    'get-card',
+    {
+      boardId: z.string().min(1, 'Board ID is required'),
+      cardId: z.string().min(1, 'Card ID is required')
+    },
+    async ({ boardId, cardId }) => {
+      try {
+        checkRateLimit();
+        const board = await Board.load(boardId);
+
+        if (!board.data.cards || !Array.isArray(board.data.cards)) {
+          return {
+            content: [{ type: 'text', text: 'Error: Board is not using card-first architecture.' }],
+            isError: true
+          };
+        }
+
+        const card = board.data.cards.find(c => c.id === cardId);
+        if (!card) {
+          return {
+            content: [{ type: 'text', text: `Error: Card with ID ${cardId} not found` }],
+            isError: true
+          };
+        }
+
+        return {
+          content: [{ type: 'text', text: JSON.stringify(card, null, 2) }]
+        };
+      } catch (error) {
+        console.error(`[get-card] Error: ${error}`);
+        return {
+          content: [{ type: 'text', text: `Error getting card: ${error.message}` }],
+          isError: true
+        };
+      }
+    },
+    'Get a specific card by ID.'
+  );
 
   server.tool(
     'update-card',
@@ -98,7 +136,7 @@ function registerCardTools(server, { config, checkRateLimit }) {
           content: [{ type: 'text', text: JSON.stringify(updatedCard, null, 2) }]
         };
       } catch (error) {
-        console.error('[update-card] Error:', error);
+        console.error(`[update-card] Error: ${error}`);
         return {
           content: [{ type: 'text', text: `Error updating card: ${error.message}` }],
           isError: true
@@ -216,7 +254,7 @@ function registerCardTools(server, { config, checkRateLimit }) {
           content: [{ type: 'text', text: JSON.stringify(card, null, 2) }]
         };
       } catch (error) {
-        console.error('[move-card] Error:', error);
+        console.error(`[move-card] Error: ${error}`);
         return {
           content: [{ type: 'text', text: `Error moving card: ${error.message}` }],
           isError: true
@@ -546,7 +584,7 @@ server.tool(
           }]
         };
       } catch (error) {
-        console.error('[batch-cards] Error:', error);
+        console.error(`[batch-cards] Error: ${error}`);
         return {
           content: [{ type: 'text', text: `Error processing batch: ${error.message}` }],
           isError: true

@@ -9,6 +9,7 @@ const { checkRateLimit } = require('./rateLimiter');
 const { registerBoardTools } = require('./tools/boards');
 const { registerCardTools } = require('./tools/cards');
 const { registerServerControlTools } = require('./tools/serverControl');
+const { registerMigrationTools } = require('./tools/migration');
 
 const server = new McpServer({
   name: 'TaskBoardAI',
@@ -19,6 +20,7 @@ const server = new McpServer({
 registerBoardTools(server, { config, checkRateLimit });
 registerCardTools(server, { config, checkRateLimit });
 registerServerControlTools(server, { config });
+registerMigrationTools(server, { config, checkRateLimit });
 
 if (require.main === module) {
   console.log('\nEnvironment Information:');

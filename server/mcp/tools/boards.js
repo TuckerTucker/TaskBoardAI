@@ -43,7 +43,7 @@ function registerBoardTools(server, { config, checkRateLimit }) {
               lastUpdated: lastUpdated || new Date().toISOString()
             });
           } catch (err) {
-            console.error(`Error reading board file ${file}:`, err);
+            console.error(`Error reading board file ${file}: ${err}`);
           }
         }
 
@@ -74,7 +74,7 @@ function registerBoardTools(server, { config, checkRateLimit }) {
           content: [{ type: 'text', text: formattedOutput }]
         };
       } catch (error) {
-        console.error('Error in get-boards tool:', error);
+        console.error(`Error in get-boards tool: ${error}`);
         return {
           content: [{ type: 'text', text: `Error listing boards: ${error.message}` }],
           isError: true
@@ -100,7 +100,7 @@ function registerBoardTools(server, { config, checkRateLimit }) {
           const templateContent = await fs.readFile(templatePath, 'utf8');
           templateData = JSON.parse(templateContent);
         } catch (readError) {
-          console.error(`Error reading board template file at ${templatePath}:`, readError);
+          console.error(`Error reading board template file at ${templatePath}: ${readError}`);
           return {
             content: [{ type: 'text', text: 'Error: Could not load board template.' }],
             isError: true
@@ -293,6 +293,24 @@ function registerBoardTools(server, { config, checkRateLimit }) {
           return {
             content: [{ type: 'text', text: output }]
           };
+        } else if (format === 'cards-only') {
+          const data = {
+            cards: board.data.cards
+              .filter(card => !columnId || card.columnId === columnId)
+              .map(card => ({
+                id: card.id,
+                title: card.title,
+                content: card.content,
+                columnId: card.columnId,
+                position: card.position,
+                dependencies: card.dependencies || [],
+                created_at: card.created_at,
+                updated_at: card.updated_at
+              }))
+          };
+          return {
+            content: [{ type: 'text', text: JSON.stringify(data, null, 2) }]
+          };
         } else {
           return {
             content: [{ type: 'text', text: JSON.stringify(formattedData, null, 2) }]
@@ -368,7 +386,7 @@ function registerBoardTools(server, { config, checkRateLimit }) {
               isError: true
             };
           }
-          console.error('Error creating backup:', error);
+          console.error(`Error creating backup: ${error}`);
           throw error;
         }
 
@@ -459,7 +477,7 @@ function registerBoardTools(server, { config, checkRateLimit }) {
           await fs.writeFile(backupPath, JSON.stringify(board.data, null, 2));
         } catch (error) {
           if (!error.message.includes('not found')) {
-            console.error('Error creating backup before deletion:', error);
+            console.error(`Error creating backup before deletion: ${error}`);
           }
         }
 
