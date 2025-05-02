@@ -1,0 +1,234 @@
+{
+  "projectName": "Tic-Tac-Toe Implementation",
+  "id": "db79f188-3609-430f-a90c-325715e808f1",
+  "columns": [
+    {
+      "id": "cdbc5855-84c9-41dd-9b1d-904928873574",
+      "name": "To Do"
+    },
+    {
+      "id": "6d3410ee-3307-48f5-ae4a-bb9ecf915aa4",
+      "name": "In Progress"
+    },
+    {
+      "id": "c1e6cea3-8852-4868-9d2d-b105acec29af",
+      "name": "Done"
+    },
+    {
+      "id": "9bfbe044-3054-4367-8faf-e92645a590ad",
+      "name": "Blocked"
+    }
+  ],
+  "cards": [
+    {
+      "id": "4af464cc-13b1-4066-a7c6-956ddd90a087",
+      "title": "Feature One",
+      "content": "## Feature Description\n\n- Point 1\n- Point 2\n\nAdditional details here.",
+      "columnId": "cdbc5855-84c9-41dd-9b1d-904928873574",
+      "collapsed": false,
+      "position": 0,
+      "subtasks": [
+        "✓ Task One",
+        "Task Two"
+      ],
+      "tags": [
+        "feature",
+        "frontend"
+      ],
+      "dependencies": [],
+      "created_at": "2025-05-02T00:28:51.306Z",
+      "updated_at": "2025-05-02T00:28:51.306Z",
+      "completed_at": null
+    },
+    {
+      "id": "554acb1e-f7b6-4b79-8da6-96a5c8150fba",
+      "title": "Feature Two",
+      "content": "A basic feature description",
+      "columnId": "6d3410ee-3307-48f5-ae4a-bb9ecf915aa4",
+      "position": 0,
+      "collapsed": true,
+      "subtasks": [],
+      "tags": [
+        "backend",
+        "another tag",
+        "exmaple of a tag"
+      ],
+      "dependencies": [],
+      "created_at": "2025-05-02T00:28:51.306Z",
+      "updated_at": "2025-05-02T00:28:51.306Z",
+      "completed_at": null
+    },
+    {
+      "id": "be3d228a-c043-4f31-8a58-b68d643a6c0f",
+      "title": "Completed Feature",
+      "content": "This feature is done",
+      "columnId": "c1e6cea3-8852-4868-9d2d-b105acec29af",
+      "position": 0,
+      "collapsed": false,
+      "subtasks": [
+        "✓ Task One",
+        "✓ Task Two",
+        "✓ Task Three"
+      ],
+      "tags": [
+        "complete"
+      ],
+      "dependencies": [],
+      "created_at": "2025-05-02T00:28:51.306Z",
+      "updated_at": "2025-05-02T00:28:51.306Z",
+      "completed_at": "2025-05-02T00:28:51.306Z"
+    },
+    {
+      "id": "c87d4abd-fe39-48b2-9da1-e58bb408cb54",
+      "title": "Example Blocked Feature",
+      "content": "the card description.",
+      "columnId": "9bfbe044-3054-4367-8faf-e92645a590ad",
+      "position": 0,
+      "collapsed": false,
+      "subtasks": [
+        "✓ Task One",
+        "✓ Task Two",
+        "✓ Task Three"
+      ],
+      "tags": [
+        "blocked",
+        "backend"
+      ],
+      "dependencies": [
+        "554acb1e-f7b6-4b79-8da6-96a5c8150fba"
+      ],
+      "created_at": "2025-05-02T00:28:51.306Z",
+      "updated_at": "2025-05-02T00:28:51.306Z",
+      "completed_at": null
+    },
+    {
+      "title": "Create Basic HTML Structure",
+      "description": "- Set up HTML5 document with proper metadata\n- Create game container\n- Add 3x3 grid for the game board\n- Add game status display element\n- Add reset button\n- Link CSS and JavaScript files",
+      "priority": "high",
+      "id": "b2f1bac7-974f-4e46-a509-468b46fd5c49",
+      "columnId": "cdbc5855-84c9-41dd-9b1d-904928873574",
+      "position": 1,
+      "created_at": "2025-05-02T00:29:10.584Z",
+      "updated_at": "2025-05-02T00:29:10.584Z",
+      "completed_at": null,
+      "collapsed": false
+    },
+    {
+      "title": "Implement Core CSS Styling",
+      "description": "- Style the game container\n- Create grid layout for the game board\n- Style individual cells\n- Add responsive design elements\n- Style status display and reset button",
+      "priority": "high",
+      "id": "d7aa2ea6-d464-4dbb-ba6b-abf0f833f939",
+      "columnId": "cdbc5855-84c9-41dd-9b1d-904928873574",
+      "position": 2,
+      "created_at": "2025-05-02T00:29:10.584Z",
+      "updated_at": "2025-05-02T00:29:10.584Z",
+      "completed_at": null
+    },
+    {
+      "title": "Set Up Game State Management",
+      "description": "- Define variables to track:\n  * Current board state\n  * Current player\n  * Game status (in progress, win, draw)\n- Initialize game state",
+      "priority": "high",
+      "id": "427f3171-6c24-4995-b03f-181bb16f491a",
+      "columnId": "cdbc5855-84c9-41dd-9b1d-904928873574",
+      "position": 3,
+      "created_at": "2025-05-02T00:29:10.584Z",
+      "updated_at": "2025-05-02T00:29:10.584Z",
+      "completed_at": null
+    },
+    {
+      "title": "Implement Cell Click Handling",
+      "description": "- Add event listeners to cells\n- Update board state when a cell is clicked\n- Prevent clicking on already filled cells\n- Toggle between players after valid moves",
+      "priority": "high",
+      "id": "9878a5f3-c501-4eb7-a900-996e15cef56a",
+      "columnId": "cdbc5855-84c9-41dd-9b1d-904928873574",
+      "position": 4,
+      "created_at": "2025-05-02T00:29:10.584Z",
+      "updated_at": "2025-05-02T00:29:10.584Z",
+      "completed_at": null
+    },
+    {
+      "title": "Add Emoji Markers",
+      "description": "- Define emoji constants (😎 and 🚀)\n- Display appropriate emoji when a player makes a move",
+      "priority": "medium",
+      "id": "70947790-cd8c-4ec7-a362-6f38d7dd02a5",
+      "columnId": "cdbc5855-84c9-41dd-9b1d-904928873574",
+      "position": 5,
+      "created_at": "2025-05-02T00:29:10.584Z",
+      "updated_at": "2025-05-02T00:29:10.584Z",
+      "completed_at": null
+    },
+    {
+      "title": "Implement Win Detection Logic",
+      "description": "- Define the 8 possible win patterns (3 rows, 3 columns, 2 diagonals)\n- Check for wins after each move\n- Update game status when a win is detected",
+      "priority": "high",
+      "id": "b1d02e01-d712-4653-9203-00dc07cf34dd",
+      "columnId": "cdbc5855-84c9-41dd-9b1d-904928873574",
+      "position": 6,
+      "created_at": "2025-05-02T00:29:10.584Z",
+      "updated_at": "2025-05-02T00:29:10.584Z",
+      "completed_at": null
+    },
+    {
+      "title": "Implement Draw Detection",
+      "description": "- Check if all cells are filled with no winner\n- Update game status for draw condition",
+      "priority": "medium",
+      "id": "47ef7efc-1926-4173-9406-579b04c97a30",
+      "columnId": "cdbc5855-84c9-41dd-9b1d-904928873574",
+      "position": 7,
+      "created_at": "2025-05-02T00:29:10.584Z",
+      "updated_at": "2025-05-02T00:29:10.584Z",
+      "completed_at": null
+    },
+    {
+      "title": "Add Visual Feedback",
+      "description": "- Highlight winning cells\n- Display winner or draw message\n- Update UI to reflect current player's turn",
+      "priority": "medium",
+      "id": "12b09760-6495-4e5f-9421-8db0a2de9491",
+      "columnId": "cdbc5855-84c9-41dd-9b1d-904928873574",
+      "position": 8,
+      "created_at": "2025-05-02T00:29:10.584Z",
+      "updated_at": "2025-05-02T00:29:10.584Z",
+      "completed_at": null
+    },
+    {
+      "title": "Implement Reset Functionality",
+      "description": "- Clear the board\n- Reset game state\n- Reset status messages",
+      "priority": "medium",
+      "id": "b7a032e5-bce3-430d-ade5-5437e30a5520",
+      "columnId": "cdbc5855-84c9-41dd-9b1d-904928873574",
+      "position": 9,
+      "created_at": "2025-05-02T00:29:10.584Z",
+      "updated_at": "2025-05-02T00:29:10.584Z",
+      "completed_at": null
+    },
+    {
+      "title": "Add Final UI Enhancements",
+      "description": "- Add hover effects on cells\n- Add simple animations for placing markers\n- Ensure responsive behavior on different screen sizes",
+      "priority": "low",
+      "id": "881c78e3-fed7-471a-afa2-3323020e4920",
+      "columnId": "cdbc5855-84c9-41dd-9b1d-904928873574",
+      "position": 10,
+      "created_at": "2025-05-02T00:29:10.584Z",
+      "updated_at": "2025-05-02T00:29:10.584Z",
+      "completed_at": null
+    },
+    {
+      "title": "Test and Debug",
+      "description": "- Test all game scenarios (wins in all directions, draws)\n- Test on different browsers\n- Fix any bugs or edge cases",
+      "priority": "high",
+      "id": "471b79aa-72b9-4c97-a132-4ff2799fa404",
+      "columnId": "cdbc5855-84c9-41dd-9b1d-904928873574",
+      "position": 11,
+      "created_at": "2025-05-02T00:29:10.584Z",
+      "updated_at": "2025-05-02T00:29:10.584Z",
+      "completed_at": null
+    }
+  ],
+  "next-steps": [
+    "Complete user-info feature slice",
+    "Review completed features for proper types, structures, and architecture"
+  ],
+  "last_updated": "2025-05-02T00:30:44.955Z",
+  "isDragging": false,
+  "scrollToColumn": null
+}

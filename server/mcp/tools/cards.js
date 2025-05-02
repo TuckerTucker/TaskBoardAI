@@ -12,8 +12,8 @@ function registerCardTools(server, { config, checkRateLimit }) {
   server.tool(
     'get-card',
     {
-      boardId: z.string().min(1, 'Board ID is required'),
-      cardId: z.string().min(1, 'Card ID is required')
+      boardId: z.string().min(1, 'Board ID is required').describe('Unique identifier of the board containing the card'),
+      cardId: z.string().min(1, 'Card ID is required').describe('Unique identifier of the card to retrieve')
     },
     async ({ boardId, cardId }) => {
       try {
@@ -46,19 +46,19 @@ function registerCardTools(server, { config, checkRateLimit }) {
         };
       }
     },
-    'Get a specific card by ID.'
+    'Retrieves a specific card by its ID from a given board. Requires both board ID and card ID to locate the exact card.'
   );
 
   server.tool(
     'update-card',
     {
-      boardId: z.string().min(1, 'Board ID is required'),
-      cardId: z.string().min(1, 'Card ID is required'),
+      boardId: z.string().min(1, 'Board ID is required').describe('Unique identifier of the board containing the card'),
+      cardId: z.string().min(1, 'Card ID is required').describe('Unique identifier of the card to update'),
       // Allow string or object for cardData
       cardData: z.union([
         z.string().min(1, 'Card data string cannot be empty').max(200000, 'Card data string too large'),
         z.object({}).passthrough() // Allow any object structure
-      ])
+      ]).describe('Card data to update. Can be a JSON string or an object containing card details.')
     },
     async ({ boardId, cardId, cardData }) => {
       console.log(`[update-card] Invoked with boardId=${boardId}, cardId=${cardId}`);
@@ -143,19 +143,19 @@ function registerCardTools(server, { config, checkRateLimit }) {
         };
       }
     },
-    'Update properties of a specific card by ID.'
+    'Updates the properties of a specific card within a board. Allows partial or full card data updates, including moving to a different column.'
   );
 
   server.tool(
     'move-card',
     {
-      boardId: z.string().min(1, 'Board ID is required'),
-      cardId: z.string().min(1, 'Card ID is required'),
-      columnId: z.string().min(1, 'Target column ID is required'),
+      boardId: z.string().min(1, 'Board ID is required').describe('Unique identifier of the board containing the card'),
+      cardId: z.string().min(1, 'Card ID is required').describe('Unique identifier of the card to move'),
+      columnId: z.string().min(1, 'Target column ID is required').describe('Unique identifier of the destination column'),
       position: z.union([
         z.number().int('Position must be an integer').min(0, 'Position must be non-negative'),
         z.enum(['first', 'last', 'up', 'down'])
-      ])
+      ]).describe('Position within the column. Can be a specific index, or keywords: first, last, up, down')
     },
     async ({ boardId, cardId, columnId, position }) => {
       console.log(`[move-card] Invoked with boardId=${boardId}, cardId=${cardId}, columnId=${columnId}, position=${position}`);
@@ -261,80 +261,80 @@ function registerCardTools(server, { config, checkRateLimit }) {
         };
       }
     },
-    'Move a card to a different column or position within a board.'
+    'Moves a card to a different column and/or adjusts its position within that column. Supports precise positioning and relative movements.'
   );
 
   // Helper function to parse card data consistently
-const parseCardData = (cardData, context = '') => {
-  if (typeof cardData === 'string') {
-    try {
-      return JSON.parse(cardData);
-    } catch {
-      throw new Error(`Invalid JSON format for card data string${context ? ` in ${context}` : ''}`);
+  const parseCardData = (cardData, context = '') => {
+    if (typeof cardData === 'string') {
+      try {
+        return JSON.parse(cardData);
+      } catch {
+        throw new Error(`Invalid JSON format for card data string${context ? ` in ${context}` : ''}`);
+      }
+    } else if (typeof cardData === 'object' && cardData !== null) {
+      return cardData;
     }
-  } else if (typeof cardData === 'object' && cardData !== null) {
-    return cardData;
-  }
-  throw new Error(`Invalid card data type${context ? ` in ${context}` : ''}. Must be a JSON string or an object.`);
-};
+    throw new Error(`Invalid card data type${context ? ` in ${context}` : ''}. Must be a JSON string or an object.`);
+  };
 
-// Helper function to validate column existence
-const validateColumn = (board, columnId, context = '') => {
-  const colExists = board.data.columns.some(c => c.id === columnId);
-  if (!colExists) {
-    throw new Error(`Target column ${columnId} does not exist${context ? ` in ${context}` : ''}`);
-  }
-};
+  // Helper function to validate column existence
+  const validateColumn = (board, columnId, context = '') => {
+    const colExists = board.data.columns.some(c => c.id === columnId);
+    if (!colExists) {
+      throw new Error(`Target column ${columnId} does not exist${context ? ` in ${context}` : ''}`);
+    }
+  };
 
-// Helper function to calculate new position
-const calculatePosition = (board, columnId, requestedPosition, currentCard = null, newCards = []) => {
-  const cardsInColumn = [
-    ...board.data.cards.filter(c => c.columnId === columnId && (!currentCard || c.id !== currentCard.id)),
-    ...newCards.filter(nc => nc.columnId === columnId && (!currentCard || nc.id !== currentCard.id))
-  ].sort((a, b) => a.position - b.position);
+  // Helper function to calculate new position
+  const calculatePosition = (board, columnId, requestedPosition, currentCard = null, newCards = []) => {
+    const cardsInColumn = [
+      ...board.data.cards.filter(c => c.columnId === columnId && (!currentCard || c.id !== currentCard.id)),
+      ...newCards.filter(nc => nc.columnId === columnId && (!currentCard || nc.id !== currentCard.id))
+    ].sort((a, b) => a.position - b.position);
 
-  if (typeof requestedPosition === 'number') {
-    return Math.min(Math.max(0, requestedPosition), cardsInColumn.length);
-  }
+    if (typeof requestedPosition === 'number') {
+      return Math.min(Math.max(0, requestedPosition), cardsInColumn.length);
+    }
 
-  switch (requestedPosition) {
-    case 'first':
-      return 0;
-    case 'last':
-      return cardsInColumn.length;
-    case 'up':
-      if (!currentCard || currentCard.columnId !== columnId) {
-        throw new Error("Cannot use 'up' when moving to a different column");
-      }
-      return Math.max(0, currentCard.position - 1);
-    case 'down':
-      if (!currentCard || currentCard.columnId !== columnId) {
-        throw new Error("Cannot use 'down' when moving to a different column");
-      }
-      return currentCard.position + 1;
-    default:
-      return cardsInColumn.length;
-  }
-};
+    switch (requestedPosition) {
+      case 'first':
+        return 0;
+      case 'last':
+        return cardsInColumn.length;
+      case 'up':
+        if (!currentCard || currentCard.columnId !== columnId) {
+          throw new Error("Cannot use 'up' when moving to a different column");
+        }
+        return Math.max(0, currentCard.position - 1);
+      case 'down':
+        if (!currentCard || currentCard.columnId !== columnId) {
+          throw new Error("Cannot use 'down' when moving to a different column");
+        }
+        return currentCard.position + 1;
+      default:
+        return cardsInColumn.length;
+    }
+  };
 
-server.tool(
+  server.tool(
     'batch-cards',
     {
-      boardId: z.string().min(1, 'Board ID is required'),
+      boardId: z.string().min(1, 'Board ID is required').describe('Unique identifier of the board to perform batch operations'),
       operations: z.array(z.object({
-        type: z.enum(['create', 'update', 'move']),
-        cardId: z.string().min(1, 'Card ID is required for update/move').optional(),
+        type: z.enum(['create', 'update', 'move']).describe('Type of operation to perform on a card'),
+        cardId: z.string().min(1, 'Card ID is required for update/move').optional().describe('Unique identifier of the card to update or move'),
         cardData: z.union([
           z.string().min(1, 'Card data string cannot be empty').max(200000, 'Card data string too large'),
           z.object({}).passthrough()
-        ]).optional(),
-        columnId: z.string().optional(),
+        ]).optional().describe('Card data for create or update operations. When omitted for create, a default card will be created'),
+        columnId: z.string().optional().describe('Target column ID for create or move operations. When omitted for create, first column will be used'),
         position: z.union([
           z.number().int('Position must be an integer').min(0, 'Position must be non-negative'),
           z.enum(['first', 'last', 'up', 'down'])
-        ]).optional(),
-        reference: z.string().optional() // Allow referencing cards created in same batch
-      })).min(1, 'At least one operation is required').max(100, 'Maximum 100 operations allowed')
+        ]).optional().describe('Position within the column for create or move operations'),
+        reference: z.string().optional().describe('Optional reference ID to link cards within the same batch operation')
+      })).min(1, 'At least one operation is required').max(100, 'Maximum 100 operations allowed').describe('Array of card operations to perform atomically'),
     },
     async ({ boardId, operations }) => {
       console.log(`[batch-cards] Invoked with boardId=${boardId}, ${operations.length} operations`);
@@ -366,20 +366,38 @@ server.tool(
           const op = operations[i];
           if (op.type === 'create') {
             try {
-              if (!op.cardData || !op.columnId) {
-                throw new Error("cardData and columnId are required for 'create' operation");
-              }
-
-              const parsedCardData = parseCardData(op.cardData, `create operation ${i + 1}`);
-              validateColumn(board, op.columnId, `create operation ${i + 1}`);
-
+              // Generate ID and timestamp once for this operation
               const newCardId = crypto.randomUUID();
               const now = new Date().toISOString();
-
-              // Calculate position
+              
+              // Default to first column if columnId is not provided
+              let targetColumnId = op.columnId;
+              if (!targetColumnId && board.data.columns && board.data.columns.length > 0) {
+                targetColumnId = board.data.columns[0].id;
+                console.log(`[batch-cards] No columnId provided, defaulting to first column: ${targetColumnId}`);
+              } else if (!targetColumnId) {
+                throw new Error("Could not determine a column ID - board has no columns");
+              }
+              
+              // Validate the column exists
+              validateColumn(board, targetColumnId, `create operation ${i + 1}`);
+              
+              // Create default cardData if not provided
+              let parsedCardData;
+              if (!op.cardData) {
+                parsedCardData = {
+                  title: `New Card ${newCardId.substring(0, 8)}`,
+                  content: "",
+                };
+                console.log(`[batch-cards] No cardData provided, using default card title`);
+              } else {
+                parsedCardData = parseCardData(op.cardData, `create operation ${i + 1}`);
+              }
+              
+              // Calculate position (default to last)
               const newPos = calculatePosition(
                 board,
-                op.columnId,
+                targetColumnId,
                 op.position || 'last',
                 null,
                 newCards
@@ -387,12 +405,12 @@ server.tool(
 
               // Adjust positions
               board.data.cards.forEach(c => {
-                if (c.columnId === op.columnId && c.position >= newPos) {
+                if (c.columnId === targetColumnId && c.position >= newPos) {
                   c.position++;
                 }
               });
               newCards.forEach(nc => {
-                if (nc.columnId === op.columnId && nc.position >= newPos) {
+                if (nc.columnId === targetColumnId && nc.position >= newPos) {
                   nc.position++;
                 }
               });
@@ -400,7 +418,7 @@ server.tool(
               const newCard = {
                 ...parsedCardData,
                 id: newCardId,
-                columnId: op.columnId,
+                columnId: targetColumnId,
                 position: newPos,
                 created_at: now,
                 updated_at: now
@@ -573,14 +591,86 @@ server.tool(
         await board.save();
 
         console.log('[batch-cards] Batch operations completed');
+        
+        // Create an enriched response with guidance
+        const responseData = {
+          // Original response data
+          success: results.every(r => r.success),
+          results,
+          referenceMap: Object.fromEntries(referenceMap),
+          
+          // Add guidance without affecting the original format
+          tips: {
+            createCardExamples: {
+              // Full example with all fields
+              detailed: {
+                type: 'create',
+                columnId: board.data.columns[0]?.id || "column-id", 
+                cardData: {
+                  title: "New Card Title",
+                  content: "Card content with **markdown** support",
+                  subtasks: ["First subtask", "✓ Completed subtask"],
+                  tags: ["example", "tag"],
+                  priority: "high"
+                }
+              },
+              
+              // Minimal example (everything else auto-generated)
+              minimal: {
+                type: 'create'
+                // Will create a card with auto-generated title in the first column
+              },
+              
+              // Common pattern with just title and content
+              simple: {
+                type: 'create',
+                cardData: {
+                  title: "Simple Card",
+                  content: "Just the essential information"
+                }
+              }
+            },
+            
+            createCardNotes: [
+              "Both columnId and cardData are now optional",
+              "If columnId is omitted, first column will be used",
+              "If cardData is omitted, a card with default title will be created",
+              "Column ID must exist in the board if specified",
+              "Card ID, timestamps, and position are auto-generated"
+            ],
+            
+            updateCardExample: {
+              type: 'update',
+              cardId: "existing-card-id",
+              cardData: {
+                title: "Updated Card Title",
+                content: "Updated content"
+                // Can include any card property to update
+              }
+            },
+            
+            moveCardExample: {
+              type: 'move',
+              cardId: "existing-card-id",
+              columnId: "target-column-id",
+              position: "last" // Can be a number or "first", "last", "up", "down"
+            },
+            
+            requiredCardFields: [
+              "id (auto-generated for create operations)",
+              "title",
+              "columnId (must be a valid column ID in this board)",
+              "position (0-indexed within column)",
+              "created_at (auto-generated for create operations)",
+              "updated_at (auto-set during operations)"
+            ]
+          }
+        };
+        
         return {
           content: [{ 
             type: 'text',
-            text: JSON.stringify({
-              success: results.every(r => r.success),
-              results,
-              referenceMap: Object.fromEntries(referenceMap)
-            }, null, 2)
+            text: JSON.stringify(responseData, null, 2)
           }]
         };
       } catch (error) {
@@ -591,12 +681,12 @@ server.tool(
         };
       }
     },
-    `Batch create, update, and move multiple cards atomically.
-     - For 'create': Omit cardId, provide type='create', cardData (JSON string), columnId, optional position ('first', 'last', or index), and optional 'reference' to identify the card in subsequent operations.
-     - For 'update': Provide cardId (or $ref:reference), type='update', and cardData (JSON string).
-     - For 'move': Provide cardId (or $ref:reference), type='move', columnId, and position ('first', 'last', 'up', 'down', or index).
-     - Use $ref:reference to reference cards created earlier in the batch (e.g. cardId: '$ref:newCard1').
-     - Operations continue processing on error, with detailed per-operation results returned.`
+    `Perform multiple card operations atomically in a single request.
+     - Supports batch create, update, and move operations
+     - Can reference newly created cards in subsequent operations
+     - Provides detailed results for each operation
+     - Maintains card and column positioning integrity
+     - Allows complex multi-step card manipulations in one transaction`
   );
 }
 

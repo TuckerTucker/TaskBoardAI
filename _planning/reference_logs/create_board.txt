@@ -1,0 +1,239 @@
+
+{
+  "success": false,
+  "results": [
+    {
+      "type": "create",
+      "error": "cardData and columnId are required for 'create' operation",
+      "success": false,
+      "operation": 1
+    },
+    {
+      "type": "create",
+      "error": "cardData and columnId are required for 'create' operation",
+      "success": false,
+      "operation": 2
+    },
+    {
+      "type": "create",
+      "error": "cardData and columnId are required for 'create' operation",
+      "success": false,
+      "operation": 3
+    },
+    {
+      "type": "create",
+      "error": "cardData and columnId are required for 'create' operation",
+      "success": false,
+      "operation": 4
+    },
+    {
+      "type": "create",
+      "error": "cardData and columnId are required for 'create' operation",
+      "success": false,
+      "operation": 5
+    },
+    {
+      "type": "create",
+      "error": "cardData and columnId are required for 'create' operation",
+      "success": false,
+      "operation": 6
+    },
+    {
+      "type": "create",
+      "error": "cardData and columnId are required for 'create' operation",
+      "success": false,
+      "operation": 7
+    },
+    {
+      "type": "create",
+      "error": "cardData and columnId are required for 'create' operation",
+      "success": false,
+      "operation": 8
+    },
+    {
+      "type": "create",
+      "error": "cardData and columnId are required for 'create' operation",
+      "success": false,
+      "operation": 9
+    },
+    {
+      "type": "create",
+      "error": "cardData and columnId are required for 'create' operation",
+      "success": false,
+      "operation": 10
+    },
+    {
+      "type": "create",
+      "error": "cardData and columnId are required for 'create' operation",
+      "success": false,
+      "operation": 11
+    }
+  ],
+  "referenceMap": {},
+  "tips": {
+    "createCardExample": {
+      "type": "create",
+      "cardData": {
+        "title": "New Card Title",
+        "content": "Card content with **markdown** support",
+        "columnId": "98ad713a-73a4-4656-a68d-66242680b983",
+        "position": 0,
+        "subtasks": [
+          "First subtask",
+          "✓ Completed subtask"
+        ],
+        "tags": [
+          "example",
+          "tag"
+        ],
+        "priority": "high"
+      }
+    },
+    "updateCardExample": {
+      "type": "update",
+      "cardId": "existing-card-id",
+      "cardData": {
+        "title": "Updated Card Title",
+        "content": "Updated content"
+      }
+    },
+    "moveCardExample": {
+      "type": "move",
+      "cardId": "existing-card-id",
+      "columnId": "target-column-id",
+      "position": "last"
+    },
+    "requiredCardFields": [
+      "id (auto-generated for create operations)",
+      "title",
+      "columnId (must be a valid column ID in this board)",
+      "position (0-indexed within column)",
+      "created_at (auto-generated for create operations)",
+      "updated_at (auto-set during operations)"
+    ]
+  }
+}
+
+Checkpoint
+Compare
+Restore
+
+
+I'll try creating the cards one by one to identify the specific issue:
+
+
+Cline wants to use a tool on the Taskboard MCP server:
+create-board
+Arguments
+{
+  "name": "Tic-Tac-Toe Implementation"
+}
+
+{
+  "success": true,
+  "message": "Board \"Tic-Tac-Toe Implementation\" created successfully with ID: 0da00916-39ab-4116-b5a5-0ef1b29e14ec",
+  "board": {
+    "id": "0da00916-39ab-4116-b5a5-0ef1b29e14ec",
+    "name": "Tic-Tac-Toe Implementation",
+    "lastUpdated": "2025-05-02T00:45:27.300Z"
+  },
+  "tips": {
+    "columns": [
+      {
+        "id": "20d54996-f73a-419c-a667-06d9ae804fa8",
+        "name": "To Do"
+      },
+      {
+        "id": "053f0552-78f8-4791-af28-8f9364a5d4e1",
+        "name": "In Progress"
+      },
+      {
+        "id": "977653ab-9fe8-4cf2-a7f4-31197915f25c",
+        "name": "Done"
+      },
+      {
+        "id": "d6bf6583-e423-4484-8813-80c6ce1c3528",
+        "name": "Blocked"
+      }
+    ],
+    "usage": [
+      "Use get-board with ID \"0da00916-39ab-4116-b5a5-0ef1b29e14ec\" to retrieve the full board",
+      "Use get-board with ID \"0da00916-39ab-4116-b5a5-0ef1b29e14ec\" and format \"cards-only\" to get just the cards",
+      "Use batch-cards with boardId \"0da00916-39ab-4116-b5a5-0ef1b29e14ec\" to create multiple cards at once",
+      "When creating cards, ensure each card has: id (UUID), title, columnId, position, created_at, and updated_at fields"
+    ],
+    "cardFields": {
+      "required": [
+        "id",
+        "title",
+        "columnId",
+        "position",
+        "created_at",
+        "updated_at"
+      ],
+      "optional": [
+        "content",
+        "collapsed",
+        "subtasks",
+        "tags",
+        "dependencies",
+        "priority",
+        "completed_at",
+        "blocked_at"
+      ]
+    },
+    "exampleCard": {
+      "id": "use-crypto.randomUUID()-to-generate",
+      "title": "Example Card Title",
+      "content": "Markdown content for card description",
+      "columnId": "20d54996-f73a-419c-a667-06d9ae804fa8",
+      "position": 0,
+      "collapsed": false,
+      "subtasks": [
+        "Task One",
+        "✓ Completed Task"
+      ],
+      "tags": [
+        "example",
+        "tag"
+      ],
+      "dependencies": [],
+      "created_at": "2025-05-02T00:45:27.301Z",
+      "updated_at": "2025-05-02T00:45:27.301Z"
+    },
+    "documentation": "{\n  \"projectName\": \"Project Example\", // Name displayed at the top of the board\n  \"id\": \"4fb7b001-0f86-4987-af0d-575ee975d11c\", // board uuid \n  \"columns\": [ // Array of column definitions\n    {\n      \"id\": \"to-do\", // Unique identifier for the column\n      \"name\": \"To Do\" // Display name of the column\n    },\n    {\n      \"id\": \"in-progress\",\n      \"name\": \"In Progress\"\n    },\n    {\n      \"id\": \"done\",\n      \"name\": \"Done\"\n    },\n    {\n      \"id\": \"blocked\",\n      \"name\": \"Blocked\"\n    }\n  ],\n  \"cards\": [ // Array of all cards in the board\n    {\n      \"id\": \"feature-one\", // Unique identifier for the card\n      \"title\": \"Feature One\", // Card title displayed in the header\n      \"content\": \"## Feature Description\\n\\n- Point 1\\n- Point 2\\n\\nAdditional details here.\", // markdown is supported\n      \"columnId\": \"to-do\", // ID of the column this card belongs to\n      \"collapsed\": false, // Whether the card is currently collapsed (boolean)\n      \"position\": 0, // Position within the column (0-indexed)\n      \"subtasks\": [ // Array of subtask strings, prefix with ✓ to mark as complete\n        \"✓ Task One\", // completed subtask\n        \"Task Two\" // task in progress\n      ],\n      \"tags\": [ // Array of tag strings for categorization\n        \"feature\",\n        \"frontend\"\n      ],\n      \"dependencies\": [ // Array of card IDs that this card depends on\n        \"feature-two\"\n      ],\n      \"created_at\": \"2025-01-18T10:00:00.000Z\", // ISO timestamp when card was created\n      \"updated_at\": \"2025-01-19T12:30:00.000Z\" // ISO timestamp of last card update\n    },\n    {\n      \"id\": \"feature-two\",\n      \"title\": \"Feature Two\",\n      \"content\": \"A basic feature description\",\n      \"columnId\": \"in-progress\",\n      \"position\": 0,\n      \"collapsed\": true,\n      \"subtasks\": [],\n      \"tags\": [\"backend\", \"another tag\", \"exmaple of a tag\"],\n      \"dependencies\": [],\n      \"created_at\": \"2025-01-18T11:15:00.000Z\",\n      \"updated_at\": \"2025-01-19T14:45:00.000Z\"\n    },\n    {\n      \"id\": \"completed-feature\",\n      \"title\": \"Completed Feature\",\n      \"content\": \"This feature is done\",\n      \"columnId\": \"done\",\n      \"position\": 0,\n      \"collapsed\": false,\n      \"subtasks\": [\n        \"✓ Task One\",\n        \"✓ Task Two\",\n        \"✓ Task Three\"\n      ],\n      \"tags\": [\"complete\"], \n      \"dependencies\": [],\n      \"created_at\": \"2025-01-17T09:30:00.000Z\",\n      \"updated_at\": \"2025-01-19T18:12:35.604Z\",\n      \"completed_at\": \"2025-01-19T18:12:35.604Z\" // ISO timestamp when moved to Done\n    },\n    {\n      \"id\": \"example-blocked-feature\",\n      \"title\": \"Example Blocked Feature\",\n      \"content\": \"the card description.\",\n      \"columnId\": \"blocked\",\n      \"position\": 0,\n      \"collapsed\": false,\n      \"subtasks\": [\n        \"✓ Task One\",\n        \"✓ Task Two\",\n        \"✓ Task Three\"\n      ],\n      \"tags\": [\"blocked\", \"backend\"],\n      \"dependencies\": [\"feature-two\"],\n      \"created_at\": \"2025-01-18T13:45:00.000Z\",\n      \"updated_at\": \"2025-01-19T16:20:00.000Z\",\n      \"blocked_at\": \"2025-01-19T16:20:00.000Z\" // ISO timestamp when moved to Blocked\n    }\n  ],\n  \"next-steps\": [ // Array of next priority tasks and focus areas\n    \"Complete user-info feature slice\",\n    \"Review completed features for proper types, structures, and architecture\"\n  ],\n  \"last_updated\": \"2025-01-19T19:20:14.802Z\", // ISO timestamp of last board update\n  \"isDragging\": false, // Internal state for drag operations\n  \"scrollToColumn\": null // ID of column to auto-scroll to, or null\n}"
+  }
+}
+
+Checkpoint
+Compare
+Restore
+
+
+I'll create the first card to test the process:
+
+
+Cline wants to use a tool on the Taskboard MCP server:
+create-card
+Arguments
+{
+  "boardId": "0da00916-39ab-4116-b5a5-0ef1b29e14ec",
+  "cardData": {
+    "id": "html-structure-card",
+    "title": "Create Basic HTML Structure",
+    "content": "- Set up HTML5 document with proper metadata\n- Create game container\n- Add 3x3 grid for the game board\n- Add game status display element\n- Add reset button\n- Link CSS and JavaScript files",
+    "columnId": "20d54996-f73a-419c-a667-06d9ae804fa8",
+    "position": 0,
+    "created_at": "2025-05-02T00:45:27.000Z",
+    "updated_at": "2025-05-02T00:45:27.000Z",
+    "tags": ["frontend", "setup"],
+    "subtasks": [
+      "Create HTML5 document",
+      "Set up game container",
+      "Create 3x3 grid",
+      "Add status display",
+      "Add reset button",
+      "Link external files"
+    ]
+  }
+}
