@@ -1,0 +1,13 @@
+#!/bin/sh
+
+# Script to start the Kanban MCP server
+
+# Ensure dependencies are installed
+if [ ! -d "node_modules/@modelcontextprotocol" ]; then
+    echo "Installing MCP SDK dependencies..."
+    npm install
+fi
+
+# Start the MCP server
+echo "Starting Kanban MCP server..."
+node server/mcp/kanbanMcpServer.js
