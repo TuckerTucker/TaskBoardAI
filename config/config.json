@@ -1,9 +1,0 @@
-{
-  "theme": "light",
-  "dataStorage": "local",
-  "serverOptions": {
-    "apiEndpoint": "/api",
-    "autoSave": true
-  },
-  "last_updated": "2025-03-10T19:29:46.501Z"
-}
