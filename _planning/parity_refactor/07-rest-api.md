@@ -70,7 +70,6 @@ import { registerBoardRoutes } from './routes/boardRoutes';
 import { registerCardRoutes } from './routes/cardRoutes';
 import { registerConfigRoutes } from './routes/configRoutes';
 import { registerWebhookRoutes } from './routes/webhookRoutes';
-import { registerMigrationRoutes } from './routes/migrationRoutes';
 
 /**
  * Create and start the API server
@@ -88,7 +87,6 @@ export async function startApiServer(config: AppConfig, services: ServiceFactory
     registerCardRoutes(app, apiEndpoint, services);
     registerConfigRoutes(app, apiEndpoint, services);
     registerWebhookRoutes(app, apiEndpoint, services);
-    registerMigrationRoutes(app, apiEndpoint, services);
     
     // Create HTTP server
     const server = http.createServer(app);
@@ -739,40 +737,6 @@ export class WebhookController {
 }
 ```
 
-### 7.9 Migration Controller
-
-**`server/api/controllers/migrationController.ts`:**
-```typescript
-import { Request, Response } from 'express';
-import { ServiceFactory } from '@core/services';
-
-/**
- * Controller for migration-related endpoints
- */
-export class MigrationController {
-  constructor(private services: ServiceFactory) {}
-  
-  /**
-   * Verify board structure
-   */
-  async verifyBoardStructure(req: Request, res: Response) {
-    const boardId = req.params.id;
-    
-    const result = await this.services.getBoardService().verifyBoard(boardId);
-    res.json(result);
-  }
-  
-  /**
-   * Migrate a board to card-first architecture
-   */
-  async migrateToCardFirst(req: Request, res: Response) {
-    const boardId = req.params.id;
-    
-    const result = await this.services.getBoardService().migrateBoard(boardId);
-    res.json(result);
-  }
-}
-```
 
 ### 7.10 Route Registration
 
@@ -1084,48 +1048,6 @@ export function registerWebhookRoutes(
 }
 ```
 
-**`server/api/routes/migrationRoutes.ts`:**
-```typescript
-import express from 'express';
-import { ServiceFactory } from '@core/services';
-import { MigrationController } from '../controllers/migrationController';
-import { asyncHandler, responseFormatter } from '../middleware/responseFormatter';
-import { validateParams } from '@core/errors/middleware';
-import { z } from 'zod';
-
-/**
- * Register migration-related routes
- */
-export function registerMigrationRoutes(
-  app: express.Application,
-  apiEndpoint: string,
-  services: ServiceFactory
-) {
-  const router = express.Router();
-  const controller = new MigrationController(services);
-  
-  // Middleware
-  router.use(responseFormatter);
-  
-  // Migration routes
-  router.get('/boards/:id/verify',
-    validateParams(z.object({
-      id: z.string().min(1, 'Board ID is required')
-    })),
-    asyncHandler(controller.verifyBoardStructure.bind(controller))
-  );
-  
-  router.post('/boards/:id/migrate',
-    validateParams(z.object({
-      id: z.string().min(1, 'Board ID is required')
-    })),
-    asyncHandler(controller.migrateToCardFirst.bind(controller))
-  );
-  
-  // Register the router with the app
-  app.use(apiEndpoint, router);
-}
-```
 
 ### 7.11 OpenAPI Documentation
 

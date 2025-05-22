@@ -105,8 +105,6 @@ export interface Column {
   id: string;
   name: string;
   position?: number;
-  items?: any[]; // Legacy support
-  [key: string]: any;
 }
 ```
 
@@ -127,7 +125,6 @@ export interface Card {
   completed_at?: string | null;
   blocked_at?: string | null;
   priority?: 'low' | 'medium' | 'high';
-  [key: string]: any;
 }
 ```
 
@@ -145,7 +142,6 @@ export interface AppConfig {
   mcpPort?: number;
   authEnabled?: boolean;
   rateLimits?: RateLimitConfig;
-  [key: string]: any;
 }
 
 export interface RateLimitConfig {
@@ -227,11 +223,10 @@ export * from './Api';
 export * from './Mcp';
 ```
 
-### 1.9 Incremental Conversion Strategy
-- Define a plan for incremental conversion from JS to TS
-- Start with core types and interfaces
-- Establish a naming convention document
-- Decide on module import strategy
+### 1.9 Module Organization
+- Establish a clear naming convention document
+- Define module import strategy
+- Set up barrel exports for clean imports
 
 ## Expected Outcome
 - Complete TypeScript setup ready for the rest of the implementation

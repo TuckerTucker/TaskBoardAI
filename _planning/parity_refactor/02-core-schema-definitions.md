@@ -171,9 +171,6 @@ const baseBoardSchema = z.object({
 const boardOptionalFields = z.object({
   description: z.string().optional(),
   last_updated: z.string().datetime().optional(),
-  // Legacy properties for backward compatibility 
-  isDragging: z.boolean().optional(),
-  scrollToColumn: z.string().nullable().optional(),
 });
 
 // Complete schema (v1)

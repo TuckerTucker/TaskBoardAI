@@ -44,7 +44,6 @@ process.on('unhandledRejection', (reason, promise) => {
 import { registerBoardTools } from './tools/boards';
 import { registerCardTools } from './tools/cards';
 import { registerServerTools } from './tools/server';
-import { registerMigrationTools } from './tools/migration';
 import { registerConfigTools } from './tools/config';
 import { registerWebhookTools } from './tools/webhooks';
 import { registerRequestContext, clearRequestContext } from './utils/requestContext';
@@ -53,7 +52,6 @@ import { registerRequestContext, clearRequestContext } from './utils/requestCont
 registerBoardTools(server, serviceFactory);
 registerCardTools(server, serviceFactory);
 registerServerTools(server, serviceFactory);
-registerMigrationTools(server, serviceFactory);
 registerConfigTools(server, serviceFactory);
 registerWebhookTools(server, serviceFactory);
 
@@ -1060,102 +1058,6 @@ export function registerCardTools(server: any, serviceFactory: ServiceFactory) {
 }
 ```
 
-### 6.6 Migration Tools Registration
-
-**`server/mcp/tools/migration.ts`:**
-```typescript
-import { z } from 'zod';
-import { ServiceFactory } from '@core/services';
-import { formatResponse, formatErrorResponse } from '../utils/responseFormatter';
-import { registerRequestContext, clearRequestContext } from '../utils/requestContext';
-
-/**
- * Register migration-related MCP tools
- */
-export function registerMigrationTools(server: any, serviceFactory: ServiceFactory) {
-  const boardService = serviceFactory.getBoardService();
-  
-  // Migrate a board to card-first architecture
-  server.tool(
-    'migrate-to-card-first',
-    {
-      boardId: z.string().min(1, 'Board ID is required').describe('Unique identifier of the board to migrate')
-    },
-    async ({ boardId }) => {
-      const context = registerRequestContext('migrate-to-card-first', { boardId });
-      
-      try {
-        const result = await boardService.migrateBoard(boardId);
-        
-        return formatResponse(result, {
-          tool: 'migrate-to-card-first',
-          helpfulTips: [
-            'Use get-board to see the migrated board',
-            'Cards will now be accessible via the card-specific tools'
-          ],
-          relatedTools: [
-            'get-board - View the migrated board',
-            'get-card - Access individual cards',
-            'batch-cards - Modify multiple cards at once'
-          ]
-        });
-      } catch (error) {
-        return formatErrorResponse(error, 'migrate-to-card-first');
-      } finally {
-        clearRequestContext();
-      }
-    },
-    'Migrates a board from legacy column-items architecture to modern card-first architecture.'
-  );
-  
-  // Verify board structure and integrity
-  server.tool(
-    'verify-board-structure',
-    {
-      boardId: z.string().min(1, 'Board ID is required').describe('Unique identifier of the board to verify')
-    },
-    async ({ boardId }) => {
-      const context = registerRequestContext('verify-board-structure', { boardId });
-      
-      try {
-        const result = await boardService.verifyBoard(boardId);
-        
-        // Add helpful recommendations based on analysis
-        const helpfulTips = [];
-        
-        if (result.architecture === 'column-items') {
-          helpfulTips.push('This board uses the legacy column-items architecture');
-          helpfulTips.push('Consider migrating to the card-first architecture with migrate-to-card-first');
-        }
-        
-        if (result.analysis.orphanedCards > 0) {
-          helpfulTips.push(`The board has ${result.analysis.orphanedCards} orphaned cards`);
-          helpfulTips.push('These cards are not associated with valid columns');
-        }
-        
-        if (result.analysis.malformedEntities > 0) {
-          helpfulTips.push(`The board has ${result.analysis.malformedEntities} malformed entities`);
-          helpfulTips.push('These entities may cause issues with board operations');
-        }
-        
-        return formatResponse(result, {
-          tool: 'verify-board-structure',
-          helpfulTips,
-          relatedTools: [
-            'migrate-to-card-first - Migrate the board to card-first architecture',
-            'get-board - View the board details'
-          ]
-        });
-      } catch (error) {
-        return formatErrorResponse(error, 'verify-board-structure');
-      } finally {
-        clearRequestContext();
-      }
-    },
-    'Verifies the structure and integrity of a board, identifying any issues that may need to be addressed.'
-  );
-}
-```
 
 ### 6.7 Config, Webhook, and Server Tools
 

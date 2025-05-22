@@ -438,22 +438,12 @@ export class BoardService {
         malformedEntities: 0,
       };
       
-      // Determine architecture
-      const architecture = board.cards && Array.isArray(board.cards) 
-        ? 'card-first' as const
-        : 'column-items' as const;
+      // All boards use card-first architecture
+      const architecture = 'card-first' as const;
       
       // Check columns
       if (board.columns && Array.isArray(board.columns)) {
         board.columns.forEach(column => {
-          // Check for columns with legacy items
-          if (column.items && Array.isArray(column.items)) {
-            analysis.columnsWithItems++;
-            analysis.totalLegacyItems += column.items.length;
-          } else {
-            analysis.columnsWithNoItems++;
-          }
-          
           // Check for malformed columns
           if (!column.id || typeof column.id !== 'string') {
             analysis.malformedEntities++;
@@ -476,15 +466,8 @@ export class BoardService {
         });
       }
       
-      // Determine if migration is needed
-      const needsMigration = architecture === 'column-items' && analysis.totalLegacyItems > 0;
-      
       // Generate recommendations
       const recommendations: string[] = [];
-      
-      if (needsMigration) {
-        recommendations.push('Board should be migrated to card-first architecture using migrateBoard');
-      }
       
       if (analysis.orphanedCards > 0) {
         recommendations.push(`${analysis.orphanedCards} orphaned cards should be assigned to valid columns`);
@@ -507,81 +490,6 @@ export class BoardService {
     }
   }
 
-  /**
-   * Migrate a board from column-items to card-first architecture
-   */
-  public async migrateBoard(id: string): Promise<{
-    success: boolean;
-    boardId: string;
-    itemsMigrated: number;
-    message: string;
-  }> {
-    try {
-      // Get board
-      const board = await this.boardRepository.findById(id);
-      
-      // Check if already using card-first architecture
-      if (board.cards && Array.isArray(board.cards)) {
-        return {
-          success: true,
-          boardId: id,
-          itemsMigrated: 0,
-          message: 'Board is already using card-first architecture',
-        };
-      }
-      
-      // Initialize cards array
-      const cards = [];
-      let cardPosition = 0;
-      let totalItemsMigrated = 0;
-      
-      // Convert items from each column to cards
-      board.columns.forEach(column => {
-        if (column.items && Array.isArray(column.items)) {
-          const columnCards = column.items.map((item: any) => {
-            totalItemsMigrated++;
-            return {
-              ...item,
-              columnId: column.id,
-              position: cardPosition++,
-              updated_at: new Date().toISOString(),
-            };
-          });
-          
-          cards.push(...columnCards);
-          
-          // Remove items array from column
-          delete column.items;
-        }
-      });
-      
-      if (totalItemsMigrated === 0) {
-        return {
-          success: true,
-          boardId: id,
-          itemsMigrated: 0,
-          message: 'No items found to migrate',
-        };
-      }
-      
-      // Update board data
-      board.cards = cards;
-      board.last_updated = new Date().toISOString();
-      
-      // Save migrated board
-      await this.boardRepository.update(id, board);
-      
-      return {
-        success: true,
-        boardId: id,
-        itemsMigrated: totalItemsMigrated,
-        message: `Successfully migrated ${totalItemsMigrated} items to cards`,
-      };
-    } catch (error) {
-      handleRepositoryError(error);
-      throw error;
-    }
-  }
 }
 ```
 
