@@ -402,6 +402,141 @@ function registerBoardTools(server, { config, checkRateLimit }) {
     },
     'Permanently deletes a board by its ID. Creates a backup before deletion to prevent accidental data loss.'
   );
+
+  // Query boards with advanced filtering and sorting
+  server.tool(
+    'query-boards',
+    {
+      title: z.string().optional().describe('Filter boards by title (partial match)'),
+      createdBefore: z.string().optional().describe('Filter boards created before this date (ISO format)'),
+      createdAfter: z.string().optional().describe('Filter boards created after this date (ISO format)'),
+      updatedBefore: z.string().optional().describe('Filter boards updated before this date (ISO format)'),
+      updatedAfter: z.string().optional().describe('Filter boards updated after this date (ISO format)'),
+      tags: z.array(z.string()).optional().describe('Filter boards containing any of these tags'),
+      sortBy: z.enum(['title', 'createdAt', 'updatedAt']).optional().describe('Property to sort by'),
+      sortOrder: z.enum(['asc', 'desc']).optional().describe('Sort order (ascending or descending)'),
+      limit: z.number().int().positive().optional().describe('Maximum number of boards to return'),
+      offset: z.number().int().min(0).optional().describe('Number of boards to skip')
+    },
+    async (query) => {
+      try {
+        checkRateLimit();
+
+        // Get all boards first
+        const boardsDir = config.boardsDir;
+        const files = await fs.readdir(boardsDir);
+        const boardFiles = files.filter(file =>
+          file.endsWith('.json') &&
+          !file.startsWith('_') &&
+          file !== 'config.json'
+        );
+
+        let boards = [];
+
+        for (const file of boardFiles) {
+          try {
+            const filePath = path.join(boardsDir, file);
+            const stats = await fs.stat(filePath);
+            if (stats.isDirectory()) continue;
+
+            const data = await fs.readFile(filePath, 'utf8');
+            const boardData = JSON.parse(data);
+
+            let lastUpdated = boardData.last_updated;
+            if (!lastUpdated) lastUpdated = stats.mtime.toISOString();
+
+            boards.push({
+              id: boardData.id || path.basename(file, '.json'),
+              title: boardData.projectName || 'Unnamed Board',
+              createdAt: boardData.created_at || stats.birthtime.toISOString(),
+              updatedAt: lastUpdated || new Date().toISOString(),
+              tags: boardData.tags || [],
+              cardCount: boardData.cards ? boardData.cards.length : 0,
+              columnCount: boardData.columns ? boardData.columns.length : 0
+            });
+          } catch (err) {
+            console.error(`Error reading board file ${file}: ${err}`);
+          }
+        }
+
+        // Apply filters
+        if (query.title) {
+          boards = boards.filter(board => 
+            board.title.toLowerCase().includes(query.title.toLowerCase())
+          );
+        }
+
+        if (query.tags && query.tags.length > 0) {
+          boards = boards.filter(board => 
+            query.tags.some(tag => board.tags.includes(tag))
+          );
+        }
+
+        if (query.createdAfter) {
+          const date = new Date(query.createdAfter);
+          boards = boards.filter(board => new Date(board.createdAt) >= date);
+        }
+
+        if (query.createdBefore) {
+          const date = new Date(query.createdBefore);
+          boards = boards.filter(board => new Date(board.createdAt) <= date);
+        }
+
+        if (query.updatedAfter) {
+          const date = new Date(query.updatedAfter);
+          boards = boards.filter(board => new Date(board.updatedAt) >= date);
+        }
+
+        if (query.updatedBefore) {
+          const date = new Date(query.updatedBefore);
+          boards = boards.filter(board => new Date(board.updatedAt) <= date);
+        }
+
+        // Apply sorting
+        if (query.sortBy) {
+          const sortOrder = query.sortOrder === 'desc' ? -1 : 1;
+          boards.sort((a, b) => {
+            if (query.sortBy === 'title') {
+              return sortOrder * a.title.localeCompare(b.title);
+            } else if (query.sortBy === 'createdAt') {
+              return sortOrder * (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+            } else if (query.sortBy === 'updatedAt') {
+              return sortOrder * (new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime());
+            }
+            return 0;
+          });
+        }
+
+        // Apply pagination
+        if (query.offset !== undefined || query.limit !== undefined) {
+          const offset = query.offset || 0;
+          const limit = query.limit || boards.length;
+          boards = boards.slice(offset, offset + limit);
+        }
+
+        const responseData = {
+          success: true,
+          data: {
+            boards,
+            count: boards.length,
+            query
+          },
+          help: `Found ${boards.length} boards matching your query. You can refine your search using additional filters.`
+        };
+
+        return {
+          content: [{ type: 'text', text: JSON.stringify(responseData, null, 2) }]
+        };
+      } catch (error) {
+        console.error('Error in query-boards tool:', error);
+        return {
+          content: [{ type: 'text', text: `Error querying boards: ${error.message}` }],
+          isError: true
+        };
+      }
+    },
+    'Search for boards that match specific criteria. Filter by title, creation date, update date, or tags. Sort and paginate results.'
+  );
 }
 
 module.exports = { registerBoardTools };

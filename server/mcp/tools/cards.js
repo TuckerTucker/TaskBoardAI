@@ -688,6 +688,160 @@ function registerCardTools(server, { config, checkRateLimit }) {
      - Maintains card and column positioning integrity
      - Allows complex multi-step card manipulations in one transaction`
   );
+
+  // Query cards with advanced filtering and sorting
+  server.tool(
+    'query-cards',
+    {
+      boardId: z.string().min(1, 'Board ID is required').describe('ID of the board containing the cards to query'),
+      title: z.string().optional().describe('Filter cards by title (partial match)'),
+      content: z.string().optional().describe('Filter cards by content (partial match)'),
+      columnId: z.string().optional().describe('Filter cards by column ID'),
+      priority: z.enum(['low', 'medium', 'high']).optional().describe('Filter cards by priority level'),
+      status: z.string().optional().describe('Filter cards by status'),
+      assignee: z.string().optional().describe('Filter cards by assignee'),
+      tags: z.array(z.string()).optional().describe('Filter cards containing any of these tags'),
+      createdBefore: z.string().optional().describe('Filter cards created before this date (ISO format)'),
+      createdAfter: z.string().optional().describe('Filter cards created after this date (ISO format)'),
+      updatedBefore: z.string().optional().describe('Filter cards updated before this date (ISO format)'),
+      updatedAfter: z.string().optional().describe('Filter cards updated after this date (ISO format)'),
+      sortBy: z.enum(['title', 'priority', 'createdAt', 'updatedAt', 'status']).optional().describe('Property to sort by'),
+      sortOrder: z.enum(['asc', 'desc']).optional().describe('Sort order (ascending or descending)'),
+      limit: z.number().int().positive().optional().describe('Maximum number of cards to return'),
+      offset: z.number().int().min(0).optional().describe('Number of cards to skip')
+    },
+    async (params) => {
+      try {
+        checkRateLimit();
+        
+        const { boardId, ...query } = params;
+        const board = await Board.load(boardId);
+
+        if (!board.data.cards || !Array.isArray(board.data.cards)) {
+          return {
+            content: [{ type: 'text', text: 'Error: Board is not using card-first architecture.' }],
+            isError: true
+          };
+        }
+
+        // Start with all cards from the board
+        let cards = [...board.data.cards];
+
+        // Apply filters
+        if (query.title) {
+          cards = cards.filter(card => 
+            card.title.toLowerCase().includes(query.title.toLowerCase())
+          );
+        }
+
+        if (query.content) {
+          cards = cards.filter(card => 
+            card.content && card.content.toLowerCase().includes(query.content.toLowerCase())
+          );
+        }
+
+        if (query.columnId) {
+          cards = cards.filter(card => card.columnId === query.columnId);
+        }
+
+        if (query.priority) {
+          cards = cards.filter(card => card.priority === query.priority);
+        }
+
+        if (query.status) {
+          cards = cards.filter(card => card.status === query.status);
+        }
+
+        if (query.assignee) {
+          cards = cards.filter(card => card.assignee === query.assignee);
+        }
+
+        if (query.tags && query.tags.length > 0) {
+          cards = cards.filter(card => 
+            card.tags && query.tags.some(tag => card.tags.includes(tag))
+          );
+        }
+
+        if (query.createdAfter) {
+          const date = new Date(query.createdAfter);
+          cards = cards.filter(card => new Date(card.created_at) >= date);
+        }
+
+        if (query.createdBefore) {
+          const date = new Date(query.createdBefore);
+          cards = cards.filter(card => new Date(card.created_at) <= date);
+        }
+
+        if (query.updatedAfter) {
+          const date = new Date(query.updatedAfter);
+          cards = cards.filter(card => new Date(card.updated_at) >= date);
+        }
+
+        if (query.updatedBefore) {
+          const date = new Date(query.updatedBefore);
+          cards = cards.filter(card => new Date(card.updated_at) <= date);
+        }
+
+        // Apply sorting
+        if (query.sortBy) {
+          const sortOrder = query.sortOrder === 'desc' ? -1 : 1;
+          cards.sort((a, b) => {
+            if (query.sortBy === 'title') {
+              return sortOrder * a.title.localeCompare(b.title);
+            } else if (query.sortBy === 'priority') {
+              const priorityValues = { low: 0, medium: 1, high: 2 };
+              return sortOrder * (priorityValues[a.priority] - priorityValues[b.priority]);
+            } else if (query.sortBy === 'createdAt') {
+              return sortOrder * (new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+            } else if (query.sortBy === 'updatedAt') {
+              return sortOrder * (new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime());
+            } else if (query.sortBy === 'status') {
+              return sortOrder * (a.status || '').localeCompare(b.status || '');
+            }
+            return 0;
+          });
+        }
+
+        // Apply pagination
+        if (query.offset !== undefined || query.limit !== undefined) {
+          const offset = query.offset || 0;
+          const limit = query.limit || cards.length;
+          cards = cards.slice(offset, offset + limit);
+        }
+
+        // Enrich cards with column information
+        const enrichedCards = cards.map(card => {
+          const column = board.data.columns.find(col => col.id === card.columnId);
+          return {
+            ...card,
+            columnName: column ? column.name : 'Unknown Column'
+          };
+        });
+
+        const responseData = {
+          success: true,
+          data: {
+            cards: enrichedCards,
+            count: enrichedCards.length,
+            boardId,
+            query
+          },
+          help: `Found ${enrichedCards.length} cards matching your query. You can refine your search using additional filters.`
+        };
+
+        return {
+          content: [{ type: 'text', text: JSON.stringify(responseData, null, 2) }]
+        };
+      } catch (error) {
+        console.error('Error in query-cards tool:', error);
+        return {
+          content: [{ type: 'text', text: `Error querying cards: ${error.message}` }],
+          isError: true
+        };
+      }
+    },
+    'Search for cards within a board that match specific criteria. Filter by title, content, column, priority, status, assignee, or tags. Sort and paginate results.'
+  );
 }
 
 module.exports = { registerCardTools };

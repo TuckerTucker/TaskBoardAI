@@ -232,3 +232,237 @@ exports.restoreArchivedBoard = async (req, res) => {
         res.status(404).json({ error: error.message || 'Failed to restore board' });
     }
 };
+
+/**
+ * Query boards with filtering, sorting, and pagination
+ * @async
+ * @function queryBoards
+ * @param {Object} req - Express request object with query parameters
+ * @param {Object} res - Express response object
+ */
+exports.queryBoards = async (req, res) => {
+    try {
+        const fs = require('node:fs').promises;
+        const path = require('node:path');
+        
+        // Get all boards first
+        const boardsDir = config.boardsDir;
+        const files = await fs.readdir(boardsDir);
+        const boardFiles = files.filter(file =>
+            file.endsWith('.json') &&
+            !file.startsWith('_') &&
+            file !== 'config.json'
+        );
+
+        let boards = [];
+
+        for (const file of boardFiles) {
+            try {
+                const filePath = path.join(boardsDir, file);
+                const stats = await fs.stat(filePath);
+                if (stats.isDirectory()) continue;
+
+                const data = await fs.readFile(filePath, 'utf8');
+                const boardData = JSON.parse(data);
+
+                let lastUpdated = boardData.last_updated;
+                if (!lastUpdated) lastUpdated = stats.mtime.toISOString();
+
+                boards.push({
+                    id: boardData.id || path.basename(file, '.json'),
+                    title: boardData.projectName || 'Unnamed Board',
+                    createdAt: boardData.created_at || stats.birthtime.toISOString(),
+                    updatedAt: lastUpdated || new Date().toISOString(),
+                    tags: boardData.tags || [],
+                    cardCount: boardData.cards ? boardData.cards.length : 0,
+                    columnCount: boardData.columns ? boardData.columns.length : 0
+                });
+            } catch (err) {
+                console.error(`Error reading board file ${file}: ${err}`);
+            }
+        }
+
+        // Apply filters
+        if (req.query.title) {
+            boards = boards.filter(board => 
+                board.title.toLowerCase().includes(req.query.title.toLowerCase())
+            );
+        }
+
+        if (req.query.tags) {
+            const queryTags = Array.isArray(req.query.tags) ? req.query.tags : [req.query.tags];
+            boards = boards.filter(board => 
+                queryTags.some(tag => board.tags.includes(tag))
+            );
+        }
+
+        if (req.query.createdAfter) {
+            const date = new Date(req.query.createdAfter);
+            boards = boards.filter(board => new Date(board.createdAt) >= date);
+        }
+
+        if (req.query.createdBefore) {
+            const date = new Date(req.query.createdBefore);
+            boards = boards.filter(board => new Date(board.createdAt) <= date);
+        }
+
+        if (req.query.updatedAfter) {
+            const date = new Date(req.query.updatedAfter);
+            boards = boards.filter(board => new Date(board.updatedAt) >= date);
+        }
+
+        if (req.query.updatedBefore) {
+            const date = new Date(req.query.updatedBefore);
+            boards = boards.filter(board => new Date(board.updatedAt) <= date);
+        }
+
+        // Apply sorting
+        if (req.query.sortBy) {
+            const sortOrder = req.query.sortOrder === 'desc' ? -1 : 1;
+            boards.sort((a, b) => {
+                if (req.query.sortBy === 'title') {
+                    return sortOrder * a.title.localeCompare(b.title);
+                } else if (req.query.sortBy === 'createdAt') {
+                    return sortOrder * (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+                } else if (req.query.sortBy === 'updatedAt') {
+                    return sortOrder * (new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime());
+                }
+                return 0;
+            });
+        }
+
+        // Apply pagination
+        const offset = parseInt(req.query.offset) || 0;
+        const limit = parseInt(req.query.limit) || boards.length;
+        boards = boards.slice(offset, offset + limit);
+
+        res.json({
+            success: true,
+            count: boards.length,
+            data: boards
+        });
+    } catch (error) {
+        console.error('Error querying boards:', error);
+        res.status(500).json({ error: 'Failed to query boards' });
+    }
+};
+
+/**
+ * Query cards within a board with filtering, sorting, and pagination
+ * @async
+ * @function queryCards
+ * @param {Object} req - Express request object with board ID in params and query parameters
+ * @param {Object} res - Express response object
+ */
+exports.queryCards = async (req, res) => {
+    try {
+        const boardId = req.params.boardId;
+        const board = await Board.load(boardId);
+
+        if (!board.data.cards || !Array.isArray(board.data.cards)) {
+            return res.status(400).json({ error: 'Board is not using card-first architecture' });
+        }
+
+        // Start with all cards from the board
+        let cards = [...board.data.cards];
+
+        // Apply filters
+        if (req.query.title) {
+            cards = cards.filter(card => 
+                card.title.toLowerCase().includes(req.query.title.toLowerCase())
+            );
+        }
+
+        if (req.query.content) {
+            cards = cards.filter(card => 
+                card.content && card.content.toLowerCase().includes(req.query.content.toLowerCase())
+            );
+        }
+
+        if (req.query.columnId) {
+            cards = cards.filter(card => card.columnId === req.query.columnId);
+        }
+
+        if (req.query.priority) {
+            cards = cards.filter(card => card.priority === req.query.priority);
+        }
+
+        if (req.query.status) {
+            cards = cards.filter(card => card.status === req.query.status);
+        }
+
+        if (req.query.assignee) {
+            cards = cards.filter(card => card.assignee === req.query.assignee);
+        }
+
+        if (req.query.tags) {
+            const queryTags = Array.isArray(req.query.tags) ? req.query.tags : [req.query.tags];
+            cards = cards.filter(card => 
+                card.tags && queryTags.some(tag => card.tags.includes(tag))
+            );
+        }
+
+        if (req.query.createdAfter) {
+            const date = new Date(req.query.createdAfter);
+            cards = cards.filter(card => new Date(card.created_at) >= date);
+        }
+
+        if (req.query.createdBefore) {
+            const date = new Date(req.query.createdBefore);
+            cards = cards.filter(card => new Date(card.created_at) <= date);
+        }
+
+        if (req.query.updatedAfter) {
+            const date = new Date(req.query.updatedAfter);
+            cards = cards.filter(card => new Date(card.updated_at) >= date);
+        }
+
+        if (req.query.updatedBefore) {
+            const date = new Date(req.query.updatedBefore);
+            cards = cards.filter(card => new Date(card.updated_at) <= date);
+        }
+
+        // Apply sorting
+        if (req.query.sortBy) {
+            const sortOrder = req.query.sortOrder === 'desc' ? -1 : 1;
+            cards.sort((a, b) => {
+                if (req.query.sortBy === 'title') {
+                    return sortOrder * a.title.localeCompare(b.title);
+                } else if (req.query.sortBy === 'priority') {
+                    const priorityValues = { low: 0, medium: 1, high: 2 };
+                    return sortOrder * (priorityValues[a.priority] - priorityValues[b.priority]);
+                } else if (req.query.sortBy === 'createdAt') {
+                    return sortOrder * (new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+                } else if (req.query.sortBy === 'updatedAt') {
+                    return sortOrder * (new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime());
+                } else if (req.query.sortBy === 'status') {
+                    return sortOrder * (a.status || '').localeCompare(b.status || '');
+                }
+                return 0;
+            });
+        }
+
+        // Apply pagination
+        const offset = parseInt(req.query.offset) || 0;
+        const limit = parseInt(req.query.limit) || cards.length;
+        cards = cards.slice(offset, offset + limit);
+
+        // Enrich cards with column information
+        const enrichedCards = cards.map(card => {
+            const column = board.data.columns.find(col => col.id === card.columnId);
+            return {
+                ...card,
+                columnName: column ? column.name : 'Unknown Column'
+            };
+        });
+
+        res.json({
+            success: true,
+            count: enrichedCards.length,
+            data: enrichedCards
+        });
+    } catch (error) {
+        console.error('Error querying cards:', error);
+        res.status(500).json({ error: 'Failed to query cards' });
+    }
+};

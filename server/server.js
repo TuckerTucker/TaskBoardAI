@@ -19,6 +19,7 @@ const config = require('./config/config');
 const boardRoutes = require('./routes/boardRoutes');
 const configRoutes = require('./routes/configRoutes');
 const webhookRoutes = require('./routes/webhookRoutes');
+const templateRoutes = require('./routes/templateRoutes');
 const errorHandler = require('./middleware/errorHandler');
 const { ensureBoardsDir, ensureConfigDir, ensureWebhooksDir } = require('./utils/fileSystem');
 
@@ -43,6 +44,7 @@ app.use('/public', express.static(config.staticDirs.public));
 app.use('/api', boardRoutes);
 app.use('/api', configRoutes);
 app.use('/api', webhookRoutes);
+app.use('/api/templates', templateRoutes);
 
 /**
  * Catch-all route to serve index.html for SPA navigation

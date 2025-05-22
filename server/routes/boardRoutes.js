@@ -86,4 +86,18 @@ router.get('/archives', boardController.getArchivedBoards);
  */
 router.post('/archives/:id/restore', boardController.restoreArchivedBoard);
 
+/**
+ * @name GET-/boards/query
+ * @description Query boards with filtering, sorting, and pagination
+ * @memberof module:routes/boardRoutes
+ */
+router.get('/boards/query', boardController.queryBoards);
+
+/**
+ * @name GET-/boards/:boardId/cards/query
+ * @description Query cards within a board with filtering, sorting, and pagination
+ * @memberof module:routes/boardRoutes
+ */
+router.get('/boards/:boardId/cards/query', boardController.queryCards);
+
 module.exports = router;
