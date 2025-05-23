@@ -2,6 +2,7 @@
 _archive
 _oss_plan
 release.sh
+public-release.sh
 node_modules
 
 # Git
