@@ -30,6 +30,15 @@ _oss_plan/
 .tmp/
 .temp/
 
+# Private files
+.claude/
+.windsurfrules
+.gitignore.public
+tic-tac-toe-plan.md
+token-optimization-tools.test.js.bak
+direct-board-list.js
+test-boards.js
+
 # Shell scripts (replaced by JS equivalents in bin/)
 start_all
 start_kanban
