@@ -112,7 +112,7 @@ if (process.env.BOARD_FILE) {
         if (fs.existsSync(templatePath)) {
             try {
                 fs.copyFileSync(templatePath, userPath);
-                console.log(`Created default board at ${userPath}`);
+                //console.log(`Created default board at ${userPath}`);
             } catch (err) {
                 console.error(`Failed to create default board: ${err.message}`);
             }
@@ -168,7 +168,7 @@ if (process.env.CONFIG_FILE) {
         if (fs.existsSync(templatePath)) {
             try {
                 fs.copyFileSync(templatePath, userPath);
-                console.log(`Created default config at ${userPath}`);
+                //console.log(`Created default config at ${userPath}`);
             } catch (err) {
                 console.error(`Failed to create default config: ${err.message}`);
             }
@@ -178,6 +178,5 @@ if (process.env.CONFIG_FILE) {
     config.configDataFile = userPath;
 }
 
-console.log('Using boards directory:', config.boardsDir);
 
 module.exports = config;

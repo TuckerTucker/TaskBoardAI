@@ -61,7 +61,7 @@ function registerCardTools(server, { config, checkRateLimit }) {
       ]).describe('Card data to update. Can be a JSON string or an object containing card details.')
     },
     async ({ boardId, cardId, cardData }) => {
-      console.log(`[update-card] Invoked with boardId=${boardId}, cardId=${cardId}`);
+      //console.log(`[update-card] Invoked with boardId=${boardId}, cardId=${cardId}`);
       try {
         checkRateLimit();
 
@@ -87,7 +87,7 @@ function registerCardTools(server, { config, checkRateLimit }) {
         const board = await Board.load(boardId);
 
         if (!board.data.cards || !Array.isArray(board.data.cards)) {
-          console.log('[update-card] Board is not using card-first architecture');
+          //console.log('[update-card] Board is not using card-first architecture');
           return {
             content: [{ type: 'text', text: 'Error: Board is not using card-first architecture.' }],
             isError: true
@@ -131,7 +131,7 @@ function registerCardTools(server, { config, checkRateLimit }) {
 
         await board.save();
 
-        console.log('[update-card] Card updated successfully');
+        //console.log('[update-card] Card updated successfully');
         return {
           content: [{ type: 'text', text: JSON.stringify(updatedCard, null, 2) }]
         };
@@ -158,14 +158,14 @@ function registerCardTools(server, { config, checkRateLimit }) {
       ]).describe('Position within the column. Can be a specific index, or keywords: first, last, up, down')
     },
     async ({ boardId, cardId, columnId, position }) => {
-      console.log(`[move-card] Invoked with boardId=${boardId}, cardId=${cardId}, columnId=${columnId}, position=${position}`);
+      //console.log(`[move-card] Invoked with boardId=${boardId}, cardId=${cardId}, columnId=${columnId}, position=${position}`);
       try {
         checkRateLimit();
 
         const board = await Board.load(boardId);
 
         if (!board.data.cards || !Array.isArray(board.data.cards)) {
-          console.log('[move-card] Board is not using card-first architecture');
+          //console.log('[move-card] Board is not using card-first architecture');
           return {
             content: [{ type: 'text', text: 'Error: Board is not using card-first architecture.' }],
             isError: true
@@ -249,7 +249,7 @@ function registerCardTools(server, { config, checkRateLimit }) {
 
         await board.save();
 
-        console.log('[move-card] Card moved successfully');
+        //console.log('[move-card] Card moved successfully');
         return {
           content: [{ type: 'text', text: JSON.stringify(card, null, 2) }]
         };
@@ -337,13 +337,13 @@ function registerCardTools(server, { config, checkRateLimit }) {
       })).min(1, 'At least one operation is required').max(100, 'Maximum 100 operations allowed').describe('Array of card operations to perform atomically'),
     },
     async ({ boardId, operations }) => {
-      console.log(`[batch-cards] Invoked with boardId=${boardId}, ${operations.length} operations`);
+      //console.log(`[batch-cards] Invoked with boardId=${boardId}, ${operations.length} operations`);
       try {
         checkRateLimit();
         const board = await Board.load(boardId);
 
         if (!board.data.cards || !Array.isArray(board.data.cards)) {
-          console.log('[batch-cards] Board is not using card-first architecture');
+          //console.log('[batch-cards] Board is not using card-first architecture');
           return {
             content: [{ type: 'text', text: 'Error: Board is not using card-first architecture.' }],
             isError: true
@@ -374,7 +374,7 @@ function registerCardTools(server, { config, checkRateLimit }) {
               let targetColumnId = op.columnId;
               if (!targetColumnId && board.data.columns && board.data.columns.length > 0) {
                 targetColumnId = board.data.columns[0].id;
-                console.log(`[batch-cards] No columnId provided, defaulting to first column: ${targetColumnId}`);
+                //console.log(`[batch-cards] No columnId provided, defaulting to first column: ${targetColumnId}`);
               } else if (!targetColumnId) {
                 throw new Error("Could not determine a column ID - board has no columns");
               }
@@ -389,7 +389,7 @@ function registerCardTools(server, { config, checkRateLimit }) {
                   title: `New Card ${newCardId.substring(0, 8)}`,
                   content: "",
                 };
-                console.log(`[batch-cards] No cardData provided, using default card title`);
+                //console.log(`[batch-cards] No cardData provided, using default card title`);
               } else {
                 parsedCardData = parseCardData(op.cardData, `create operation ${i + 1}`);
               }
@@ -590,7 +590,7 @@ function registerCardTools(server, { config, checkRateLimit }) {
         // Save changes
         await board.save();
 
-        console.log('[batch-cards] Batch operations completed');
+        //console.log('[batch-cards] Batch operations completed');
         
         // Create an enriched response with guidance
         const responseData = {

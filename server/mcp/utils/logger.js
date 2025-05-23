@@ -85,19 +85,20 @@ function log(level, message, data = {}) {
   const entry = formatLogEntry(level, message, data);
   const serialized = JSON.stringify(entry);
   
+  // MCP servers must not output to stdout, redirect all logs to stderr
   switch (level) {
     case 'ERROR':
       console.error(serialized);
       break;
     case 'WARN':
-      console.warn(serialized);
+      console.error(serialized);
       break;
     case 'DEBUG':
-      console.debug(serialized);
+      console.error(serialized);
       break;
     case 'INFO':
     default:
-      console.log(serialized);
+      console.error(serialized);
   }
 }
 
@@ -163,7 +164,7 @@ function audit(action, details = {}) {
     ...details
   });
   
-  console.log(JSON.stringify(entry));
+  console.error(JSON.stringify(entry));
   
   // In a production system, you might want to write audit logs
   // to a separate file or database for compliance purposes
