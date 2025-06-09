@@ -1,0 +1,190 @@
+{
+  "repository": {
+    "totalSize": {
+      "files": 142,
+      "directories": 89,
+      "linesOfCode": 31997
+    },
+    "fileTypes": {
+      "javascript": {
+        "count": 85,
+        "percentage": 59.9
+      },
+      "typescript": {
+        "count": 57,
+        "percentage": 40.1
+      },
+      "json": {
+        "count": 18,
+        "percentage": 12.7
+      },
+      "markdown": {
+        "count": 25,
+        "percentage": 17.6
+      },
+      "css": {
+        "count": 7,
+        "percentage": 4.9
+      },
+      "html": {
+        "count": 1,
+        "percentage": 0.7
+      }
+    }
+  },
+  "codeComplexity": {
+    "modules": {
+      "server": {
+        "files": 98,
+        "linesOfCode": 24500,
+        "complexity": "high"
+      },
+      "app": {
+        "files": 15,
+        "linesOfCode": 3200,
+        "complexity": "medium"
+      },
+      "tests": {
+        "files": 15,
+        "linesOfCode": 4297,
+        "complexity": "low"
+      }
+    },
+    "averageFileSize": 225,
+    "largestFiles": [
+      {
+        "path": "server/mcp/kanbanMcpServer.js",
+        "lines": 487
+      },
+      {
+        "path": "server/core/services/BoardService.ts",
+        "lines": 412
+      },
+      {
+        "path": "app/js/app.js",
+        "lines": 389
+      }
+    ]
+  },
+  "dependencies": {
+    "total": 41,
+    "production": 19,
+    "development": 22,
+    "outdated": "unknown",
+    "securityVulnerabilities": "unknown",
+    "topDependencies": [
+      {
+        "name": "express",
+        "version": "4.21.2",
+        "type": "production"
+      },
+      {
+        "name": "@modelcontextprotocol/sdk",
+        "version": "1.12.0",
+        "type": "production"
+      },
+      {
+        "name": "typescript",
+        "version": "5.8.3",
+        "type": "development"
+      },
+      {
+        "name": "jest",
+        "version": "29.7.0",
+        "type": "development"
+      },
+      {
+        "name": "zod",
+        "version": "3.25.20",
+        "type": "production"
+      }
+    ]
+  },
+  "testMetrics": {
+    "testFiles": 15,
+    "testSuites": {
+      "unit": 11,
+      "integration": 3,
+      "benchmark": 1
+    },
+    "coverage": {
+      "estimated": 30,
+      "files": {
+        "components": 1,
+        "controllers": 1,
+        "models": 3,
+        "mcp": 5,
+        "routes": 1,
+        "utils": 2
+      }
+    }
+  },
+  "documentationMetrics": {
+    "readmeFiles": 8,
+    "apiDocumentation": true,
+    "codeComments": {
+      "density": "moderate",
+      "jsDocComments": true,
+      "typeScriptDocs": true
+    },
+    "tutorials": 3,
+    "architecturalDocs": 14
+  },
+  "architectureMetrics": {
+    "modularity": {
+      "score": 8.5,
+      "modules": 12,
+      "averageCoupling": "low"
+    },
+    "layering": {
+      "layers": 4,
+      "separation": "good",
+      "violations": "minimal"
+    },
+    "patterns": {
+      "designPatterns": 5,
+      "antiPatterns": 3
+    }
+  },
+  "qualityIndicators": {
+    "maintainabilityIndex": 75,
+    "technicalDebtRatio": 0.25,
+    "codeChurn": "moderate",
+    "duplicateCode": {
+      "percentage": 15,
+      "hotspots": [
+        "controllers (JS/TS versions)",
+        "error handling",
+        "validation logic"
+      ]
+    }
+  },
+  "buildMetrics": {
+    "buildTools": 4,
+    "scripts": 8,
+    "cicd": {
+      "configured": false,
+      "pipeline": "none"
+    }
+  },
+  "releaseMetrics": {
+    "currentVersion": "1.4.1",
+    "releaseFiles": 11,
+    "versioningScheme": "semantic",
+    "releaseFrequency": "regular"
+  },
+  "securityMetrics": {
+    "securityTools": 3,
+    "authenticationMethods": 1,
+    "encryptionUsed": false,
+    "inputValidation": true,
+    "rateLimiting": true
+  },
+  "performanceMetrics": {
+    "asyncOperations": "partial",
+    "cachingImplemented": false,
+    "databaseQueries": "n/a",
+    "apiResponseTime": "unknown",
+    "memoryFootprint": "low"
+  }
+}

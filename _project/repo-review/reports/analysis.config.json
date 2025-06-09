@@ -1,0 +1,7 @@
+{
+  "repo_path": "/Volumes/tkr-riffic/@tkr-projects/tkr-kanban",
+  "analysis_date": "2025-01-30",
+  "output_format": "markdown+json",
+  "report_sections": ["executive_summary", "findings", "recommendations", "metrics"],
+  "agents": ["overview", "security", "quality", "deps"]
+}

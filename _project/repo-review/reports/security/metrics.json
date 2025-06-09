@@ -1,0 +1,209 @@
+{
+  "analysis_metadata": {
+    "timestamp": "2025-05-30T10:00:00Z",
+    "duration_seconds": 180,
+    "analyzer_version": "1.0.0",
+    "repository": "tkr-kanban",
+    "commit": "a8aaccf",
+    "branch": "main"
+  },
+  "security_metrics": {
+    "overall_score": 6.2,
+    "risk_score": 78,
+    "maturity_level": "DEVELOPING",
+    "categories": {
+      "authentication": {
+        "score": 6.5,
+        "findings": 4,
+        "coverage": 0.75,
+        "strengths": [
+          "JWT-based authentication implemented",
+          "Role-based access control (RBAC)",
+          "Permission matrix defined"
+        ],
+        "weaknesses": [
+          "Hardcoded JWT secret",
+          "Incomplete API key implementation",
+          "No session management"
+        ]
+      },
+      "authorization": {
+        "score": 7.0,
+        "findings": 1,
+        "coverage": 0.80,
+        "strengths": [
+          "RBAC implementation",
+          "Resource ownership checks",
+          "Permission middleware"
+        ],
+        "weaknesses": [
+          "Path traversal vulnerabilities"
+        ]
+      },
+      "input_validation": {
+        "score": 6.0,
+        "findings": 3,
+        "coverage": 0.72,
+        "strengths": [
+          "Zod schema validation",
+          "UUID validation middleware",
+          "Some input sanitization"
+        ],
+        "weaknesses": [
+          "Inconsistent validation coverage",
+          "XSS vulnerabilities",
+          "Missing webhook URL validation"
+        ]
+      },
+      "cryptography": {
+        "score": 4.0,
+        "findings": 1,
+        "coverage": 0.50,
+        "strengths": [
+          "Password hashing mentioned",
+          "JWT token usage"
+        ],
+        "weaknesses": [
+          "Hardcoded secrets",
+          "No encryption at rest",
+          "Weak key generation"
+        ]
+      },
+      "secure_communication": {
+        "score": 5.5,
+        "findings": 2,
+        "coverage": 0.60,
+        "strengths": [
+          "CORS implementation",
+          "Helmet.js integration"
+        ],
+        "weaknesses": [
+          "Missing security headers",
+          "Wildcard CORS allowed",
+          "No HSTS enforcement"
+        ]
+      },
+      "error_handling": {
+        "score": 7.5,
+        "findings": 1,
+        "coverage": 0.85,
+        "strengths": [
+          "Structured error classes",
+          "Error formatting",
+          "Global error handler"
+        ],
+        "weaknesses": [
+          "Console logging sensitive data"
+        ]
+      },
+      "logging_monitoring": {
+        "score": 5.0,
+        "findings": 2,
+        "coverage": 0.55,
+        "strengths": [
+          "Structured logging framework",
+          "Request ID tracking"
+        ],
+        "weaknesses": [
+          "Missing auth event logging",
+          "No anomaly detection",
+          "Sensitive data in logs"
+        ]
+      },
+      "dependency_management": {
+        "score": 6.0,
+        "findings": 1,
+        "coverage": 0.70,
+        "strengths": [
+          "Modern dependencies",
+          "Security-focused packages (helmet)"
+        ],
+        "weaknesses": [
+          "No automated scanning",
+          "Potential outdated packages"
+        ]
+      }
+    }
+  },
+  "coverage_analysis": {
+    "endpoints": {
+      "total": 45,
+      "authenticated": 33,
+      "public": 12,
+      "validation_coverage": 0.72,
+      "authorization_coverage": 0.73
+    },
+    "files": {
+      "total": 156,
+      "security_relevant": 42,
+      "reviewed": 42,
+      "coverage": 1.0
+    },
+    "vulnerabilities": {
+      "by_severity": {
+        "critical": 2,
+        "high": 3,
+        "medium": 5,
+        "low": 4
+      },
+      "by_category": {
+        "injection": 3,
+        "broken_auth": 4,
+        "sensitive_exposure": 2,
+        "xxe": 0,
+        "broken_access": 1,
+        "misconfig": 2,
+        "xss": 1,
+        "deserialization": 0,
+        "components": 1,
+        "logging": 2
+      }
+    }
+  },
+  "remediation_effort": {
+    "total_hours_estimated": 80,
+    "by_severity": {
+      "critical": 16,
+      "high": 24,
+      "medium": 30,
+      "low": 10
+    },
+    "by_category": {
+      "code_changes": 50,
+      "configuration": 15,
+      "architecture": 10,
+      "documentation": 5
+    }
+  },
+  "trends": {
+    "security_debt": "MEDIUM",
+    "improvement_velocity": "UNKNOWN",
+    "risk_trajectory": "STABLE"
+  },
+  "recommendations": {
+    "immediate_actions": [
+      "Fix hardcoded JWT secret",
+      "Implement webhook URL validation",
+      "Complete API key implementation"
+    ],
+    "short_term": [
+      "Add path traversal protection",
+      "Fix XSS vulnerabilities",
+      "Enhance input validation"
+    ],
+    "long_term": [
+      "Implement security monitoring",
+      "Add automated security testing",
+      "Establish security review process"
+    ]
+  },
+  "benchmarks": {
+    "industry_comparison": {
+      "authentication": "BELOW_AVERAGE",
+      "authorization": "AVERAGE",
+      "input_validation": "BELOW_AVERAGE",
+      "secure_communication": "BELOW_AVERAGE",
+      "overall": "BELOW_AVERAGE"
+    }
+  }
+}

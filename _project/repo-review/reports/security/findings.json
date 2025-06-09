@@ -1,0 +1,376 @@
+{
+  "analysis": {
+    "repository": "tkr-kanban",
+    "date": "2025-05-30",
+    "version": "1.4.1",
+    "analyzer": "security-agent",
+    "depth": 3
+  },
+  "summary": {
+    "total_findings": 14,
+    "critical": 2,
+    "high": 3,
+    "medium": 5,
+    "low": 4,
+    "risk_score": 78
+  },
+  "findings": [
+    {
+      "id": "SEC-001",
+      "title": "Hardcoded JWT Secret",
+      "severity": "CRITICAL",
+      "confidence": "HIGH",
+      "owasp_category": "A02:2021 - Cryptographic Failures",
+      "cwe": "CWE-798",
+      "location": {
+        "file": "/server/core/services/AuthService.ts",
+        "line": 40,
+        "code": "jwtSecret: string = process.env.JWT_SECRET || 'default-secret-change-in-production'"
+      },
+      "description": "Application uses a hardcoded fallback JWT secret with insufficient entropy, allowing attackers to forge authentication tokens.",
+      "impact": "Complete authentication bypass, unauthorized access to all protected resources",
+      "remediation": {
+        "effort": "LOW",
+        "steps": [
+          "Remove hardcoded default value",
+          "Enforce JWT_SECRET environment variable at startup",
+          "Use cryptographically secure random generation",
+          "Implement secret rotation mechanism"
+        ]
+      },
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/v42/4-Web_Application_Security_Testing/09-Testing_for_Weak_Cryptography/04-Testing_for_Weak_Encryption"
+      ]
+    },
+    {
+      "id": "SEC-002",
+      "title": "Server-Side Request Forgery (SSRF) in Webhooks",
+      "severity": "CRITICAL",
+      "confidence": "HIGH",
+      "owasp_category": "A10:2021 - Server-Side Request Forgery",
+      "cwe": "CWE-918",
+      "location": {
+        "file": "/server/controllers/webhookController.js",
+        "line": 81,
+        "code": "const result = await Webhook.testConnection(url.trim());"
+      },
+      "description": "Webhook system allows arbitrary URLs without validation, enabling SSRF attacks against internal resources.",
+      "impact": "Access to internal network resources, cloud metadata endpoints, port scanning capabilities",
+      "remediation": {
+        "effort": "MEDIUM",
+        "steps": [
+          "Implement URL allowlist validation",
+          "Block private IP ranges and metadata endpoints",
+          "Add timeout and retry limits",
+          "Validate URL schemes (HTTPS only)"
+        ]
+      },
+      "references": [
+        "https://owasp.org/Top10/A10_2021-Server-Side_Request_Forgery_%28SSRF%29/"
+      ]
+    },
+    {
+      "id": "SEC-003",
+      "title": "Incomplete API Key Implementation",
+      "severity": "HIGH",
+      "confidence": "HIGH",
+      "owasp_category": "A07:2021 - Identification and Authentication Failures",
+      "cwe": "CWE-287",
+      "location": {
+        "file": "/server/core/services/AuthService.ts",
+        "lines": [251, 270],
+        "code": "// TODO: Implement actual API key verification\nreturn null;"
+      },
+      "description": "API key verification is stubbed but not implemented, leaving API key authentication non-functional.",
+      "impact": "API endpoints relying on API key authentication are unprotected",
+      "remediation": {
+        "effort": "MEDIUM",
+        "steps": [
+          "Complete API key verification implementation",
+          "Store hashed API keys with proper salting",
+          "Implement key rotation and expiration",
+          "Add rate limiting per API key"
+        ]
+      }
+    },
+    {
+      "id": "SEC-004",
+      "title": "Missing Path Traversal Protection",
+      "severity": "HIGH",
+      "confidence": "MEDIUM",
+      "owasp_category": "A01:2021 - Broken Access Control",
+      "cwe": "CWE-22",
+      "location": {
+        "file": "/server/core/repositories/FileSystemRepository.ts",
+        "line": 22,
+        "code": "const data = await fs.readFile(path, 'utf-8');"
+      },
+      "description": "File operations lack path normalization and boundary checks, potentially allowing directory traversal attacks.",
+      "impact": "Unauthorized file access, information disclosure, potential code execution",
+      "remediation": {
+        "effort": "LOW",
+        "steps": [
+          "Implement path sanitization using path.resolve()",
+          "Validate paths are within allowed directories",
+          "Use whitelist of allowed file extensions",
+          "Implement file access logging"
+        ]
+      }
+    },
+    {
+      "id": "SEC-005",
+      "title": "Potential XSS Vulnerabilities",
+      "severity": "HIGH",
+      "confidence": "MEDIUM",
+      "owasp_category": "A03:2021 - Injection",
+      "cwe": "CWE-79",
+      "location": {
+        "files": [
+          "/app/js/components/Card.js",
+          "/app/js/components/Column.js",
+          "/app/js/components/NextSteps.js"
+        ],
+        "pattern": "innerHTML"
+      },
+      "description": "Direct HTML injection without sanitization detected in frontend components.",
+      "impact": "Cross-site scripting, session hijacking, data theft",
+      "remediation": {
+        "effort": "MEDIUM",
+        "steps": [
+          "Replace innerHTML with safe DOM methods",
+          "Implement Content Security Policy",
+          "Use sanitization library for user content",
+          "Escape all dynamic content"
+        ]
+      }
+    },
+    {
+      "id": "SEC-006",
+      "title": "Insufficient Input Validation",
+      "severity": "MEDIUM",
+      "confidence": "HIGH",
+      "owasp_category": "A03:2021 - Injection",
+      "cwe": "CWE-20",
+      "location": {
+        "files": ["Various controllers"],
+        "pattern": "Missing consistent schema validation"
+      },
+      "description": "Not all endpoints validate input consistently despite Zod schemas being available.",
+      "impact": "Injection attacks, data corruption, application errors",
+      "remediation": {
+        "effort": "MEDIUM",
+        "steps": [
+          "Enforce schema validation on all endpoints",
+          "Implement request body size limits",
+          "Add input length restrictions",
+          "Validate against attack patterns"
+        ]
+      }
+    },
+    {
+      "id": "SEC-007",
+      "title": "Missing Security Headers",
+      "severity": "MEDIUM",
+      "confidence": "HIGH",
+      "owasp_category": "A05:2021 - Security Misconfiguration",
+      "cwe": "CWE-16",
+      "location": {
+        "file": "/server/api/middleware/security.ts",
+        "lines": [84, 101]
+      },
+      "description": "Several important security headers are missing or misconfigured.",
+      "impact": "Clickjacking, MIME type confusion, missing HTTPS enforcement",
+      "remediation": {
+        "effort": "LOW",
+        "steps": [
+          "Enable all Helmet.js security headers",
+          "Configure HSTS with appropriate max-age",
+          "Implement proper CSP directives",
+          "Add security.txt file"
+        ]
+      }
+    },
+    {
+      "id": "SEC-008",
+      "title": "Weak Rate Limiting Configuration",
+      "severity": "MEDIUM",
+      "confidence": "MEDIUM",
+      "owasp_category": "A04:2021 - Insecure Design",
+      "cwe": "CWE-307",
+      "location": {
+        "file": "/server/api/middleware/security.ts",
+        "lines": [11, 48]
+      },
+      "description": "Rate limiting exists but may be insufficient for production use.",
+      "impact": "Brute force attacks, resource exhaustion, API abuse",
+      "remediation": {
+        "effort": "MEDIUM",
+        "steps": [
+          "Implement distributed rate limiting",
+          "Add endpoint-specific rate limits",
+          "Implement progressive delays",
+          "Add IP-based blocking"
+        ]
+      }
+    },
+    {
+      "id": "SEC-009",
+      "title": "Console Logging of Sensitive Data",
+      "severity": "MEDIUM",
+      "confidence": "MEDIUM",
+      "owasp_category": "A09:2021 - Security Logging and Monitoring Failures",
+      "cwe": "CWE-532",
+      "location": {
+        "pattern": "console.log|console.error",
+        "files": "Multiple files"
+      },
+      "description": "Sensitive information may be logged to console in production environments.",
+      "impact": "Information disclosure through log files",
+      "remediation": {
+        "effort": "LOW",
+        "steps": [
+          "Implement structured logging",
+          "Remove console.log in production",
+          "Sanitize logged data",
+          "Implement log retention policies"
+        ]
+      }
+    },
+    {
+      "id": "SEC-010",
+      "title": "Missing CORS Origin Validation",
+      "severity": "MEDIUM",
+      "confidence": "HIGH",
+      "owasp_category": "A05:2021 - Security Misconfiguration",
+      "cwe": "CWE-346",
+      "location": {
+        "file": "/server/api/middleware/security.ts",
+        "line": 63,
+        "code": "origin: corsOrigins.includes('*') ? true : corsOrigins"
+      },
+      "description": "CORS configuration allows wildcard origins when configured.",
+      "impact": "Cross-origin attacks, data theft from authenticated sessions",
+      "remediation": {
+        "effort": "LOW",
+        "steps": [
+          "Remove wildcard CORS support",
+          "Implement dynamic origin validation",
+          "Use environment-specific configurations",
+          "Add CORS preflight caching"
+        ]
+      }
+    },
+    {
+      "id": "SEC-011",
+      "title": "Outdated Dependencies",
+      "severity": "LOW",
+      "confidence": "MEDIUM",
+      "owasp_category": "A06:2021 - Vulnerable and Outdated Components",
+      "cwe": "CWE-1104",
+      "location": {
+        "file": "package.json"
+      },
+      "description": "Some dependencies may have known vulnerabilities.",
+      "impact": "Exploitation of known vulnerabilities in third-party code",
+      "remediation": {
+        "effort": "LOW",
+        "steps": [
+          "Run npm audit regularly",
+          "Implement automated updates",
+          "Add security scanning to CI/CD",
+          "Monitor CVE databases"
+        ]
+      }
+    },
+    {
+      "id": "SEC-012",
+      "title": "Missing Authentication Logging",
+      "severity": "LOW",
+      "confidence": "HIGH",
+      "owasp_category": "A09:2021 - Security Logging and Monitoring Failures",
+      "cwe": "CWE-778",
+      "location": {
+        "files": ["Authentication endpoints"]
+      },
+      "description": "Failed authentication attempts are not consistently logged.",
+      "impact": "Inability to detect brute force attacks or compromised accounts",
+      "remediation": {
+        "effort": "LOW",
+        "steps": [
+          "Log all authentication events",
+          "Implement anomaly detection",
+          "Add alerting for suspicious patterns",
+          "Store logs securely"
+        ]
+      }
+    },
+    {
+      "id": "SEC-013",
+      "title": "Weak Password Requirements",
+      "severity": "LOW",
+      "confidence": "HIGH",
+      "owasp_category": "A07:2021 - Identification and Authentication Failures",
+      "cwe": "CWE-521",
+      "location": {
+        "file": "/server/core/schemas/authSchemas.ts"
+      },
+      "description": "Password validation only checks minimum length without complexity requirements.",
+      "impact": "Weak passwords vulnerable to brute force attacks",
+      "remediation": {
+        "effort": "LOW",
+        "steps": [
+          "Implement complexity requirements",
+          "Check against common passwords",
+          "Add password strength meter",
+          "Implement password history"
+        ]
+      }
+    },
+    {
+      "id": "SEC-014",
+      "title": "Missing Session Management",
+      "severity": "LOW",
+      "confidence": "MEDIUM",
+      "owasp_category": "A07:2021 - Identification and Authentication Failures",
+      "cwe": "CWE-613",
+      "location": {
+        "component": "Authentication system"
+      },
+      "description": "No session invalidation or token blacklisting mechanism implemented.",
+      "impact": "Cannot revoke compromised tokens, no logout functionality",
+      "remediation": {
+        "effort": "MEDIUM",
+        "steps": [
+          "Implement token revocation",
+          "Add session timeout configuration",
+          "Implement logout everywhere",
+          "Add device tracking"
+        ]
+      }
+    }
+  ],
+  "metrics": {
+    "files_analyzed": 156,
+    "lines_of_code": 12847,
+    "security_coverage": 0.65,
+    "authentication_endpoints": 8,
+    "public_endpoints": 12,
+    "input_validation_coverage": 0.72,
+    "dependency_count": 42,
+    "security_headers_score": 0.6
+  },
+  "compliance": {
+    "owasp_top_10_coverage": {
+      "A01_broken_access_control": ["SEC-004"],
+      "A02_cryptographic_failures": ["SEC-001"],
+      "A03_injection": ["SEC-005", "SEC-006"],
+      "A04_insecure_design": ["SEC-008"],
+      "A05_security_misconfiguration": ["SEC-007", "SEC-010"],
+      "A06_vulnerable_components": ["SEC-011"],
+      "A07_auth_failures": ["SEC-003", "SEC-013", "SEC-014"],
+      "A08_software_data_integrity": [],
+      "A09_logging_failures": ["SEC-009", "SEC-012"],
+      "A10_ssrf": ["SEC-002"]
+    }
+  }
+}

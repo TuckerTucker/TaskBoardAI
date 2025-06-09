@@ -1,0 +1,81 @@
+# TKR Project Kit
+# Core project configuration for the TKR Project Kit
+
+# Project metadata
+project:
+  name: "TKR Project Kit"
+  version: "0.1.0"
+  description: "A project scaffolding toolkit for creating new projects with standardized structure and configurations"
+  author: "TKR"
+  role: "Development Toolkit"
+  timestamp: "2025-05-20"
+  status: "in-progress"
+
+# Directory structure
+directories:
+  - path: "../"
+    description: "Root project directory"
+    subdirectories:
+      - path: "_project/"
+        description: "Project context and grounding information"
+        subdirectories:
+          - path: "_claude/"
+            description: "Claude AI agent configuration directory"
+            files:
+              - "claude.local.md": "Project specific Claude configuration"
+              - "rr_init-review.md": "Initialize parallel git worktrees for repository analysis"
+              - "rr_execute-review.md": "Run all analysis agents in parallel"
+              - "rr_merge-findings.md": "Aggregate results into comprehensive reports"
+          - path: "_ref/"
+            description: "Reference materials for packages and/or libraries used in the project to assist the coding agents."
+            subdirectories:
+              - path: "tkr-project-yaml/"
+                description: "Templates and specifications for project YAML files"
+                files:
+                  - "specification-guide.md": "Detailed guide for completing YAML documentation"
+                subdirectories:
+                  - path: "templates/"
+                    description: "YAML templates for different documentation types"
+                    files:
+                      - "component-template.yaml": "Template for individual UI components"
+                      - "template-core-project.yaml": "Template for core project configuration"
+          - path: "_specs/"
+            description: "Project planning documents. May include wireframes, architecture docs, planning discussions."
+          - path: "repo-review/"
+            description: "Parallel repository analysis system using specialized AI agents"
+            files:
+              - "repo-review.md": "Documentation and overview of the repository review system"
+            subdirectories:
+              - path: "agents/"
+                description: "Specialized agent configurations"
+                files:
+                  - "overview-agent.md": "Architecture & structure analyst"
+                  - "security-agent.md": "Security vulnerability scanner"
+                  - "a11y-agent.md": "Accessibility compliance checker"
+                  - "performance-agent.md": "Performance optimization analyst"
+                  - "quality-agent.md": "Code quality & tech debt assessor"
+                  - "deps-agent.md": "Dependency & license analyzer"
+              - path: "templates/"
+                description: "Report templates and schemas"
+                files:
+                  - "report-template.md": "Standardized output format"
+                  - "findings-schema.json": "JSON schema for findings"
+              - path: "trees/"
+                description: "Git worktrees for each agent (created during init)"
+              - path: "reports/"
+                description: "Final aggregated analysis reports"
+  - path: "./"
+    description: "Setup script and tools"
+    files:
+      - "setup": "Setup script that copies project files to parent directory and self-deletes"
+
+# Project purpose
+purpose:
+  summary: "To provide a standardized project structure for new projects that includes directory organization, AI assistant configuration, and parallel repository analysis capabilities."
+  goals:
+    - "Standardize project organization across projects"
+    - "Provide ready-to-use AI assistant configuration"
+    - "Include reference materials and templates for project documentation"
+    - "Simplify project initialization with setup scripts"
+    - "Enable comprehensive repository analysis using parallel AI agents"
+    - "Support multi-perspective code reviews (security, performance, accessibility, etc.)"

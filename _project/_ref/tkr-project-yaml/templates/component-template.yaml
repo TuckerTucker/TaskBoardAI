@@ -1,0 +1,196 @@
+# Component-specific YAML Template
+# This template provides a structure for documenting individual UI components.
+# Replace placeholder values with your actual component details.
+# Comments throughout explain the purpose and usage of each section.
+
+component:
+  # Basic component information
+  name: "component_name"                      # Required: Technical name (snake_case)
+  metadata:
+    display_name: "Human-Readable Name"       # Required: User-friendly name
+    description: "Component description"       # Required: Explain the component's purpose
+    category: "category_name"                  # Required: UI category (e.g., navigation, form, display)
+    status: "draft"                            # Required: Component status (draft, ready, deprecated)
+    created: "YYYY-MM-DD"                      # Optional: Creation date
+    last_updated: "YYYY-MM-DD"                 # Optional: Last update date
+    owner: "Team or Person Name"               # Optional: Who maintains this component
+    dependencies:                              # Optional: Other components this depends on
+      - "dependency_name"
+    project_reference: "../core-project.yaml"  # Required: Reference to the core project configuration
+  
+  # Visual and structural properties
+  type: "html_element_type"                    # Required: Base HTML element (div, button, etc.)
+  properties:
+    # HTML attributes
+    attributes:                                # Optional: HTML attributes
+      role: "semantic_role"                    # Optional: ARIA role
+      aria_label: "Accessibility label"        # Optional: Accessibility label
+    
+    # Visual styling
+    styling:                                   # Required: Visual appearance
+      background_color: "token.reference"      # Use design tokens from core project
+      color: "token.reference"
+      padding: "token.reference"
+      margin: "token.reference"
+      border:                                  # Optional: Border properties
+        width: "1px"
+        style: "solid"
+        color: "token.reference"
+        radius: "token.reference"
+      shadow: "token.reference"                # Optional: Shadow property
+    
+    # Component dimensions
+    dimensions:                                # Optional: Size specifications
+      width: "size_value"                      # Optional: Width specification
+      height: "size_value"                     # Optional: Height specification
+      min_width: "size_value"                  # Optional: Minimum width
+      max_width: "size_value"                  # Optional: Maximum width
+  
+  # Component state management
+  state:
+    # Initial component state
+    initial_state:                             # Required: Starting state
+      property_name: value                     # Initial state properties
+    
+    # Possible component states
+    states:                                    # Required: List of possible states
+      - name: "state_name"                     # Required: State identifier
+        description: "State description"       # Required: Explain this state
+        visual: "Visual description"           # Optional: How it looks in this state
+    
+    # Valid state transitions
+    state_transitions:                         # Optional: How states change
+      - from: "source_state"                   # Required: Starting state
+        to: ["target_state1", "target_state2"] # Required: Possible end states
+        trigger: "What causes transition"      # Required: What triggers change
+    
+    # State change animations
+    animations:                                # Optional: Transition animations
+      state_change:                            # Group by transition type
+        source_to_target:                      # Name the specific transition
+          type: "animation_type"               # Required: Animation type
+          duration: "time_value"               # Required: Animation duration
+          easing: "easing_function"            # Required: Animation timing function
+  
+  # Accessibility specifications
+  accessibility:
+    role: "aria_role"                          # Required: ARIA role
+    aria_attributes:                           # Optional: ARIA attributes
+      - name: "aria_attribute"                 # Required: Attribute name
+        value: "attribute_value"               # Required: Attribute value
+    keyboard_interactions:                     # Required: Keyboard support
+      - key: "key_name"                        # Required: Key or combination
+        action: "Action description"           # Required: What happens
+    screen_reader:                             # Optional: Screen reader behavior
+      announcements:                           # Optional: What is announced
+        event_name: "Announcement text"        # Template for each event
+  
+  # Responsive behavior
+  responsive:
+    behavior:                                  # Required: Responsive changes
+      mobile:                                  # Required: Mobile layout
+        property: "value"                      # Properties that change
+      tablet:                                  # Optional: Tablet layout
+        property: "value"
+      desktop:                                 # Required: Desktop layout
+        property: "value"
+    breakpoint_adjustments:                    # Optional: Detailed breakpoint changes
+      - breakpoint: "breakpoint_name"          # Required: Breakpoint identifier
+        changes:                               # Required: Changes at this breakpoint
+          - property: "css_property"           # Required: Property to change
+            value: "new_value"                 # Required: New value at this breakpoint
+  
+  # Performance considerations
+  performance:
+    rendering:                                 # Optional: Rendering optimizations
+      ssr: true_or_false                       # Optional: Server-side rendering
+      lazy_load: true_or_false                 # Optional: Lazy loading
+    optimization:                              # Optional: Performance optimizations
+      technique_name: setting                  # Specific optimization techniques
+  
+  # Error handling specific to this component
+  error_handling:
+    scenarios:                                 # Required: Error scenarios
+      - error: "error_type"                    # Required: Type of error
+        action: "response_action"              # Required: How component responds
+        retry: boolean_or_object               # Optional: Retry settings
+        fallback: "fallback_behavior"          # Optional: Fallback approach
+  
+  # Data requirements and handling
+  data:
+    required_fields:                           # Optional: Required data fields
+      - name: "field_name"                     # Required: Field identifier
+        type: "data_type"                      # Required: Field data type
+        description: "Field description"       # Optional: Purpose of the field
+    optional_fields:                           # Optional: Optional data fields
+      - name: "field_name"
+        type: "data_type"
+        description: "Field description"
+    source:                                    # Optional: Where data comes from
+      type: "data_source_type"                 # Required: Source type
+    validation:                                # Optional: Data validation
+      - rule: "validation_rule"                # Required: Validation rule
+        fallback: "fallback_behavior"          # Optional: What happens on invalid data
+  
+  # Event handling
+  events:
+    emitted:                                   # Optional: Events this component triggers
+      - name: "event_name"                     # Required: Event identifier
+        description: "Event description"       # Required: Purpose of event
+        payload: "data_sent_with_event"        # Optional: Event data structure
+    received:                                  # Optional: Events this component handles
+      - name: "event_name"                     # Required: Event identifier
+        description: "Event description"       # Required: Purpose of event
+        effect: "component_response"           # Required: How component responds
+  
+  # Visual content specifications
+  content:
+    layout:                                    # Optional: Content organization
+      regions:                                 # Optional: Content areas
+        - name: "region_name"                  # Required: Region identifier
+          placement: "position"                # Required: Where region is located
+          content: "content_description"       # Required: What goes in this region
+    text:                                      # Optional: Text styling
+      text_element:                            # Group by text element type
+        weight: "font_weight"                  # Optional: Font weight
+        size: "font_size"                      # Optional: Font size
+    iconography:                               # Optional: Icon usage
+      icon_purpose: "icon_name"                # Map purposes to icon names
+  
+  # Children elements or sub-components
+  children:
+    - type: "child_component_type"             # Required: Child component type
+      properties:                              # Required: Child properties
+        property_name: value                   # Child component configuration
+      children:                                # Optional: Nested children
+        - type: "nested_child_type"
+          properties:
+            property_name: value
+  
+  # Testing specifications
+  testing:
+    unit_tests:                                # Optional: Unit test coverage
+      scenarios:                               # Optional: Test scenarios
+        - description: "test_description"      # Required: What is being tested
+          props: "test_props"                  # Optional: Props for this test
+          expected: "expected_outcome"         # Required: Expected result
+    accessibility_tests:                       # Optional: Accessibility tests
+      - "test_description"                     # Required: What is being tested
+    visual_regression:                         # Optional: Visual regression tests
+      critical_states:                         # Optional: States to test visually
+        - "state_name"
+  
+  # Documentation and examples
+  examples:
+    - name: "example_name"                     # Required: Example identifier
+      description: "example_description"       # Required: What this example shows
+      props:                                   # Required: Props for this example
+        prop_name: value                       # Configuration for this example
+      preview_image: "image_path"              # Optional: Screenshot path
+  
+  # Code references
+  code_references:                             # Optional: Links to code
+    implementation: "file_path"                # Optional: Component implementation
+    tests: "file_path"                         # Optional: Component tests
+    stories: "file_path"                       # Optional: Storybook stories
+    usage_examples: "file_path"                # Optional: Example implementations

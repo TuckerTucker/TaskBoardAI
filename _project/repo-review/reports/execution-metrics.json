@@ -1,0 +1,33 @@
+{
+  "analysis_start": "2025-01-30T00:00:00Z",
+  "analysis_complete": "2025-01-30T00:05:00Z",
+  "execution_time_minutes": 5,
+  "agents_executed": {
+    "overview": {
+      "status": "completed",
+      "files_created": ["analysis-report.md", "findings.json", "metrics.json"],
+      "key_findings": "142 JS/TS files, ~32K lines of code, 60% JS/40% TS split, ~30% test coverage"
+    },
+    "security": {
+      "status": "completed", 
+      "files_created": ["analysis-report.md", "findings.json", "metrics.json"],
+      "key_findings": "14 security findings (2 critical, 3 high, 5 medium, 4 low), security score 6.2/10"
+    },
+    "quality": {
+      "status": "completed",
+      "files_created": ["analysis-report.md", "findings.json", "metrics.json"],
+      "key_findings": "13.3% test coverage, 35% code duplication, maintainability score 65/100"
+    },
+    "deps": {
+      "status": "completed",
+      "files_created": ["analysis-report.md", "findings.json", "metrics.json"],
+      "key_findings": "37 direct dependencies, 7 vulnerabilities (1 high), 18 outdated packages"
+    }
+  },
+  "total_files_analyzed": 142,
+  "total_findings": 37,
+  "critical_issues": 3,
+  "high_priority_issues": 5,
+  "repository_path": "/Volumes/tkr-riffic/@tkr-projects/tkr-kanban",
+  "analysis_depth": 3
+}

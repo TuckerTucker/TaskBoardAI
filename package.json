@@ -25,6 +25,7 @@
     "@types/cors": "^2.8.18",
     "@types/inquirer": "^9.0.8",
     "@types/uuid": "^10.0.0",
+    "@anthropic-ai/claude-code": "^1.0.17",
     "axios": "^1.6.7",
     "chalk": "^5.4.1",
     "commander": "^14.0.0",
