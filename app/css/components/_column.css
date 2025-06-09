@@ -141,8 +141,9 @@
 }
 
 .card.collapsed {
-    height: 40px;
-    overflow: hidden;
+    min-height: 40px;
+    height: auto;
+    overflow: visible;
 }
 
 /* Column-specific scrollbars */

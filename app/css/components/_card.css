@@ -9,6 +9,10 @@
     transition: all 0.2s ease;
 }
 
+.card.collapsed {
+    overflow: visible;
+}
+
 .card:hover {
     box-shadow: var(--shadow-md);
     transform: translateY(-2px);
@@ -42,6 +46,7 @@
     align-items: flex-start;
     padding: var(--spacing-sm) var(--spacing-sm);
     border-bottom: 1px solid var(--border-color);
+    min-height: fit-content;
 }
 
 .card-header h3 {
@@ -51,12 +56,17 @@
     color: var(--text-primary);
     word-break: break-word;
     padding-right: var(--spacing-sm);
+    flex: 1;
+    line-height: 1.4;
+    overflow-wrap: break-word;
+    hyphens: auto;
 }
 
 .card-actions {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: var(--spacing-xs);
+    flex-shrink: 0;
 }
 
 .card .collapse-btn,
@@ -92,6 +102,20 @@
 
 .card-content.collapsed {
     display: none;
+}
+
+.card.collapsed .card-header {
+    border-bottom: none;
+    min-height: auto;
+    height: auto;
+}
+
+.card.collapsed .card-header h3 {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: initial;
+    max-height: none;
+    height: auto;
 }
 
 .card-content {
