@@ -1,6 +1,6 @@
 {
   "name": "@tuckertucker/taskboardai",
-  "version": "1.4.2",
+  "version": "1.0.0",
   "description": "A lightweight, file-based kanban board with AI integration through Claude",
   "main": "server/server.js",
   "bin": {
