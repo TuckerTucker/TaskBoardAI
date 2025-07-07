@@ -1,0 +1,50 @@
+# Node modules
+node_modules/
+
+# Personal boards (keep only example)
+boards/*.json
+!boards/_kanban_example.json
+
+# Webhook configurations
+webhooks/*.json
+
+# Environment variables
+.env
+.env.*
+
+# IDE files
+.vscode/
+.idea/
+*.sublime-*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Build artifacts
+dist/
+build/
+
+# Coverage reports
+coverage/
+
+# Test artifacts
+.nyc_output
+
+# Private configuration
+config/private-*
+config/*.private.*
+
+# Internal documentation
+docs/internal/
+_oss_plan/
+_archive/
+_planning/
+
+# Release files (keep in private repo only)
+releases/
